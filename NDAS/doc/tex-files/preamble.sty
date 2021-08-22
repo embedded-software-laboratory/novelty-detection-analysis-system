@@ -1,0 +1,133 @@
+\ProvidesPackage{preamble}
+\RequirePackage{kvoptions}
+
+
+\DeclareBoolOption[true]{DE} % specifying `foo` is the same as `foo=true`
+\DeclareBoolOption[true]{BA}
+
+\ExecuteOptions{DE=false} % foo is false by default
+\ExecuteOptions{BA=false} % foo is false by default
+
+\ProcessKeyvalOptions{preamble}
+
+\newif\ifba	% define boolean variable indicating the thesis type
+\bafalse
+
+\newif\ifgerman	% define boolean variable indicating the language
+\germanfalse
+
+\ifpreamble@DE
+
+\germantrue
+% packages for german language
+\usepackage[english,ngerman]{babel}	
+\usepackage[babel,german=quotes]{csquotes} 
+\usepackage{bibgerm}  % german bibliography
+\fi
+
+\ifpreamble@BA
+	\batrue
+\fi
+
+\pdfminorversion=5
+
+\newcommand{\authorname}{\authorprename~\authorsurname}	% define authorname command (used on titlepage)
+
+% required packages
+\usepackage[nottoc,notlot,notlof]{tocbibind}	% http://www.ctan.org/pkg/tocbibind  - controls the numbering of the table of contents for list of tabular, bibliography...
+\usepackage{scrhack}  % 
+\usepackage{cmap} 
+\usepackage[T1]{fontenc} % split words at the end of the line which contain ü/ä/ö
+\usepackage{ragged2e}
+\usepackage{array}
+\usepackage{multirow}
+\usepackage[pdftex,
+pdfsubject = {{Thesis at the Department of Informatics at RWTH Aachen University}},
+pdfpagelayout=SinglePage,
+pdffitwindow=true,
+bookmarksnumbered,
+hidelinks
+]{hyperref} % richtige Lesezeichen für Acrobat
+\usepackage{graphics}
+\usepackage[automark,autooneside]{scrlayer-scrpage} %changed from scrpage2
+\usepackage{tikz}
+\usetikzlibrary{shapes,arrows,shapes.arrows,shadows,mindmap,decorations.pathmorphing,fit,backgrounds}
+\usepackage{listings}
+\usepackage{amsmath}	% math symbols
+\usepackage{amssymb}
+\usepackage{stmaryrd} % \lightning
+\usepackage{xspace}
+\usepackage{nicefrac}
+\usepackage{lettrine}
+\usepackage{microtype}
+%\usepackage[shadow,colorinlistoftodos]{todonotes} % http://www.golatex.de/todo-liste-t5995.html
+\usepackage{todonotes}
+
+
+% font section
+\usepackage{lmodern}
+\usepackage[scaled=0.85]{beramono}
+
+\usepackage{ulem}        % http://www.ctan.org/pkg/ulem      - special underlining of text
+\usepackage{subcaption}	 % http://www.ctan.org/pkg/subfigure - allows to put multiple illustrations/tables into a single figure/tabular surrounding
+\usepackage{caption}		 % http://www.ctan.org/pkg/caption   - allows single captions for multiple figures/tables with subfigures
+%\usepackage{kpfonts}     % http://www.ctan.org/pkg/kpfonts   - additional fonts
+\usepackage{ltablex}	   % http://www.ctan.org/pkg/ltablex   - single table over multiple pages (tabularx combined with longtable)
+%\usepackage[german]{algorithm2e}	% http://www.ctan.org/pkg/algorithm2e   - Surrounding for algorithms written in pseudocode
+\usepackage{algorithm2e}	% http://www.ctan.org/pkg/algorithm2e   - Surrounding for algorithms written in pseudocode
+\usepackage{url}	       % http://www.ctan.org/pkg/url       - shall allow line breaks in urls (clickable)
+%\usepackage{breakurl}   % http://www.ctan.org/pkg/breakurl  - alternative for url package (not with pdflatex)
+\usepackage{float}	     % http://www.ctan.org/pkg/float     - enables the positioning of figures with H command
+\usepackage{lmodern}
+\usepackage{csquotes}
+\usepackage{pdfpages}
+
+\usepackage{setspace}
+
+\usepackage[
+nonumberlist, % no pagenumbering
+acronym] % create acronymlist
+{glossaries}
+\usepackage{makeidx} % Index
+
+\setcounter{secnumdepth}{3}	% numbers sub-...-subsections up to the specified depth
+\setcounter{tocdepth}{3}    % adds sub-...-subsections up to the specified depth to the list of contents
+
+\input{glyphtounicode}
+\pdfgentounicode=1 
+
+% Acronyms
+%\ifpreamble@DE 
+\renewcommand*{\acronymname}{Abkürzungsverzeichnis}
+\newglossary[slg]{symbolslist}{syi}{syg}{Symbolverzeichnis} %Ein eigenes Symbolverzeichnis erstellen
+\newglossary[englabbl]{englAbbrev}{englabbi}{englabbg}{Symbolverzeichnis} %Ein eigenes Symbolverzeichnis erstellen
+%\fi
+\renewcommand*{\glspostdescription}{} %Den Punkt am Ende jeder Beschreibung deaktivieren
+\newcommand{\abk}[1]{\gls{#1}}
+\newcommand{\abki}[1]{\glsuseri{#1}\glsunset{#1}}
+\newcommand{\abkii}[1]{\glsuserii{#1}\glsunset{#1}}
+\newcommand{\sym}[1]{\gls{symbol:#1}}
+
+
+\makeglossaries
+\makeindex 
+
+\usepackage[absolute,overlay]{textpos}
+  \setlength{\TPHorizModule}{1mm}
+  \setlength{\TPVertModule}{1mm}
+
+% Disable single lines at the start of a paragraph (Schusterjungen)
+\clubpenalty = 10000
+\widowpenalty = 10000 \displaywidowpenalty = 10000
+
+
+\makeatletter
+\AtBeginDocument{
+  \hypersetup{
+    pdftitle = {\englishtitle},
+    pdfauthor = {\authorname}
+}
+}
+\makeatother
+            
+\endinput

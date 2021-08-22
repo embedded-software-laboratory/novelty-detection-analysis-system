@@ -1,0 +1,23 @@
+% !TEX root = ../main.tex
+
+\chapter{Configuration}
+The analysis software has a configuration file in the config folder. In this config.yml file, various settings can be made, such as the dark mode or other visual settings. In the following these settings are presented.\\
+\\
+The configuration file uses YAML\footnote{\url{https://en.wikipedia.org/wiki/YAML}} and thus has a fixed format which must be adhered to so that the file can still be read by the software. Most of the settings are self-explanatory. The settings are sorted by extension, because the respective extension gets the corresponding configurations in the initialization process during start-up. Additional labels can be defined that can be selected for annotation by adding strings to the labels section:
+\begin{lstlisting}[caption=List of available labels for annotation.]
+annotation:
+  labels:
+    - "Condition"
+    - "Sensor"
+    - "Unknown"
+\end{lstlisting}
+The stored physiological value ranges are also present in the configuration file and are read out by the \texttt{physiologicallimits} extension. Here, a lower limit and an upper limit must be specified for each physiological data type. The assignment is done via the identifiers of the table columns, therefore aliases can be specified. Columns that have these aliases or the main identifier of the physiological value can thus be identified and the value limit assigned. Below is the entry for the temperature:
+\begin{lstlisting}[caption=Physiological info for temperature.]
+physiologicalinfo:
+  temperature:
+    low: 30
+    high: 40
+    aliases: ["temp", "t", "c"]
+  ...
+\end{lstlisting}
+The darkmode can also be activated via the configuration file. Further information can be found in the file.

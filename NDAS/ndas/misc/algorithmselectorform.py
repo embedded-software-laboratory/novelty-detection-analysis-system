@@ -1,0 +1,180 @@
+from PyQt5.QtWidgets import *
+
+from ndas.extensions import algorithms
+from ndas.misc import parameter
+
+
+class AlgorithmInputForm:
+    """
+    The input form for algorithm selection
+    """
+
+    def __init__(self, aid):
+        """
+        Creates the widgets and layouts
+
+        Parameters
+        ----------
+        aid
+        """
+        self.single_algorithm_layout = QVBoxLayout()
+        self.algorithm_generators = []
+        self.algorithm_additional_parameters = []
+        self.algorithm_additional_options_layout = QHBoxLayout()
+
+        first_row_layout = QHBoxLayout()
+
+        active_analysis_algorithm_layout = QHBoxLayout()
+        active_analysis_algorithm_label = QLabel("Active Algorithm:")
+        self.active_analysis_algorithm = QComboBox()
+        active_analysis_algorithm_layout.addWidget(active_analysis_algorithm_label)
+        active_analysis_algorithm_layout.addWidget(self.active_analysis_algorithm)
+        self.active_analysis_algorithm.currentIndexChanged.connect(lambda index: self.on_algorithm_change(index))
+
+        algorithm_list = algorithms.get_available_algorithms()
+        for algorithm in algorithm_list:
+            self.active_analysis_algorithm.addItem(algorithm)
+
+        algorithm_name_label = QLabel("Name:")
+        self.algorithm_name = QLineEdit("algo-" + str(aid))
+        self.algorithm_name.setMaximumWidth(200)
+
+        first_row_layout.addLayout(active_analysis_algorithm_layout)
+        first_row_layout.addWidget(algorithm_name_label)
+        first_row_layout.addWidget(self.algorithm_name)
+
+        first_row_spacer = QSpacerItem(20, 0, QSizePolicy.Expanding, QSizePolicy.Minimum)
+        first_row_layout.addItem(first_row_spacer)
+
+        second_row_layout = QHBoxLayout()
+        second_row_layout.addLayout(self.algorithm_additional_options_layout)
+
+        second_row_spacer = QSpacerItem(20, 0, QSizePolicy.Expanding, QSizePolicy.Minimum)
+        second_row_layout.addItem(second_row_spacer)
+
+        self.single_algorithm_layout.addLayout(first_row_layout)
+        self.single_algorithm_layout.addLayout(second_row_layout)
+
+    def get_conf(self):
+        """
+        Loads the configuration for algorithms
+        """
+        klass = algorithms.get_available_algorithms()[self.active_analysis_algorithm.currentIndex()]
+        name = self.algorithm_name.text()
+        algorithm_parameter = self.get_param_list()
+        return {'klass': klass, 'name': name, 'parameter': algorithm_parameter}
+
+    def get_name(self) -> str:
+        """
+        Returns the name of the algorithm
+        """
+        return str(self.algorithm_name.text())
+
+    def get_layout(self):
+        """
+        Returns the layout of this form
+        """
+        return self.single_algorithm_layout
+
+    def delete_items_of_layout(self, layout):
+        """
+        Removes elements of this form
+
+        Parameters
+        ----------
+        layout
+        """
+        if layout is not None:
+            while layout.count():
+                item = layout.takeAt(0)
+                widget = item.widget()
+                if widget is not None:
+                    widget.setParent(None)
+                else:
+                    self.delete_items_of_layout(item.layout())
+
+    def on_algorithm_change(self, index):
+        """
+        Adds elements based on algorithm selection to this form
+
+        Parameters
+        ----------
+        index
+        """
+        for param in self.algorithm_additional_parameters:
+            for i in range(self.algorithm_additional_options_layout.count()):
+                layout_item = self.algorithm_additional_options_layout.itemAt(i)
+                if layout_item.layout() == param:
+                    self.delete_items_of_layout(layout_item.layout())
+                    self.algorithm_additional_options_layout.removeItem(layout_item)
+                    break
+
+        additional_parameters = algorithms.get_algorithm_required_arguments(
+            algorithms.get_available_algorithms()[index])
+        q_layout = QHBoxLayout()
+
+        for arg in additional_parameters:
+            q_groupbox = QGroupBox()
+            q_groupbox_layout = QHBoxLayout()
+            q_groupbox.setLayout(q_groupbox_layout)
+
+            q_label = QLabel(arg.argument_name + " = ", parent=q_groupbox)
+
+            if arg.type == parameter.ArgumentType.INTEGER:
+                q_input = QSpinBox(parent=q_groupbox)
+                q_input.setMinimum(arg.minimum)
+                q_input.setMaximum(arg.maximum)
+                q_input.setValue(arg.default)
+            elif arg.type == parameter.ArgumentType.FLOAT:
+                q_input = QDoubleSpinBox(parent=q_groupbox)
+                q_input.setValue(arg.default)
+                q_input.setSingleStep(0.1)
+                q_input.setMinimum(arg.minimum)
+                q_input.setMaximum(arg.maximum)
+            elif arg.type == parameter.ArgumentType.BOOL:
+                q_input = QCheckBox(parent=q_groupbox)
+                q_input.setChecked(arg.default)
+            else:
+                q_input = QLineEdit(arg.default, parent=q_groupbox)
+
+            if arg.tooltip is not None:
+                q_label.setToolTip(arg.tooltip)
+                q_input.setToolTip(arg.tooltip)
+
+            q_groupbox_layout.addWidget(q_label)
+            q_groupbox_layout.addWidget(q_input)
+
+            q_layout.addWidget(q_groupbox)
+
+        self.algorithm_additional_parameters.append(q_layout)
+        self.algorithm_additional_options_layout.addLayout(q_layout)
+
+    def get_param_list(self):
+        """
+        Returns the list of optional parameters for active algorithm
+        """
+        args = {}
+        for param in self.algorithm_additional_parameters:
+            for i in range(self.algorithm_additional_options_layout.count()):
+                layout_item = self.algorithm_additional_options_layout.itemAt(i)
+                if layout_item.layout() == param:
+                    for x in range(0, layout_item.layout().count()):
+
+                        groupbox = layout_item.layout().itemAt(x).widget().children()
+
+                        label_item = groupbox[1]
+                        input_item = groupbox[2]
+
+                        label_text = label_item.text().replace(" = ", "")
+
+                        if isinstance(input_item, QSpinBox):
+                            input_text = input_item.value()
+                        elif isinstance(input_item, QDoubleSpinBox):
+                            input_text = input_item.value()
+                        elif isinstance(input_item, QCheckBox):
+                            input_text = input_item.isChecked()
+                        else:
+                            input_text = input_item.text().replace(" ", "")
+
+                        args[label_text] = input_text
+        return args

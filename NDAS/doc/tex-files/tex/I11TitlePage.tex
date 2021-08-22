@@ -1,0 +1,56 @@
+
+% dynamically set the thesis type according to the used language
+\newcommand{\thesistypeen}{Documentation}
+
+
+\renewcommand{\subject}{\thesistypeen\\ }
+	
+
+% set title page
+\renewcommand*{\maketitle}{%
+  \begin{titlepage}
+  	\begin{textblock}{120}(85,0)
+  		\includegraphics[height=3.1cm]{i11_Vector_RGB.pdf}
+  	\end{textblock}
+  	
+  	% empty
+  	\ 
+  	\vspace{0.5cm}
+
+	% thesis type
+	\centering
+	\textbf{\subject}
+	
+	\vspace{0.8cm}
+	\vfill
+	
+	% thesis title		% TODO: größer & andere Schriftart
+	\textbf{
+	  \LARGE{\englishtitle}\\
+    }
+  
+  	\vspace{7.0cm}
+  	\vfill
+  	
+  	% student
+  	\authorname\\
+  	
+  	\vspace{0.3cm}
+  	\vfill
+  	
+  	% metainfo
+  	Aachen, \today
+  	\vspace{0.3cm}
+  	\vfill
+  	 
+  	
+  	
+    \vspace{0.3cm}
+    \vfill
+   
+  	
+   
+  \end{titlepage}
+}
+
+\maketitle

@@ -1,0 +1,25 @@
+% !TEX root = ../main.tex
+
+\chapter{Installation and Start-Up}
+This section discusses the initial installation and setup of the software.\\
+\\
+The main requirements arise from the use of Qt for the graphical user interface. Consequently, it is necessary to install PyQt5 as Python bindings for Qt5. Without these Python bindings it is not possible to run the software. Also, PyQtGraph is a main component of the software, as this graph library is used for visualization and plotting of the data. The analysis system at the time of this documentation has the following requirements: 
+\begin{lstlisting}[caption=requirements.txt: Current requirements for the analysis software.]
+wfdb==3.2.0
+numpy==1.18.4
+hickle==4.0.4
+scipy==1.5.3
+pyqtgraph==0.11.1
+pandas==1.0.3
+PyQt5==5.15.4
+PyYAML==5.4.1
+\end{lstlisting}
+The software has been tested with the indicated versions, but may work fine with newer software versions of the listed packages. This is subject to testing. The current requirements can always be found in requirements.txt.\\
+\\
+The installation of these packages can be done with the Python Package installer. For this, the requirements.txt can be read directly into \texttt{pip} and the required packages are installed automatically via the following command:
+\begin{lstlisting}[caption=Installation of requirements from the requirements.txt.]
+pip install -r PATH/TO/requirements.txt
+\end{lstlisting}
+The software has a start-up check. If not all required packages are installed, this is shown to the user in an error message.\\
+\\
+No further configuration is necessary to start the software. The graphical user interface can be started by running \texttt{python ndas.py} from the console.

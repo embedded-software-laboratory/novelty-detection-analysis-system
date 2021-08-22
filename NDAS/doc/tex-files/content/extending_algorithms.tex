@@ -1,0 +1,55 @@
+% !TEX root = ../main.tex
+
+\chapter{Adding new Algorithms}
+The analysis system can be extended with further algorithms. For this purpose, an autoloader was implemented, which automatically loads the algorithms available in the corresponding folder at program start up. Algorithms can then be selected via the graphical user interface without further configuration requirements.\\
+\\
+To implement a new algorithm, a new class has to be created which inherits from the BaseDetector superclass. The algorithm class has to implement a \texttt{detect()} method that takes a pandas dataframe and returns a dictionary. The return values are structured as follows: The returned dictionary contains multiple other dictionaries, depending on the number of dimensions. The column name is used as identifier and therefore as key in the dictionary. The column-specific dictionaries contain the detected class for each individual data point of the column, as visualized below:\\
+\begin{lstlisting}[language=python,caption=Structure of the return dictionary.]
+total_results = 
+{
+ columnID1 = {timeID1 : c1t1class, timeID2: c1t2class...},
+ columnID2 = {timeID1  : c2t1class, ...},
+ ...
+}
+\end{lstlisting}
+The available classes for the detection process are depicted below:
+\begin{table}[H]
+  \begin{center}
+  \caption{Return values for algorithms.}\label{tab:return_values}
+  \begin{tabular}{ccc} \hline
+  Value & Name & Color (Hex triplet) \\ \hline
+  -2 & Ignored & Grey (\#a9a9a9) \\
+  -1 & Training & Turquoise (\#00afbb) \\
+  0 & Normal & Blue (\#4e81bd)  \\
+  1 & Anomalous (Tier-I) & Red (\#fc4e08) \\
+  2 & Anomalous (Tier-II) & Yellow (\#e7b800)  \\ \hline
+  \end{tabular}
+  \end{center}
+  \end{table}
+The following is a sample implementation of an algorithm. In this minimal example, every second data value is classified as an anomaly:
+\begin{lstlisting}[language=python,caption=example.py: Minimal example for an implemented algorithm.]
+from ndas.algorithms.basedetector import BaseDetector
+
+class ExampleDetector(BaseDetector):
+
+  def __init__(self, *args, **kwargs):
+    super(ExampleDetector, self).__init__(*args, **kwargs)
+
+  def detect(self, datasets, **kwargs) -> dict:
+    total_results = {}
+
+    for column in datasets.columns[1:]:
+      column_results = {}
+
+      i = 0
+      for index, row in datasets[[datasets.columns[0], column]].iterrows():
+          if i == 0:
+              column_results[row[datasets.columns[0]]] = 1
+              i = 1
+          else:
+              column_results[row[datasets.columns[0]]] = 0
+              i = 0
+      total_results[column] = column_results
+    return total_results
+  \end{lstlisting}
+ When creating new algorithms, auxiliary functions can be used, which have been implemented in the superclass and are therefore directly available. Via \texttt{register\_parameter} additional parameters can be registered, which are queried in the GUI before running the algorithm. Via \texttt{signal\_error} an error message can be sent to the GUI, which is displayed to the user in a messagebox window. With \texttt{signal\_percentage} the current percentage status for the progress bar can be sent. Additional plots can be submitted to the GUI using \texttt{signal\_add\_plot}, while additional line plots can be added to existing plots using \texttt{signal\_add\_line} and \texttt{signal\_add\_infinite\_line}. A string can be sent to the logger via \texttt{log}. Via \texttt{get\_physiological\_information} the physiological value ranges can be requested from the config file for passed identifiers (e.g. temperature). Further information about the auxiliary functions can be found in the BaseDetector class.

@@ -1,0 +1,56 @@
+% !TEX root = ../main.tex
+% adapts automatically according to the selected language (for the preamble)
+\titlehead{
+
+\begin{textblock}{120}(85,0)
+	\includegraphics[height=3.1cm]{i11_Vector_RGB.pdf}
+\end{textblock}
+}
+
+\ifthenelse{\boolean{ba}}{
+	\newcommand{\thesistypeen}{Bachelor~Thesis}
+	\newcommand{\thesistypede}{Bachelorarbeit}
+	}{
+	\newcommand{\thesistypeen}{Master~Thesis}
+	\newcommand{\thesistypede}{Masterarbeit}
+	}
+
+  
+\ifthenelse{\boolean{german}}{
+	\subject{\thesistypede\\ 
+	\vspace{0.15cm}\Large{\thesistypeen
+	}}
+}{
+	\subject{\thesistypeen\\ 
+	\vspace{0.15 cm}\Large{\thesistypede
+	}}
+}
+
+\title{
+\ifthenelse{\boolean{german}}{\germantitle}{\englishtitle}\\
+\vspace{0.25cm}\vfil\Large{
+\ifthenelse{\boolean{german}}{\englishtitle}{\germantitle}}
+}
+\author{\authorname\\
+Matrikelnummer: \matriculationnumber}
+
+\publishers{
+\ifthenelse{\boolean{german}}{Gutachter}{Examiners}%
+:\\ %research mentor
+\examinors \\
+\vspace{0.25cm}
+\vfil
+\vfil
+\ifthenelse{\boolean{german}}{Betreuer}{Advisors}%
+:\\
+\advisors
+
+\vfil
+\vfil
+\vspace{0.25cm}
+
+\ifthenelse{\boolean{german}}{Diese Arbeit wurde vorgelegt am \\Lehrstuhl Informatik 11 -- Embedded Software}{This thesis was submitted to \\Lehrstuhl Informatik 11 -- Embedded Software}
+}
+
+\date{ Aachen, \today}
+

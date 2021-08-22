@@ -1,0 +1,73 @@
+\documentclass[paper=A4,abstracton,twoside,openright,11pt,headsepline,BCOR=1cm,DIV=10,utf8]{scrreprt}
+
+% do this first, since title of thesis might contain umlauts
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{commath}
+\usepackage{enumitem}
+
+\usepackage[ruled,vlined]{algorithm2e}
+
+% TODO: fill in the information
+\newcommand{\englishtitle}{Novelty Detection Analysis System: Manual}
+\newcommand{\authorprename}{Jan}
+\newcommand{\authorsurname}{van Essen}
+
+\usepackage[DE=false, BA=false]{preamble}
+
+
+\input{tex/commands.tex}    
+
+\input{symbols.tex}
+
+\usepackage{color}
+\definecolor{deepblue}{rgb}{0,0,0.5}
+\definecolor{deepred}{rgb}{0.6,0,0}
+\definecolor{deepgreen}{rgb}{0,0.5,0}
+
+
+\DeclareFixedFont{\ttm}{T1}{txtt}{m}{n}{11}  % for normal
+
+
+\lstset{
+	frame=none,
+	language=Python,
+	numbers=left,
+	captionpos=b,
+	breaklines=true,
+	basicstyle=\ttm,
+	xleftmargin=15pt,
+	keywordstyle=\color{deepblue},
+	emph={MyClass},          % Custom highlighting
+	emphstyle=\color{deepred},    % Custom highlighting style
+	stringstyle=\color{deepgreen},
+}
+
+\AfterEndEnvironment{figure}{\noindent\ignorespaces}
+\AfterEndEnvironment{table}{\noindent\ignorespaces}
+
+
+
+% --------------------------------------preambles-end-----------------------------------------
+
+% Begin of the actual document
+\begin{document}
+
+
+\pagestyle{scrheadings}
+
+\input{tex/I11TitlePage.tex}
+
+\pagestyle{scrheadings}
+
+% TODO: write your content into the chapters
+\input{content/initial_installation.tex}
+\input{content/configuration_file.tex}
+\input{content/extending_algorithms.tex}
+
+
+\printindex	
+
+\end{document}
+

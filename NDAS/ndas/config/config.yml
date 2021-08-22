@@ -1,0 +1,61 @@
+annotation:
+  labels:
+    - "Condition"
+    - "Sensor"
+    - "Unknown"
+data:
+  # auto-slice imported data larger than this size (x axis)
+  # data is still imported and can be shown, but is initially not plotted for performance reasons
+  auto_truncate_size:
+    100000
+physiologicalinfo:
+  # use these aliases for known phys. limits
+  # high, low: float or None
+  # aliases: list of strings, or empty list
+  temperature:
+    low: 30
+    high: 40
+    aliases: ["temp", "t", "c"]
+  heartrate:
+    low: 30
+    high: 200
+    aliases: ["hr", "HR"]
+  pamean:
+    low: 1
+    high: 98
+    aliases: []
+  pasystolic:
+    low: 5
+    high: 140
+    aliases: [ ]
+  padiastolic:
+    low: 1
+    high: 93
+    aliases: [ ]
+  systemicmean:
+    low: 2
+    high: 174
+    aliases: [ ]
+  systemicdiastolic:
+    low: 24
+    high: 138
+    aliases: [ ]
+  systemicsystolic:
+    low: 47
+    high: 222
+    aliases: [ ]
+  respiration:
+    low: 4
+    high: 52
+    aliases: [ ]
+  sao2:
+    low: 20.5
+    high: 100
+    aliases: [ ]
+algorithms:
+savestate:
+plots:
+  draw_outlier_series_box: True
+  outlier_series_threshold: 5
+  use_dark_mode: False
+
