@@ -4,9 +4,12 @@ from PyQt5.QtWidgets import *
 
 from ndas.extensions import algorithms, data, savestate, plots, annotations
 from ndas.mainwindow import statgraphwidgets, datageneratorwidget, benchmarkwidget, datainspectionwidget
+from ndas.mainwindow.sshsettingswidget import SSHSettingsWindow
+from ndas.mainwindow.databasesettingswidget import DatabaseSettingsWindow
 from ndas.misc import rangeslider, loggerwidget, parameter
 from ndas.utils import stats
-
+from ndas.database_interface import interface
+import os
 
 class MainWindow(QMainWindow):
     """
@@ -323,6 +326,9 @@ class MainWindow(QMainWindow):
         open_wfm_numeric_action = QAction("Import waveform (numeric)", self)
         open_wfm_numeric_action.triggered.connect(lambda: self.fm_open_wfm_numeric_action())
         self.file_menu.addAction(open_wfm_numeric_action)
+        import_patient_action = QAction("Import patient from database", self)
+        import_patient_action.triggered.connect(lambda: self.fm_import_patient_action())
+        self.file_menu.addAction(import_patient_action)
 
         open_ndas_action = QAction("Load", self)
         open_ndas_action.triggered.connect(lambda: self.load_ndas_slot())
@@ -341,6 +347,14 @@ class MainWindow(QMainWindow):
         export_mpl_action = QAction("matplotlib", self)
         export_mpl_action.triggered.connect(lambda: self.export_to_mpl())
         export_menu.addAction(export_mpl_action)
+
+        settings_menu = self.main_menu.addMenu("Settings")
+        ssh_settings_action = QAction("Configure SSH authentification data", self)
+        ssh_settings_action.triggered.connect(lambda: self.change_ssh_settings())
+        settings_menu.addAction(ssh_settings_action)
+        database_settings_action = QAction("Configure database authentification data", self)
+        database_settings_action.triggered.connect(lambda: self.change_database_settings())
+        settings_menu.addAction(database_settings_action)
 
         help_menu = self.main_menu.addMenu('&?')
         about_action = QAction("About", self)
@@ -666,6 +680,17 @@ class MainWindow(QMainWindow):
         """
         plots.plot_layout_widget.export("mpl")
 
+
+    @pyqtSlot()
+    def change_ssh_settings(self):
+        self.sshwidget = SSHSettingsWindow(self)
+        self.sshwidget.show()
+
+    @pyqtSlot()
+    def change_database_settings(self):
+        self.databasewidget = DatabaseSettingsWindow(self)
+        self.databasewidget.show()
+
     @pyqtSlot()
     def add_new_plot(self, name, x_data, y_data, x_lbl, y_lbl):
         """
@@ -948,6 +973,24 @@ class MainWindow(QMainWindow):
                                                      "wfm files (*.hea)", options=options)
         if file_names:
             data.set_instance("WFMNumericImporter", file_names)
+            data.get_instance().signals.result_signal.connect(
+                lambda result_data, labels: self.data_import_result_slot(result_data, labels))
+            data.get_instance().signals.status_signal.connect(lambda status: self.progress_bar_update_slot(status))
+            data.get_instance().signals.error_signal.connect(lambda s: self.error_msg_slot(s))
+            self.thread_pool.start(data.get_instance())
+
+
+    @pyqtSlot()
+    def fm_import_patient_action(self):
+        """
+        Calls the interface to select patients directly from a database
+        """
+
+        patientId, ok = QInputDialog.getInt(self,"Patient-ID","Enter the id of the patient (database: asic_data):")
+        if ok:
+            interface.startInterface(["interface", "db_asic_scheme.json", "selectPatient", str(patientId)])
+
+            data.set_instance("CSVImporter", "ndas\\database_interface\\queryResult.csv")
             data.get_instance().signals.result_signal.connect(
                 lambda result_data, labels: self.data_import_result_slot(result_data, labels))
             data.get_instance().signals.status_signal.connect(lambda status: self.progress_bar_update_slot(status))
