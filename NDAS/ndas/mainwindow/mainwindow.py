@@ -986,16 +986,23 @@ class MainWindow(QMainWindow):
         Calls the interface to select patients directly from a database
         """
 
-        patientId, ok = QInputDialog.getInt(self,"Patient-ID","Enter the id of the patient (database: asic_data):")
-        if ok:
-            interface.startInterface(["interface", "db_asic_scheme.json", "selectPatient", str(patientId)])
+        if not os.path.exists(os.getcwd() + "\\ndas\\local_data\\sshSettings.json"):
+            self._confirm_error("Error", "Please configure your ssh authentification data first.")
+        elif not os.path.exists(os.getcwd() + "\\ndas\\local_data\\db_asic_scheme.json"):
+            self._confirm_error("Error", "Please configure your database authentification data first.")
+        else:
+            patientId, ok = QInputDialog.getInt(self,"Patient-ID","Enter the id of the patient (database: asic_data):")
+            if ok:
+                filename = os.getcwd()+"\\ndas\\local_data\\imported_patients\\asic_data_patient_{}.csv".format(str(patientId))
+                if not os.path.exists(filename):
+                    interface.startInterface(["interface", "db_asic_scheme.json", "selectPatient", str(patientId)])
 
-            data.set_instance("CSVImporter", "ndas\\database_interface\\queryResult.csv")
-            data.get_instance().signals.result_signal.connect(
-                lambda result_data, labels: self.data_import_result_slot(result_data, labels))
-            data.get_instance().signals.status_signal.connect(lambda status: self.progress_bar_update_slot(status))
-            data.get_instance().signals.error_signal.connect(lambda s: self.error_msg_slot(s))
-            self.thread_pool.start(data.get_instance())
+                data.set_instance("CSVImporter", filename)
+                data.get_instance().signals.result_signal.connect(
+                    lambda result_data, labels: self.data_import_result_slot(result_data, labels))
+                data.get_instance().signals.status_signal.connect(lambda status: self.progress_bar_update_slot(status))
+                data.get_instance().signals.error_signal.connect(lambda s: self.error_msg_slot(s))
+                self.thread_pool.start(data.get_instance())
 
     def update_plot_selector(self):
         """

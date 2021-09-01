@@ -161,12 +161,15 @@ def startInterface(argv):
 			temp[0] = datetime.strptime(temp[0], "%Y-%m-%d %H:%M:%S").timestamp()
 			row = tuple(temp)
 			convertedRows.append(row)
-		file = open(currentPath + "\\queryResult.csv", 'w')
+		if not os.path.exists(os.getcwd() + "\\ndas\\local_data\\imported_patients"):
+			os.makedirs(os.getcwd() + "\\ndas\\local_data\\imported_patients")
+		filename = os.getcwd()+"\\ndas\\local_data\\imported_patients\\asic_data_patient_{}.csv".format(argv[3])
+		file = open(filename, 'w')
 		writer = csv.writer(file, delimiter=";", quoting=csv.QUOTE_ALL)
 		writer.writerow(firstLine)
 		for line in convertedRows:
 			newLine = list(line)
-			writer.writerow(newLine)	
+			writer.writerow(newLine)
 	else:
 		found = False
 		for parameter in parameters:
