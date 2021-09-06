@@ -7,4 +7,4 @@ This software is still in developement and new features may be added in the futu
 
 ### Acknowledgements
 
-This research is part of the [medical informatics initiative](https://www.medizininformatik-initiative.de/en/), in particular the [SMITH project](https://www.smith.care/home-2/) and is supported by the German Federal Ministry of Education and Research, grant numbers: 01ZZ1803K.
+This research is part of the [medical informatics initiative](https://www.medizininformatik-initiative.de/en/), in particular the [SMITH project](https://www.smith.care/en/) and is supported by the German Federal Ministry of Education and Research, grant numbers: 01ZZ1803K.
