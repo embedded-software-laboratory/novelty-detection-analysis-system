@@ -243,8 +243,7 @@ class MainWindow(QMainWindow):
         algorithm_list = algorithms.get_available_algorithms()
         for algorithm in algorithm_list:
             self.active_analysis_algorithm.addItem(algorithm)
-        else:
-            self.change_algorithm_additional_parameters()
+        self.change_algorithm_additional_parameters()
 
     def _add_labels(self):
         """
@@ -307,13 +306,12 @@ class MainWindow(QMainWindow):
         export_menu.addAction(export_mpl_action)
         help_menu = self.main_menu.addMenu('&?')
         about_action = QAction('About', self)
+        about_action.triggered.connect(lambda: self.open_about_window())
         help_menu.addAction(about_action)
-        howto_action = QAction('How to use', self)
-        help_menu.addAction(howto_action)
 
     def _add_widgets(self):
         """
-        Adds the widgets to the GUI
+        Adds the main widgets to the GUI
 
         Returns
         -------
@@ -440,15 +438,13 @@ class MainWindow(QMainWindow):
 
         """
         if layout is not None:
-            while True:
-                while True:
-                    if layout.count():
-                        item = layout.takeAt(0)
-                        widget = item.widget()
-                        if widget is not None:
-                            widget.setParent(None)
-
-                self.delete_items_of_layout(item.layout())
+            while layout.count():
+                item = layout.takeAt(0)
+                widget = item.widget()
+                if widget is not None:
+                    widget.setParent(None)
+                else:
+                    self.delete_items_of_layout(item.layout())
 
     @pyqtSlot()
     def toggle_plot_lines_slot(self):
@@ -497,12 +493,10 @@ class MainWindow(QMainWindow):
             plots.set_plot_line_status(current_plot_selection, current_pl_checkbox_state)
             plots.set_plot_active(self.plot_selector.currentText())
         else:
-            pass
-        for plot_name in self.plot_selector.currentText():
-            plots.set_plot_active(plot_name)
-        else:
-            self.update_statistics()
-        self.toggle_plot_points_slot()
+            for plot_name in self.plot_selector.currentText():
+                plots.set_plot_active(plot_name)
+
+        self.update_statistics()
 
     @pyqtSlot()
     def progress_bar_update_slot(self, val: int):
@@ -555,35 +549,52 @@ class MainWindow(QMainWindow):
                     self.analysis_additional_options.removeItem(layout_item)
                     break
 
-        else:
-            additional_parameters = algorithms.get_instance().get_required_arguments()
-            q_layout = QFormLayout()
-            for arg in additional_parameters:
-                q_label = QLabel(arg.argument_name + ' = ')
-                if arg.type == parameter.ArgumentType.INTEGER:
-                    q_input = QSpinBox()
-                    q_input.setMinimum(arg.minimum)
-                    q_input.setMaximum(arg.maximum)
-                    q_input.setValue(arg.default)
-                elif arg.type == parameter.ArgumentType.FLOAT:
-                    q_input = QDoubleSpinBox()
-                    q_input.setValue(arg.default)
-                    q_input.setSingleStep(0.1)
-                    q_input.setMinimum(arg.minimum)
-                    q_input.setMaximum(arg.maximum)
-                elif arg.type == parameter.ArgumentType.BOOL:
-                    q_input = QCheckBox()
-                    q_input.setChecked(arg.default)
-                else:
-                    q_input = QLineEdit(arg.default)
-                if arg.tooltip is not None:
-                    q_label.setToolTip(arg.tooltip)
-                    q_input.setToolTip(arg.tooltip)
-                else:
-                    q_layout.addRow(q_label, q_input)
+        additional_parameters = algorithms.get_instance().get_required_arguments()
+
+        q_layout = QFormLayout()
+
+        for arg in additional_parameters:
+
+            q_label = QLabel(arg.argument_name + " = ")
+
+            if arg.type == parameter.ArgumentType.INTEGER:
+
+                q_input = QSpinBox()
+
+                q_input.setMinimum(arg.minimum)
+
+                q_input.setMaximum(arg.maximum)
+
+                q_input.setValue(arg.default)
+
+            elif arg.type == parameter.ArgumentType.FLOAT:
+
+                q_input = QDoubleSpinBox()
+
+                q_input.setValue(arg.default)
+
+                q_input.setSingleStep(0.1)
+
+                q_input.setMinimum(arg.minimum)
+
+                q_input.setMaximum(arg.maximum)
+
+            elif arg.type == parameter.ArgumentType.BOOL:
+
+                q_input = QCheckBox()
+
+                q_input.setChecked(arg.default)
             else:
-                self.additional_parameters_layout_list.append(q_layout)
-                self.analysis_additional_options.addLayout(q_layout)
+                q_input = QLineEdit(arg.default)
+
+            if arg.tooltip is not None:
+                q_label.setToolTip(arg.tooltip)
+                q_input.setToolTip(arg.tooltip)
+
+            q_layout.addRow(q_label, q_input)
+
+        self.additional_parameters_layout_list.append(q_layout)
+        self.analysis_additional_options.addLayout(q_layout)
 
     def get_param_list(self):
         """
@@ -612,8 +623,7 @@ class MainWindow(QMainWindow):
                             input_text = input_item.text().replace(' ', '')
                         args[label_text] = input_text
 
-            else:
-                return args
+        return args
 
     @pyqtSlot()
     def export_to_png(self):
@@ -748,9 +758,8 @@ class MainWindow(QMainWindow):
         for plot_name, plot_primary_novelties in val.items():
             algorithms.set_detected_novelties(plot_name, plot_primary_novelties)
             plots.add_plot_novelties(plot_name, algorithms.get_detected_novelties(plot_name))
-        else:
-            plots.update_plot_view()
-            self.update_statistics()
+        plots.update_plot_view()
+        self.update_statistics()
 
     @pyqtSlot()
     def update_statistics(self):
@@ -785,6 +794,7 @@ class MainWindow(QMainWindow):
             del self.timer
         self.progress_bar.hide()
         self.status_bar.showMessage('Ready')
+        return
 
     @pyqtSlot()
     def fm_open_csv_action(self):
@@ -1063,6 +1073,13 @@ class MainWindow(QMainWindow):
             return False
         return True
 
+    def open_about_window(self):
+        """
+        Displays the about window with licensing information.
+        """
+        QMessageBox.about(self, "About this Software",
+                          "This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.\n\nThis program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more details.\n\nYou should have received a copy of the GNU General Public License along with this program.  If not, see <https://www.gnu.org/licenses/>.")
+
     def closeEvent(self, e):
         """
         Event that triggers the confirmation to quit the program
@@ -1082,6 +1099,9 @@ class MainWindow(QMainWindow):
 
     @pyqtSlot()
     def close(self):
+        """
+        Close function to quit the program
+        """
         super().close()
 
     @pyqtSlot()
