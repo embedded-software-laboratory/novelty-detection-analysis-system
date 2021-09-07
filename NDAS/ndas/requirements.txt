@@ -6,3 +6,4 @@ scipy==1.5.3
 pandas==1.0.3
 PyQt5==5.15.4
 PyYAML==5.4.1
+qtwidgets==0.18
