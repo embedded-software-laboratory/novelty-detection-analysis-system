@@ -1,5 +1,5 @@
 from PyQt5.QtCore import (pyqtSlot, QTimer)
-from PyQt5.QtGui import QIntValidator, QIcon
+from PyQt5.QtGui import QIntValidator, QDoubleValidator, QIcon
 from PyQt5.QtWidgets import *
 
 from ndas.extensions import algorithms, data, savestate, plots, annotations
@@ -87,10 +87,21 @@ class MainWindow(QMainWindow):
         self.annotation_number_active = QLabel("0")
         self.annotation_number_selected_label = QLabel("Selected: ")
         self.annotation_number_selected = QLabel("0")
-        self.annotation_active_label_label = QLabel("Active Label:")
+        self.annotation_active_label_label = QLabel("           Active Label:")
         self.annotation_active_label = QComboBox()
-        self.annotation_detailed_comment_label = QLabel('Detailed Comment:')
+        self.annotation_active_label.currentTextChanged.connect(lambda text: self.update_annotation_options(text))
+
+        self.annotation_active_label_sensor_label = QLabel("Type:")
+        self.annotation_active_label_sensor = QComboBox()
+        self.sensor_type_labels = ["", "Noise", "Tampering", "Dislocation", "Disconnection", "Miscalibration", "Other (comment)"]
+        for type_string in self.sensor_type_labels:
+            self.annotation_active_label_sensor.addItem(type_string)
+        self.annotation_corrected_value_label = QLabel('Corrected Value:')
+        self.annotation_corrected_value = QLineEdit()
+        self.annotation_corrected_value.setValidator(QDoubleValidator(0, 500, 2))
+        self.annotation_detailed_comment_label = QLabel('Comment:')
         self.annotation_detailed_comment = QLineEdit()
+
         self.annotation_add_label_btn = QPushButton(" Add")
         self.annotation_add_label_btn.setIcon(QIcon('ndas/img/plus-line.svg'))
         self.annotation_remove_label_btn = QPushButton(" Remove")
@@ -112,6 +123,10 @@ class MainWindow(QMainWindow):
 
         self.annotation_groupbox_layout.addWidget(self.annotation_active_label_label)
         self.annotation_groupbox_layout.addWidget(self.annotation_active_label)
+        self.annotation_groupbox_layout.addWidget(self.annotation_active_label_sensor_label)
+        self.annotation_groupbox_layout.addWidget(self.annotation_active_label_sensor)
+        self.annotation_groupbox_layout.addWidget(self.annotation_corrected_value_label)
+        self.annotation_groupbox_layout.addWidget(self.annotation_corrected_value)
         self.annotation_groupbox_layout.addWidget(self.annotation_detailed_comment_label)
         self.annotation_groupbox_layout.addWidget(self.annotation_detailed_comment)
 
@@ -453,7 +468,7 @@ class MainWindow(QMainWindow):
         self.toggle_plot_points.clicked.connect(lambda: self.toggle_plot_points_slot())
 
         self.annotation_add_label_btn.clicked.connect(
-            lambda: self.plot_layout_widget.label_selection(self.annotation_active_label.currentText() + '|' + self.annotation_detailed_comment.text()))
+            lambda: self.plot_layout_widget.label_selection(self.annotation_active_label.currentText() + '|' + self.annotation_active_label_sensor.currentText() + '|' + self.annotation_corrected_value.text() + '|' + self.annotation_detailed_comment.text()))
         self.annotation_remove_label_btn.clicked.connect(
             lambda: self.plot_layout_widget.delabel_selection())
         self.annotate_deselect_btn.clicked.connect(lambda: self.plot_layout_widget.deselect_all())
@@ -832,6 +847,30 @@ class MainWindow(QMainWindow):
         Notify Imputation Tab about new data
         """
         datamedicalimputationwidget.DataMedicalImputationWidget.on_import_data(self.tab_datamedimputation)
+
+    @pyqtSlot()
+    def update_annotation_options(self, string):
+        """
+        Sets Annotation-UI depending on selected annotation label
+        """
+        self.annotation_active_label_sensor_label.hide()
+        self.annotation_active_label_sensor.hide()
+        self.annotation_active_label_sensor.setCurrentIndex(0)
+        self.annotation_corrected_value_label.hide()
+        self.annotation_corrected_value.hide()
+        self.annotation_corrected_value.setText("")
+        self.annotation_detailed_comment.setText("")
+
+        if string == "Sensor":
+            self.annotation_active_label_sensor_label.show()
+            self.annotation_active_label_sensor.show()
+            self.annotation_corrected_value.show()
+            self.annotation_corrected_value_label.show()
+            self.annotation_detailed_comment_label.setText("Comment:")
+        elif string == "Condition":
+            self.annotation_detailed_comment_label.setText("Probable Condition:")
+        else:
+            self.annotation_detailed_comment_label.setText("Description:")
 
     @pyqtSlot()
     def update_data_selection_text(self, start_value, end_value):

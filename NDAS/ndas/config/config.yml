@@ -2,7 +2,7 @@ annotation:
   labels:
     - "Condition"
     - "Sensor"
-    - "Unknown"
+    - "Other/Unknown"
 data:
   # auto-slice imported data larger than this size (x axis)
   # data is still imported and can be shown, but is initially not plotted for performance reasons
@@ -15,7 +15,7 @@ physiologicalinfo:
   temperature:
     low: 30
     high: 40
-    aliases: ["temp", "t", "c"]
+    aliases: ["temp", "t", "c", "TempC"]
   heartrate:
     low: 30
     high: 200
@@ -23,7 +23,7 @@ physiologicalinfo:
   pamean:
     low: 1
     high: 98
-    aliases: []
+    aliases: [ ]
   pasystolic:
     low: 5
     high: 140
@@ -35,23 +35,31 @@ physiologicalinfo:
   systemicmean:
     low: 2
     high: 174
-    aliases: [ ]
+    aliases: ["pMe"]
   systemicdiastolic:
     low: 24
     high: 138
-    aliases: [ ]
+    aliases: ["pDi"]
   systemicsystolic:
     low: 47
     high: 222
-    aliases: [ ]
+    aliases: ["pSy"]
   respiration:
     low: 4
     high: 52
-    aliases: [ ]
+    aliases: ["RR"]
   sao2:
     low: 20.5
     high: 100
-    aliases: [ ]
+    aliases: ["SaO2"]
+  end-tidal-co2:
+    low: 28.8
+    high: 49.2
+    aliases: ["etCO2"]
+  central-venous-pressure:
+    low: -5
+    high: 30
+    aliases: ["CVP"]
 algorithms:
 savestate:
 plots:
