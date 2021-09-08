@@ -1,8 +1,9 @@
 import numpy as np
 import pyqtgraph as pg
 import pyqtgraph.exporters
-from PyQt5.QtWidgets import QApplication
+from PyQt5.QtWidgets import QApplication, QGraphicsRectItem
 from pyqtgraph.Qt import QtCore
+from PyQt5.QtGui import *
 
 from ndas.extensions import annotations
 from ndas.misc.colors import Color
@@ -71,8 +72,16 @@ class GraphLayoutWidget(pg.GraphicsLayoutWidget):
         self.main_plot = self.addPlot(row=layout_row, col=layout_col, viewBox=MultiSelectViewBox())
         self.main_plot.setMenuEnabled(False)
         self.main_plot.setAutoVisible(y=True)
+        self.main_plot.vb.setMouseMode(1)
         self.main_plot.showGrid(x=True, y=True, alpha=.3)
         self.main_plot.getViewBox().multipoint_selection_changed_signal.connect(lambda val: self._multiselect(val))
+
+        self.drag_box = QGraphicsRectItem(0, 0, 1, 1)
+        self.drag_box.setPen(pg.mkPen(self.palette().color(QPalette.Highlight), width=1))
+        self.drag_box.setBrush(pg.mkBrush(self.palette().color(QPalette.Highlight).getRgb()[:3] + (64,)))
+        self.drag_box.setZValue(1e9)
+        self.drag_box.hide()
+        self.main_plot.addItem(self.drag_box, ignoreBounds=True)
 
         self._h_line = pg.InfiniteLine(angle=0, movable=False, pen={'color': "FF0000", 'alpha': 0.3})
         self._v_line = pg.InfiniteLine(angle=90, movable=False, pen={'color': "FF0000", 'alpha': 0.3})
@@ -265,6 +274,7 @@ class GraphLayoutWidget(pg.GraphicsLayoutWidget):
         Removes currently visible plots from boths plot areas
         """
         self.main_plot.clear()
+        self.main_plot.addItem(self.drag_box)
         self.nav_plot.clear()
 
     def set_background_color(self, pbg: str):
@@ -535,30 +545,37 @@ class MultiSelectViewBox(pg.ViewBox):
         """
         modifiers = QApplication.keyboardModifiers()
 
-        if ev.button() == QtCore.Qt.LeftButton:
-            pg.ViewBox.mouseDragEvent(self, ev)
-        elif ev.button() == QtCore.Qt.RightButton and (modifiers != QtCore.Qt.ControlModifier):
-            pg.ViewBox.mouseDragEvent(self, ev)
-        elif ev.button() == QtCore.Qt.RightButton and (modifiers == QtCore.Qt.ControlModifier):
-            ev.ignore()
+        if ev.button() == QtCore.Qt.RightButton and (modifiers == QtCore.Qt.ControlModifier):
             ev.accept()
-            pos = ev.pos()
+            rect = self.parentItem().items[0]
+            rect.hide()
+            updated_rect = QtCore.QRectF(self.mapToView(self.mapFromParent(ev.buttonDownPos())), self.mapToView(self.mapFromParent(ev.pos())))
 
-            if ev.button() == QtCore.Qt.RightButton:
-                if ev.isFinish():
-                    self.rbScaleBox.hide()
+            if ev.isFinish():
+                rect_coordinates = updated_rect.getCoords()
 
-                    self.ax = QtCore.QRectF(pg.Point(ev.buttonDownPos(ev.button())), pg.Point(pos))
-                    self.ax = self.childGroup.mapRectFromParent(self.ax)
-
-                    rect_coordinates = self.ax.getCoords()
-
-                    bottom_left = [rect_coordinates[0], rect_coordinates[1]]
-                    top_right = [rect_coordinates[2], rect_coordinates[3]]
-
-                    self.signal_selection_change((bottom_left, top_right))
+                bottom_left = []
+                top_right = []
+                if rect_coordinates[0] < rect_coordinates[2]:
+                    bottom_left.append(rect_coordinates[0])
+                    top_right.append(rect_coordinates[2])
                 else:
-                    self.updateScaleBox(ev.buttonDownPos(), ev.pos())
+                    bottom_left.append(rect_coordinates[2])
+                    top_right.append(rect_coordinates[0])
+                if rect_coordinates[1] < rect_coordinates[3]:
+                    bottom_left.append(rect_coordinates[1])
+                    top_right.append(rect_coordinates[3])
+                else:
+                    bottom_left.append(rect_coordinates[3])
+                    top_right.append(rect_coordinates[1])
+
+                self.signal_selection_change((bottom_left, top_right))
+            else:
+                rect.setPos(updated_rect.topLeft())
+                rect.setTransform(QTransform.fromScale(updated_rect.width(), updated_rect.height()))
+                rect.show()
+        else:
+            pg.ViewBox.mouseDragEvent(self, ev)
 
     def signal_selection_change(self, selection_list):
         """
