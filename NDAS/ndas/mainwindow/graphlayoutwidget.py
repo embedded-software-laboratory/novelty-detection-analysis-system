@@ -72,7 +72,6 @@ class GraphLayoutWidget(pg.GraphicsLayoutWidget):
         self.main_plot = self.addPlot(row=layout_row, col=layout_col, viewBox=MultiSelectViewBox())
         self.main_plot.setMenuEnabled(False)
         self.main_plot.setAutoVisible(y=True)
-        self.main_plot.vb.setMouseMode(1)
         self.main_plot.showGrid(x=True, y=True, alpha=.3)
         self.main_plot.getViewBox().multipoint_selection_changed_signal.connect(lambda val: self._multiselect(val))
 
