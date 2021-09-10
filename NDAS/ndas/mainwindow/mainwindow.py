@@ -6,6 +6,7 @@ from ndas.extensions import algorithms, data, savestate, plots, annotations
 from ndas.mainwindow import statgraphwidgets, datageneratorwidget, benchmarkwidget, datainspectionwidget, datamedicalimputationwidget
 from ndas.misc import rangeslider, loggerwidget, parameter
 from ndas.utils import stats
+import logging
 
 
 class MainWindow(QMainWindow):
@@ -93,7 +94,7 @@ class MainWindow(QMainWindow):
 
         self.annotation_active_label_sensor_label = QLabel("Type:")
         self.annotation_active_label_sensor = QComboBox()
-        self.sensor_type_labels = ["", "Noise", "Tampering", "Dislocation", "Disconnection", "Miscalibration", "Other (comment)"]
+        self.sensor_type_labels = ["", "Noise", "Tampering", "Dislocation", "Disconnection", "Stuck Value", "Miscalibration", "Other (comment)"]
         for type_string in self.sensor_type_labels:
             self.annotation_active_label_sensor.addItem(type_string)
         self.annotation_corrected_value_label = QLabel('Corrected Value:')
@@ -808,6 +809,7 @@ class MainWindow(QMainWindow):
             data.get_instance().signals.status_signal.connect(lambda status: self.progress_bar_update_slot(status))
             data.get_instance().signals.error_signal.connect(lambda s: self.error_msg_slot(s))
             self.thread_pool.start(data.get_instance())
+            logging.info("Loaded CSV-File '"+file_name+"'")
 
     @pyqtSlot()
     def data_import_result_slot(self, df, labels):
@@ -977,6 +979,7 @@ class MainWindow(QMainWindow):
             data.get_instance().signals.status_signal.connect(lambda status: self.progress_bar_update_slot(status))
             data.get_instance().signals.error_signal.connect(lambda s: self.error_msg_slot(s))
             self.thread_pool.start(data.get_instance())
+            logging.info("Loaded Waveform-Files '"+file_names+"'")
 
     @pyqtSlot()
     def fm_open_wfm_numeric_action(self):
@@ -994,6 +997,7 @@ class MainWindow(QMainWindow):
             data.get_instance().signals.status_signal.connect(lambda status: self.progress_bar_update_slot(status))
             data.get_instance().signals.error_signal.connect(lambda s: self.error_msg_slot(s))
             self.thread_pool.start(data.get_instance())
+            logging.info("Loaded Numeric Waveform-Files '"+file_names+"'")
 
     def update_plot_selector(self):
         """

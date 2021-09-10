@@ -40,7 +40,7 @@ class DataMedicalImputationWidget(QWidget):
         self.bar_plot.setXRange(0, 1)
         self.bar_plot.setMouseEnabled(x=False, y=False)
         self.bar_v_line = pg.InfiniteLine(pos=(-1), angle=90, pen=(pg.mkPen(self.palette().color(QPalette.Highlight))))
-        self.bar_plot.addItem(self.bar_v_line)
+        self.bar_plot.addItem(self.bar_v_line, ignoreBounds=True)
         self.bar_plot.scene().sigMouseMoved.connect(lambda evt: self.on_mouse_moved_over_graph(evt, -1))
         self.layout_left.addWidget(self.bar_plot, 0, 1)
         self.layout_left.setRowStretch(0, 1)
@@ -65,6 +65,7 @@ class DataMedicalImputationWidget(QWidget):
         self.GI_quartiles_layouts = []
         self.GI_quartiles = []
         self.v_lines = []
+        self.h_lines = []
 
         for i in range(len(self.Titles)):
             self.Graphs.append(pg.PlotWidget())
@@ -72,15 +73,18 @@ class DataMedicalImputationWidget(QWidget):
             self.Graphs[i].setTitle(self.Titles[i])
             self.Graph_Plots.append(self.Graphs[i].plot([], [], pen=pg.mkPen(color=(128, 128, 128), width=1), symbol='o', symbolSize=2, symbolBrush='k'))
             self.Graphs[i].setXRange(0, 1)
-            self.Graphs[i].setMouseEnabled(x=False)
+            self.Graphs[i].setYRange(0, 1)
+            self.Graphs[i].setMouseEnabled(x=False, y=True)
             self.Graphs[i].scene().sigMouseMoved.connect(lambda evt, bound_i=i: self.on_mouse_moved_over_graph(evt, bound_i))
             self.v_lines.append(pg.InfiniteLine(pos=(-1), angle=90, pen=(pg.mkPen(self.palette().color(QPalette.Highlight)))))
+            self.h_lines.append(pg.InfiniteLine(pos=(-1000), angle=0, pen=(pg.mkPen(self.palette().color(QPalette.Highlight)))))
 
         """
         Create Data Graph Statistics
         """
         for i in range(len(self.Titles)):
-            self.Graphs[i].addItem(self.v_lines[i])
+            self.Graphs[i].addItem(self.v_lines[i], ignoreBounds=True)
+            self.Graphs[i].addItem(self.h_lines[i], ignoreBounds=True)
             self.layout_left.addWidget(self.Graphs[i], i + 1, 1)
             self.Graph_Infos.append(QGroupBox('Stats - ' + self.Titles_Short[i]))
             self.Graph_Info_Layouts.append(QVBoxLayout())
@@ -215,6 +219,7 @@ class DataMedicalImputationWidget(QWidget):
         self.Patient_Ethnicity = QLabel('-')
         self.Patient_Height = QLabel('-')
         self.Patient_Weight = QLabel('-')
+        self.Patient_BMI = QLabel('-')
 
         self.Patient_Information_General.addWidget(QLabel('ID:'), 0, 0)
         self.Patient_Information_General.addWidget(self.Patient_ID, 0, 1)
@@ -228,15 +233,21 @@ class DataMedicalImputationWidget(QWidget):
         self.Patient_Information_General.addWidget(self.Patient_Height, 4, 1)
         self.Patient_Information_General.addWidget(QLabel('Weight (kg):'), 5, 0)
         self.Patient_Information_General.addWidget(self.Patient_Weight, 5, 1)
+        self.Patient_Information_General.addWidget(QLabel('BMI (calculated):'), 6, 0)
+        self.Patient_Information_General.addWidget(self.Patient_BMI, 6, 1)
 
         self.ICD_Layout = QGridLayout()
         self.ICD_Labels = []
         self.ICD_Strings = ['280-285', '286-287', '288-289', '390-392', '393-398', '401-405', '410-414', '415-417', '420-429', '430-438', '440-449', '451-459', '460-466', '470-478', '480-488', '490-496', '500-508', '510-519', '800-804', '805-809', '810-819', '820-829', '830-839', '840-848', '850-854', '860-869', '870-879', '880-887', '890-897', '900-904', '905-909', '910-919', '920-924', '925-929', '930-939', '940-949', '950-957', '958-959', '960-979', '980-989', '990-995', '996-999']
         self.ICD_Descriptions = ['Anemia', 'Coagulation/hemorrhagic', 'Other diseases of the blood and blood forming organs', 'Acute rheumatic fever', 'Chronic rheumatic heart disease', 'Hypertensive disease', 'Ischemic heart disease', 'Diseases of pulmonary circulation', 'Other forms of heart disease', 'Cerebrovascular disease', 'Diseases of arteries, arterioles, and capillaries', 'Diseases of veins and lymphatics, and other diseases of circulatory system', 'Acute respiratory infections', 'Other diseases of the upper respiratory tract', 'Pneumonia and influenza', 'Chronic obstructive pulmonary disease and allied conditions', 'Pneumoconioses and other lung diseases due to external agents', 'Other diseases of respiratory system', 'Fracture of skull', 'Fracture of neck and trunk', 'Fracture of upper limb', 'Fracture of lower limb', 'Dislocation', 'Sprains and strains of joints and adjacent muscles', 'Intracranial injury, excluding those with skull fracture', 'Internal injury of thorax, abdomen, and pelvis', 'Open wound of head, neck, and trunk', 'Open wound of upper limb', 'Open wound of lower limb', 'Injury of blood vessels', 'Late effects of injuries, poisonings, toxic effects, and other external causes', 'Superficial injury', 'Contusion with intact skin surface', 'Crushing injury', 'Effects of foreign body entering through Body orifice', 'Burns', 'Injury of nerves and spinal cord', 'Certain traumatic complications and unspecified injuries', 'Poisoning by drugs, medicinal and biological substances', 'Toxic effects of substances chiefly nonmedicinal as to source', 'Other and unspecified effects of external causes', 'Complications of surgical and medical care, not elsewhere classified']
+        self.ICD_Details = ['', '', 'Diseases of white blood cells, Polycythemia, Lymphadenitis, Hypersplenism, Other diseases of Spleen, Methemoglobinemia, Hypercoagulable state, Myelofibrosis, Heparin-induced thrombocytopenia', '', '', '', '', 'Pulmonary Heart Disease, Arteriovenous fistula of pulmonary vessels, Aneurysm of pulmonary artery', 'Pericarditis, Endocarditis, Myocarditis, Cardiomyopathy, Conduction disorders, Cardiac dysrhythmias, Heart failure, Cardiomegaly, Myocardial rupture, Hyperkinetic heart disease, Takotsubo syndrome', '', '', 'Phlebitis, Vein Embolism and Thrombosis, Varicose Veins, Hemorrhoids, Hypotension', '', 'Deviated nasal septum, Polyp, Chronic Pharyngitis, Chronic Sinusitis, Chronic disease of tonsils and adenoids, Peritonsilar abscess, Chronic laryngitis, Allergic Rhinitis', '', 'Bronchitis, Emphysema, Asthma, Bronchiectasis, COPD', '', 'Empyema, Pleurisy, Pneumothorax, Pulmonary congestion, ARDS, Respiratory failure', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', 'Early complications of Physical Trauma, Other Injuries', '', '', 'Effects of Radiation, Coldness, Heat, Air Presure, Lightning, Drowning, Neoplasms, Thirst, Exhaustion, Motion sickness, Asphyxiation, Electrocution; Adverse effects of Anaphylaxis, Anginoeurotic edema, Medication, Allergy, Anesthesia, Child abuse, Anaphylactic shock', '']
         for i in range(len(self.ICD_Strings)):
             self.ICD_Labels.append(QLabel(self.ICD_Strings[i]))
             self.ICD_Labels[i].setStyleSheet('color: lightGray')
-            self.ICD_Labels[i].setToolTip(self.ICD_Descriptions[i])
+            if not self.ICD_Details[i] == '':
+                self.ICD_Labels[i].setToolTip(self.ICD_Descriptions[i]+ " (This includes: "+self.ICD_Details[i]+")")
+            else:
+                self.ICD_Labels[i].setToolTip(self.ICD_Descriptions[i])
             self.ICD_Layout.addWidget(self.ICD_Labels[i], i // 5, i % 5)
 
         self.Patient_Information_Layout.addLayout(self.Patient_Information_General)
@@ -357,13 +368,19 @@ class DataMedicalImputationWidget(QWidget):
             point = self.bar_plot.plotItem.vb.mapSceneToView(pos)
         else:
             point = self.Graphs[i].plotItem.vb.mapSceneToView(pos)
+        for h_line_ind in range(len(self.h_lines)):
+            if i == h_line_ind:
+                self.h_lines[h_line_ind].setPos(point.y())
+            else:
+                self.h_lines[h_line_ind].setPos(-1000)
+
 
         self.bar_v_line.setPos(point.x())
         for v_line in self.v_lines:
             v_line.setPos(point.x())
 
-        self.main_window.x_label.setText('y=%0.01f' % point.x())
-        self.main_window.y_label.setText('')
+        self.main_window.x_label.setText('x=%0.01f' % point.x())
+        self.main_window.y_label.setText('y=%0.01f' % point.y())
 
     def visualize_data(self, update_dataframe):
         """
@@ -383,8 +400,13 @@ class DataMedicalImputationWidget(QWidget):
         """
         icd_changes = {}
         for i in range(len(self.ICD_Strings)):
+            if not self.ICD_Details[i] == '':
+                self.ICD_Labels[i].setToolTip(self.ICD_Descriptions[i]+ " (This includes: "+self.ICD_Details[i]+")")
+            else:
+                self.ICD_Labels[i].setToolTip(self.ICD_Descriptions[i])
             local_icd_series = update_dataframe.iloc[:, 16 + i]
             if local_icd_series.sum() > 0:
+                self.ICD_Labels[i].setToolTip(self.ICD_Labels[i].toolTip()+"\n")
                 self.ICD_Labels[i].setStyleSheet('color: black')
                 list_of_value_change_indices = local_icd_series[(local_icd_series.diff() != 0)].index.tolist()
 
@@ -396,6 +418,10 @@ class DataMedicalImputationWidget(QWidget):
                     if str(x_value) not in icd_changes:
                         icd_changes[str(x_value)] = []
                     icd_changes[str(x_value)] = icd_changes[str(x_value)] + [(2 * local_icd_series[index] - 1) * (i + 1)]
+                    if(2 * local_icd_series[index] - 1) >0:
+                        self.ICD_Labels[i].setToolTip(self.ICD_Labels[i].toolTip() + "\nAdded at time: "+str(int(float(x_value))))
+                    else:
+                        self.ICD_Labels[i].setToolTip(self.ICD_Labels[i].toolTip() + "\nRemoved at time: " + str(int(float(x_value))))
             else:
                 self.ICD_Labels[i].setStyleSheet('color: lightGray')
 
@@ -440,7 +466,10 @@ class DataMedicalImputationWidget(QWidget):
 
         self.Patient_Height.setText('%.1f' % update_dataframe['height(cm)'].iloc[0])
         self.Patient_Weight.setText('%.1f' % update_dataframe['weight(kg)'].iloc[0])
-
+        if update_dataframe['weight(kg)'].iloc[0] and update_dataframe['height(cm)'].iloc[0]:
+            self.Patient_BMI.setText('%.1f' % (update_dataframe['weight(kg)'].iloc[0]*10000/update_dataframe['height(cm)'].iloc[0]/update_dataframe['height(cm)'].iloc[0]))
+        else:
+            self.Patient_BMI.setText('-')
         """
         Add Data to Graphs and Graph Statistics
         """
