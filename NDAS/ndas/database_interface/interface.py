@@ -78,7 +78,7 @@ def startInterface(argv):
 	if argv[2] == "dataDensity":
 		if argv[3] == "patientid":
 			if argv[5] == "entriesTotal":
-				cur.execute("select count(*) from SMITH_ASIC_SCHEME.asic_data where patientid = {}".format(argv[4]))
+				cur.execute("select count(*) from SMITH_ASIC_SCHEME.asic_data_mimic where patientid = {}".format(argv[4]))
 				result = cur.fetchall()
 				print(result)
 				cur.close()
@@ -99,7 +99,7 @@ def startInterface(argv):
 					index+=1
 				identifier = identifier[:-2]
 				identifierComplete = identifier.replace(", ", " and ") + " IS NOT NULL"
-				cur.execute("select count(*) from SMITH_ASIC_SCHEME.asic_data where patientid = {} and {}".format(argv[4], identifierComplete))
+				cur.execute("select count(*) from SMITH_ASIC_SCHEME.asic_data_mimic where patientid = {} and {}".format(argv[4], identifierComplete))
 				result = cur.fetchall()
 				print(result)
 				cur.close()
@@ -143,14 +143,14 @@ def startInterface(argv):
 				cur.execute('drop procedure if exists dataDensityWithParameter; ')
 				cur.close()		
 	elif argv[2] == "selectPatient":
-		stdin, stdout, stderr = ssh.exec_command('mysql -h{} -u{} -p{} SMITH_SepsisDB -e "show columns from SMITH_ASIC_SCHEME.asic_data"'.format(databaseConfiguration['host'], databaseConfiguration['username'], databaseConfiguration['password']))
+		stdin, stdout, stderr = ssh.exec_command('mysql -h{} -u{} -p{} SMITH_SepsisDB -e "show columns from SMITH_ASIC_SCHEME.{}"'.format(databaseConfiguration['host'], databaseConfiguration['username'], databaseConfiguration['password'], argv[4]))
 		columnNames = stdout.readlines()
 		columnNames = columnNames[2:]
 		firstLine = []
 		for name in columnNames:
 			name = name.split()
 			firstLine.append(name[0])
-		stdin, stdout, stderr = ssh.exec_command('mysql -h{} -u{} -p{} SMITH_SepsisDB -e "select * from SMITH_ASIC_SCHEME.asic_data where patientid = {}"'.format(databaseConfiguration['host'], databaseConfiguration['username'], databaseConfiguration['password'], argv[3]))
+		stdin, stdout, stderr = ssh.exec_command('mysql -h{} -u{} -p{} SMITH_SepsisDB -e "select * from SMITH_ASIC_SCHEME.{} where patientid = {}"'.format(databaseConfiguration['host'], databaseConfiguration['username'], databaseConfiguration['password'], argv[4], argv[3]))
 		result = stdout.readlines()
 		result = result[1:]
 		convertedRows = []
@@ -163,7 +163,7 @@ def startInterface(argv):
 			convertedRows.append(row)
 		if not os.path.exists(os.getcwd() + "\\ndas\\local_data\\imported_patients"):
 			os.makedirs(os.getcwd() + "\\ndas\\local_data\\imported_patients")
-		filename = os.getcwd()+"\\ndas\\local_data\\imported_patients\\asic_data_patient_{}.csv".format(argv[3])
+		filename = os.getcwd()+"\\ndas\\local_data\\imported_patients\\{}_patient_{}.csv".format(argv[4], argv[3])
 		file = open(filename, 'w')
 		writer = csv.writer(file, delimiter=";", quoting=csv.QUOTE_ALL)
 		writer.writerow(firstLine)
