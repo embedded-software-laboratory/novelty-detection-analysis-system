@@ -7,6 +7,7 @@ from ndas.mainwindow import graphlayoutwidget
 from ndas.misc import graphbox
 from ndas.misc.colors import Color
 from ndas.utils import logger, regression_analysis
+from re import search
 
 registered_plots = {}
 plot_layout_widget = None
@@ -202,10 +203,11 @@ def register_available_plots(current_active_plot=None):
 
     for idx, col in enumerate(columns[1:]):
         temp_data = df[col]
-        temp_time = df[columns[0]]
-        temp_df = pd.DataFrame({columns[0]: temp_time, col: temp_data})
-        temp_df.dropna(axis=0, inplace=True)
-        register_plot(col, temp_df[columns[0]], temp_df[col], labels[0], labels[idx + 1])
+        if not temp_data.dropna().empty and not search(r'ID|gender|age|ethnicity|height|weight|ICD', labels[idx + 1]):
+            temp_time = df[columns[0]]
+            temp_df = pd.DataFrame({columns[0]: temp_time, col: temp_data})
+            temp_df.dropna(axis=0, inplace=True)
+            register_plot(col, temp_df[columns[0]], temp_df[col], labels[0], labels[idx + 1])
 
     if current_active_plot is not None:
         set_plot_active(current_active_plot)

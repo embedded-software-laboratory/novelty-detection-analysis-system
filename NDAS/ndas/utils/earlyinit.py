@@ -130,6 +130,7 @@ def check_libraries():
         'lxml': _missing_package_error_str("lxml"),
         'pandas': _missing_package_error_str("pandas"),
         'wfdb': _missing_package_error_str("wfdb"),
+        'qtwidgets': _missing_package_error_str("qtwidgets"),
         'seaborn': _missing_package_error_str("seaborn")
     }
     _check_modules(modules)

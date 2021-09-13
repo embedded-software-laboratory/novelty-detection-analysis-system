@@ -405,7 +405,7 @@ class MainWindow(QMainWindow):
         Calls the save option for NDAS files
         """
         options = QFileDialog.Options()
-        options |= QFileDialog.DontUseNativeDialog
+        # options |= QFileDialog.DontUseNativeDialog
 
         save_dialog = QFileDialog()
         save_dialog.setDefaultSuffix('ndas')
@@ -431,7 +431,7 @@ class MainWindow(QMainWindow):
         Calls the load option for NDAS files
         """
         options = QFileDialog.Options()
-        options |= QFileDialog.DontUseNativeDialog
+        # options |= QFileDialog.DontUseNativeDialog
         file_name, _ = QFileDialog.getOpenFileName(self, "Choose NDAS file", "",
                                                    "NDAS Files (*.ndas)", options=options)
         if file_name:
@@ -447,6 +447,7 @@ class MainWindow(QMainWindow):
                 self.data_selection_end.textChanged.connect(lambda: self.update_data_selection_slider())
                 self.update_plot_selector()
                 self.update_data_selection_slider()
+                datamedicalimputationwidget.DataMedicalImputationWidget.on_import_data(self.tab_datamedimputation)
 
             self.progress_bar_update_slot(100)
 
@@ -646,7 +647,7 @@ class MainWindow(QMainWindow):
         Adds the options to export to png
         """
         options = QFileDialog.Options()
-        options |= QFileDialog.DontUseNativeDialog
+        # options |= QFileDialog.DontUseNativeDialog
 
         save_dialog = QFileDialog()
         save_dialog.setDefaultSuffix('png')
@@ -664,7 +665,7 @@ class MainWindow(QMainWindow):
         Adds the option to export to svg
         """
         options = QFileDialog.Options()
-        options |= QFileDialog.DontUseNativeDialog
+        # options |= QFileDialog.DontUseNativeDialog
 
         save_dialog = QFileDialog()
         save_dialog.setDefaultSuffix('svg')
@@ -799,7 +800,7 @@ class MainWindow(QMainWindow):
         File selector to import csv files
         """
         options = QFileDialog.Options()
-        options |= QFileDialog.DontUseNativeDialog
+        # options |= QFileDialog.DontUseNativeDialog
         file_name, _ = QFileDialog.getOpenFileName(self, "Choose CSV File", "",
                                                    "csv Files (*.csv)", options=options)
         if file_name:
@@ -872,6 +873,8 @@ class MainWindow(QMainWindow):
         elif string == "Condition":
             self.annotation_detailed_comment_label.setText("Probable Condition:")
         else:
+            self.annotation_corrected_value.show()
+            self.annotation_corrected_value_label.show()
             self.annotation_detailed_comment_label.setText("Description:")
 
     @pyqtSlot()
@@ -969,7 +972,7 @@ class MainWindow(QMainWindow):
         File selector to import waveform files
         """
         options = QFileDialog.Options()
-        options |= QFileDialog.DontUseNativeDialog
+        # options |= QFileDialog.DontUseNativeDialog
         file_names, _ = QFileDialog.getOpenFileNames(self, "Choose Waveform Files", "",
                                                      "wfm files (*.hea)", options=options)
         if file_names:
@@ -987,7 +990,7 @@ class MainWindow(QMainWindow):
         File selector to import numeric waveform files
         """
         options = QFileDialog.Options()
-        options |= QFileDialog.DontUseNativeDialog
+        # options |= QFileDialog.DontUseNativeDialog
         file_names, _ = QFileDialog.getOpenFileNames(self, "Choose Waveform Files", "",
                                                      "wfm files (*.hea)", options=options)
         if file_names:

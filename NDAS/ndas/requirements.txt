@@ -7,3 +7,6 @@ pandas==1.0.3
 PyQt5==5.15.4
 PyYAML==5.4.1
 qtwidgets==0.18
+bs4==0.01
+lxml==4.6.3
+seaborn==0.11.1
