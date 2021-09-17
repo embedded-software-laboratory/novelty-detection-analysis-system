@@ -1,5 +1,5 @@
 import numpy as np
-from ndas.dataimputationalgorithms import pandas_interpolation
+from . import pandas_interpolation
 import pandas as pd
 
 
@@ -12,7 +12,7 @@ class BaseImputation:
         self.Pandas_Interpolation = pandas_interpolation.PandasInterpolation()
         self.Methods = {'interpolate': self.Pandas_Interpolation.simple_interpolation,  'polynomial': self.Pandas_Interpolation.polynomial_interpolation,  'spline': self.Pandas_Interpolation.spline_interpolation}
 
-    def base_imputation(self, dataframe, spacing_multiplier, current_spacing, method_string):
+    def base_imputation(self, dataframe, spacing_multiplier, current_spacing, method_string, lim_dir='forward', lim_are='inside'):
         """
         Method for Imputation. First find and fill Missing gaps, then increase density depending on spacing_multiplier
         """
@@ -33,4 +33,4 @@ class BaseImputation:
         else:
             imputation_dataframe = pd.DataFrame(data, columns=(dataframe.columns))
 
-        return self.Methods[method_string](imputation_dataframe)
+        return self.Methods[method_string](imputation_dataframe, lim_dir=lim_dir, lim_are=lim_are)

@@ -13,12 +13,12 @@ physiologicalinfo:
   # high, low: float or None
   # aliases: list of strings, or empty list
   temperature:
-    low: 30
-    high: 40
+    low: 25
+    high: 45
     aliases: ["temp", "t", "c", "TempC"]
   heartrate:
-    low: 30
-    high: 200
+    low: 15
+    high: 230
     aliases: ["hr", "HR"]
   pamean:
     low: 1
@@ -33,32 +33,32 @@ physiologicalinfo:
     high: 93
     aliases: [ ]
   systemicmean:
-    low: 2
-    high: 174
+    low: 25
+    high: 210
     aliases: ["pMe"]
   systemicdiastolic:
-    low: 24
-    high: 138
+    low: 20
+    high: 180
     aliases: ["pDi"]
   systemicsystolic:
-    low: 47
-    high: 222
+    low: 35
+    high: 280
     aliases: ["pSy"]
   respiration:
     low: 4
-    high: 52
+    high: 65
     aliases: ["RR"]
   sao2:
     low: 20.5
     high: 100
     aliases: ["SaO2"]
   end-tidal-co2:
-    low: 28.8
-    high: 49.2
+    low: 18
+    high: 49
     aliases: ["etCO2"]
   central-venous-pressure:
-    low: -5
-    high: 30
+    low: -10
+    high: 50
     aliases: ["CVP"]
 algorithms:
 savestate:
