@@ -7,7 +7,7 @@ begin
 	create temporary table res(patientid int, count int);
 	set n = (select count(*) from (select distinct patientid from SMITH_ASIC_SCHEME.$placeholder ad) as patientids);
 	set i = 0;
-	while i<n do
+	while i<10 do
 		set pid = (select distinct patientid from SMITH_ASIC_SCHEME.$placeholder ad2 limit i,1);
 		insert into res select patientid, count(*) from SMITH_ASIC_SCHEME.$placeholder ad where patientid = pid and ($identifier) is not null;
 		set i = i+1;

@@ -78,20 +78,30 @@ class DatabaseSettingsWidget(QWidget):
 			self.loadPatient(parent, patientid, database)
 		if self.mode == 1:
 			patientid = interface.startInterface(["interface", "db_asic_scheme.json", "dataDensity", "bestPatients", "entriesTotal", 1, database])
-			self.loadPatient(parent, patientid, database)
+			if patientid == -1:
+				QMessageBox.critical(self, "Error", "No patient found, table seems to be empty.", QMessageBox.Ok)
+			else:
+				self.loadPatient(parent, patientid, database)
 		if self.mode == 2:
 			parameters = self.parameter.text().replace(" ", "").split(",")
 			patientid = interface.startInterface(["interface", "db_asic_scheme.json", "dataDensity", "bestPatients"] + parameters + [1, database])
-			self.loadPatient(parent, patientid, database)
-		parent.close()
+			if patientid == -1:
+				QMessageBox.critical(self, "Error", "No patient with the speficied criteria found.", QMessageBox.Ok)
+			else:
+				self.loadPatient(parent, patientid, database)
 
 	def loadPatient(self, parent, patientid, database):
 		filename = os.getcwd()+"\\ndas\\local_data\\imported_patients\\{}_patient_{}.csv".format(database, str(patientid))
+		result = 0
 		if not os.path.exists(filename):
-			interface.startInterface(["interface", "db_asic_scheme.json", "selectPatient", str(patientid), database])
-		data.set_instance("CSVImporter", filename)
-		data.get_instance().signals.result_signal.connect(
-			lambda result_data, labels: parent.getParent().data_import_result_slot(result_data, labels))
-		data.get_instance().signals.status_signal.connect(lambda status: parent.getParent().progress_bar_update_slot(status))
-		data.get_instance().signals.error_signal.connect(lambda s: parent.getParent().error_msg_slot(s))
-		parent.getParent().thread_pool.start(data.get_instance())
+			result = interface.startInterface(["interface", "db_asic_scheme.json", "selectPatient", str(patientid), database])
+		if result == -1:
+			QMessageBox.critical(self, "Error", "Patient not found.", QMessageBox.Ok)
+		else:
+			data.set_instance("CSVImporter", filename)
+			data.get_instance().signals.result_signal.connect(
+				lambda result_data, labels: parent.getParent().data_import_result_slot(result_data, labels))
+			data.get_instance().signals.status_signal.connect(lambda status: parent.getParent().progress_bar_update_slot(status))
+			data.get_instance().signals.error_signal.connect(lambda s: parent.getParent().error_msg_slot(s))
+			parent.getParent().thread_pool.start(data.get_instance())
+			parent.close()

@@ -116,6 +116,8 @@ def startInterface(argv):
 				stdin, stdout, stderr = ssh.exec_command('mysql -h{} -u{} -p{} SMITH_SepsisDB -e "call dataDensity({});"'.format(databaseConfiguration['host'], databaseConfiguration['username'], databaseConfiguration['password'],argv[5]))
 				results = stdout.readlines()
 				results = results[1:]
+				if results == []:
+					return -1
 				res = 0
 				for result in results:
 					res = result.split("\t")[0]
@@ -148,12 +150,15 @@ def startInterface(argv):
 				stdin, stdout, stderr = ssh.exec_command('mysql -h{} -u{} -p{} SMITH_SepsisDB -e "call dataDensityWithParameter({});"'.format(databaseConfiguration['host'], databaseConfiguration['username'], databaseConfiguration['password'],argv[len(argv)-2]))
 				results = stdout.readlines()
 				results = results[1:]
+				if results == []:
+					return -1
 				res = 0
 				for result in results:
 					res = result.split("\t")[0]
 				stdin, stdout, stderr = ssh.exec_command('mysql -h{} -u{} -p{} SMITH_SepsisDB -e "drop procedure if exists dataDensityWithParameter; "'.format(databaseConfiguration['host'], databaseConfiguration['username'], databaseConfiguration['password']))
 				return res		
 	elif argv[2] == "selectPatient":
+		# selects the patient from the given table (argv[4]) with the specified patient id (argv[3])
 		stdin, stdout, stderr = ssh.exec_command('mysql -h{} -u{} -p{} SMITH_SepsisDB -e "show columns from SMITH_ASIC_SCHEME.{}"'.format(databaseConfiguration['host'], databaseConfiguration['username'], databaseConfiguration['password'], argv[4]))
 		columnNames = stdout.readlines()
 		columnNames = columnNames[2:]
@@ -164,6 +169,8 @@ def startInterface(argv):
 		stdin, stdout, stderr = ssh.exec_command('mysql -h{} -u{} -p{} SMITH_SepsisDB -e "select * from SMITH_ASIC_SCHEME.{} where patientid = {}"'.format(databaseConfiguration['host'], databaseConfiguration['username'], databaseConfiguration['password'], argv[4], argv[3]))
 		result = stdout.readlines()
 		result = result[1:]
+		if result == []:
+			return -1
 		convertedRows = []
 		for row in result:
 			row = row.split("\t")
