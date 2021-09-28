@@ -78,11 +78,13 @@ def startInterface(argv):
 	if argv[2] == "dataDensity":
 		if argv[3] == "patientid":
 			if argv[5] == "entriesTotal":
+				# count how many entries exists in the table asic_data_mimic for the given patient id
 				cur.execute("select count(*) from SMITH_ASIC_SCHEME.asic_data_mimic where patientid = {}".format(argv[4]))
 				result = cur.fetchall()
 				print(result)
 				cur.close()
 			else:
+				#count how many entries exists in the table asic_data_mimic for the given patient id where the given parameter column is not null
 				index = 0
 				identifier = ""
 				for arg in argv:
@@ -105,24 +107,30 @@ def startInterface(argv):
 				cur.close()
 		elif argv[3] == "bestPatients":
 			if argv[4] == "entriesTotal":
-				sqlFile = open("dataDensity.sql")
-				dataDensityProcedure = sqlFile.read().replace("\n", " ")
+				# search for the patient who has the most entries in the given table
+				stdin, stdout, stderr = ssh.exec_command('mysql -h{} -u{} -p{} SMITH_SepsisDB -e "drop procedure if exists dataDensity; "'.format(databaseConfiguration['host'], databaseConfiguration['username'], databaseConfiguration['password']))
+				sqlFile = open(currentPath + "\\dataDensity.sql")
+				dataDensityProcedure = sqlFile.read().replace("$placeholder", argv[6])
 				sqlFile.close()
-				cur.execute(dataDensityProcedure)
-				cur.callproc('dataDensity', [argv[5]])
-				for result in cur.stored_results():
-					print(result.fetchall())
-				cur.execute('drop procedure if exists dataDensity; ')
-				cur.close()
+				stdin, stdout, stderr = ssh.exec_command('mysql -h{} -u{} -p{} SMITH_SepsisDB -e "{}"'.format(databaseConfiguration['host'], databaseConfiguration['username'], databaseConfiguration['password'], dataDensityProcedure))
+				stdin, stdout, stderr = ssh.exec_command('mysql -h{} -u{} -p{} SMITH_SepsisDB -e "call dataDensity({});"'.format(databaseConfiguration['host'], databaseConfiguration['username'], databaseConfiguration['password'],argv[5]))
+				results = stdout.readlines()
+				results = results[1:]
+				res = 0
+				for result in results:
+					res = result.split("\t")[0]
+				stdin, stdout, stderr = ssh.exec_command('mysql -h{} -u{} -p{} SMITH_SepsisDB -e "drop procedure if exists dataDensity; "'.format(databaseConfiguration['host'], databaseConfiguration['username'], databaseConfiguration['password']))
+				return res
 			else: 
-				cur.execute('drop procedure if exists dataDensityWithParameter; ')
+				# search for the patient who has the most entries in the given table for the specified parameters
+				stdin, stdout, stderr = ssh.exec_command('mysql -h{} -u{} -p{} SMITH_SepsisDB -e "drop procedure if exists dataDensityWithParameter; "'.format(databaseConfiguration['host'], databaseConfiguration['username'], databaseConfiguration['password']))
 				index = 0
 				identifier = ""
 				for arg in argv:
 					if index < 4:
 						index+=1
 						continue
-					if index == len(argv)-1:
+					if index == len(argv)-2:
 						break
 					found = False
 					for parameter in parameters:
@@ -133,15 +141,18 @@ def startInterface(argv):
 						print("Unknown parameter " + arg + " in database asic")
 					index+=1
 				identifier = identifier[:-4]				
-				sqlFile = open("dataDensityWithParameter.sql")
-				dataDensityProcedure = sqlFile.read().replace("\n", " ").replace("$placeholder", identifier)
+				sqlFile = open(currentPath + "\\dataDensityWithParameter.sql")
+				dataDensityProcedure = sqlFile.read().replace("$placeholder", argv[len(argv)-1]).replace("$identifier", identifier)
 				sqlFile.close()
-				cur.execute(dataDensityProcedure)
-				cur.callproc('dataDensityWithParameter', [argv[len(argv)-1]])
-				for result in cur.stored_results():
-					print(result.fetchall())
-				cur.execute('drop procedure if exists dataDensityWithParameter; ')
-				cur.close()		
+				stdin, stdout, stderr = ssh.exec_command('mysql -h{} -u{} -p{} SMITH_SepsisDB -e "{}"'.format(databaseConfiguration['host'], databaseConfiguration['username'], databaseConfiguration['password'], dataDensityProcedure))
+				stdin, stdout, stderr = ssh.exec_command('mysql -h{} -u{} -p{} SMITH_SepsisDB -e "call dataDensityWithParameter({});"'.format(databaseConfiguration['host'], databaseConfiguration['username'], databaseConfiguration['password'],argv[len(argv)-2]))
+				results = stdout.readlines()
+				results = results[1:]
+				res = 0
+				for result in results:
+					res = result.split("\t")[0]
+				stdin, stdout, stderr = ssh.exec_command('mysql -h{} -u{} -p{} SMITH_SepsisDB -e "drop procedure if exists dataDensityWithParameter; "'.format(databaseConfiguration['host'], databaseConfiguration['username'], databaseConfiguration['password']))
+				return res		
 	elif argv[2] == "selectPatient":
 		stdin, stdout, stderr = ssh.exec_command('mysql -h{} -u{} -p{} SMITH_SepsisDB -e "show columns from SMITH_ASIC_SCHEME.{}"'.format(databaseConfiguration['host'], databaseConfiguration['username'], databaseConfiguration['password'], argv[4]))
 		columnNames = stdout.readlines()
