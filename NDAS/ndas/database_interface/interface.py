@@ -108,21 +108,20 @@ def startInterface(argv):
 		elif argv[3] == "bestPatients":
 			if argv[4] == "entriesTotal":
 				# search for the patient who has the most entries in the given table
-				stdin, stdout, stderr = ssh.exec_command('mysql -h{} -u{} -p{} SMITH_SepsisDB -e "drop procedure if exists dataDensity; "'.format(databaseConfiguration['host'], databaseConfiguration['username'], databaseConfiguration['password']))
-				sqlFile = open(currentPath + "\\dataDensity.sql")
-				dataDensityProcedure = sqlFile.read().replace("$placeholder", argv[6])
-				sqlFile.close()
-				stdin, stdout, stderr = ssh.exec_command('mysql -h{} -u{} -p{} SMITH_SepsisDB -e "{}"'.format(databaseConfiguration['host'], databaseConfiguration['username'], databaseConfiguration['password'], dataDensityProcedure))
-				stdin, stdout, stderr = ssh.exec_command('mysql -h{} -u{} -p{} SMITH_SepsisDB -e "call dataDensity({});"'.format(databaseConfiguration['host'], databaseConfiguration['username'], databaseConfiguration['password'],argv[5]))
+				#stdin, stdout, stderr = ssh.exec_command('mysql -h{} -u{} -p{} SMITH_SepsisDB -e "drop procedure if exists dataDensity; "'.format(databaseConfiguration['host'], databaseConfiguration['username'], databaseConfiguration['password']))
+				#sqlFile = open(currentPath + "\\dataDensity.sql")
+				#dataDensityProcedure = sqlFile.read().replace("$placeholder", argv[6])
+				#sqlFile.close()
+				#stdin, stdout, stderr = ssh.exec_command('mysql -h{} -u{} -p{} SMITH_SepsisDB -e "{}"'.format(databaseConfiguration['host'], databaseConfiguration['username'], databaseConfiguration['password'], dataDensityProcedure))
+				#stdin, stdout, stderr = ssh.exec_command('mysql -h{} -u{} -p{} SMITH_SepsisDB -e "call dataDensity({});"'.format(databaseConfiguration['host'], databaseConfiguration['username'], databaseConfiguration['password'],argv[5]))
+				print(argv[5])
+				stdin, stdout, stderr = ssh.exec_command('mysql -h{} -u{} -p{} SMITH_SepsisDB -e "select patientid from SMITH_ASIC_SCHEME.asic_lookup_{} order by entriesTotal desc limit {};"'.format(databaseConfiguration['host'], databaseConfiguration['username'], databaseConfiguration['password'],argv[6], argv[5]))
 				results = stdout.readlines()
 				results = results[1:]
 				if results == []:
 					return -1
-				res = 0
-				for result in results:
-					res = result.split("\t")[0]
-				stdin, stdout, stderr = ssh.exec_command('mysql -h{} -u{} -p{} SMITH_SepsisDB -e "drop procedure if exists dataDensity; "'.format(databaseConfiguration['host'], databaseConfiguration['username'], databaseConfiguration['password']))
-				return res
+				#stdin, stdout, stderr = ssh.exec_command('mysql -h{} -u{} -p{} SMITH_SepsisDB -e "drop procedure if exists dataDensity; "'.format(databaseConfiguration['host'], databaseConfiguration['username'], databaseConfiguration['password']))
+				return results
 			else: 
 				# search for the patient who has the most entries in the given table for the specified parameters
 				stdin, stdout, stderr = ssh.exec_command('mysql -h{} -u{} -p{} SMITH_SepsisDB -e "drop procedure if exists dataDensityWithParameter; "'.format(databaseConfiguration['host'], databaseConfiguration['username'], databaseConfiguration['password']))

@@ -29,9 +29,14 @@ class DatabaseSettingsWidget(QWidget):
 		self.patientIdLayout.addRow("Enter patient id: ", self.patientId)
 		self.patientIdFrame.setLayout(self.patientIdLayout)
 
-		self.radio2 = QRadioButton("Select the patient who has the most entries in the database")
-		self.radio2.toggled.connect(lambda:self.btnstate(self.radio2))
+		self.label = QLabel()
+		self.label.setText("Show the patients who has the most entries in total in the database:")
+		self.numberOfPatients = QLineEdit()
+		self.patiendidsLabel = QLabel()
+		showPatients = QPushButton("Show patients")
+		showPatients.clicked.connect(lambda: self.showPatients(parent, self.numberOfPatients.text(), database.currentText()))
 
+		
 		self.radio3 = QRadioButton("Select the patient who has the most entries for a specific parameter")
 		self.radio3.toggled.connect(lambda:self.btnstate(self.radio3))
 
@@ -49,7 +54,10 @@ class DatabaseSettingsWidget(QWidget):
 		layout.addRow("Select database: ", database)
 		layout.addRow(self.radio1)
 		layout.addRow(self.patientIdFrame)
-		layout.addRow(self.radio2)
+		layout.addRow(self.label)
+		layout.addRow("Enter number of patients:", self.numberOfPatients)
+		layout.addRow(self.patiendidsLabel)
+		layout.addRow(showPatients)
 		layout.addRow(self.radio3)
 		layout.addRow(self.parameterFrame)
 		layout.addRow(confirm)
@@ -105,3 +113,12 @@ class DatabaseSettingsWidget(QWidget):
 			data.get_instance().signals.error_signal.connect(lambda s: parent.getParent().error_msg_slot(s))
 			parent.getParent().thread_pool.start(data.get_instance())
 			parent.close()
+
+	def showPatients(self, parent, numberOfPatients, database):
+		db = ""
+		if database == "asic_data_mimic":
+			db = "mimic"
+		elif database == "asic_data_sepsis":
+			db = "sepsis"
+		patientids = interface.startInterface(["interface", "db_asic_scheme.json", "dataDensity", "bestPatients", "entriesTotal", numberOfPatients, db])
+		self.patiendidsLabel.setText(''.join(patientids))
