@@ -19,84 +19,46 @@ class DatabaseSettingsWidget(QWidget):
 		super().__init__(parent)
 		database = QComboBox()
 		database.addItems({"asic_data_mimic", "asic_data_sepsis"})
-		self.radio1 = QRadioButton("Select patient by patient id")
-		self.radio1.setChecked(True)
-		self.radio1.toggled.connect(lambda:self.btnstate(self.radio1))
-
+		self.selectLabel = QLabel()
+		self.selectLabel.setText("Select patient by patient id")
 		self.patientId = QLineEdit()
-		self.patientIdFrame = QFrame()
-		self.patientIdLayout = QFormLayout()
-		self.patientIdLayout.addRow("Enter patient id: ", self.patientId)
-		self.patientIdFrame.setLayout(self.patientIdLayout)
 
-		self.label = QLabel()
-		self.label.setText("Show the patients who has the most entries in total in the database:")
+		self.patientEntriesLabel = QLabel()
+		self.patientEntriesLabel.setText("Show the patients who has the most entries in total in the database:")
 		self.numberOfPatients = QLineEdit()
 		self.patiendidsLabel = QLabel()
-		showPatients = QPushButton("Show patients")
+		showPatients = QPushButton("Show patient ids")
 		showPatients.clicked.connect(lambda: self.showPatients(parent, self.numberOfPatients.text(), database.currentText()))
 
-		
-		self.radio3 = QRadioButton("Select the patient who has the most entries for a specific parameter")
-		self.radio3.toggled.connect(lambda:self.btnstate(self.radio3))
-
+		self.parameterEntriesLabel = QLabel()
+		self.parameterEntriesLabel.setText("Show the patients who has the most entries for a specific parameter:")
+		self.numberOfPatients2 = QLineEdit()
 		self.parameter = QLineEdit()
-		self.parameterFrame = QFrame()
-		self.parameterLayout = QFormLayout()
-		self.parameterLayout.addRow("Enter parameter: ", self.parameter)
-		self.parameterFrame.setLayout(self.parameterLayout)
+		self.patiendidsLabel2 = QLabel()
+		showPatients2 = QPushButton("Show patient ids")
+		showPatients2.clicked.connect(lambda: self.showPatientsWithParameter(parent, self.numberOfPatients2.text(), database.currentText(), self.parameter.text()))
 
 		confirm = QPushButton("Confirm")
-		confirm.clicked.connect(lambda: self.getPatientData(parent, self.patientId.text(), database.currentText()))
+		confirm.clicked.connect(lambda: self.loadPatient(parent, self.patientId.text(), database.currentText()))
 
 
 		layout = QFormLayout()
 		layout.addRow("Select database: ", database)
-		layout.addRow(self.radio1)
-		layout.addRow(self.patientIdFrame)
-		layout.addRow(self.label)
+		layout.addRow(self.selectLabel)
+		layout.addRow(self.patientId)
+		layout.addRow(confirm)
+		layout.addRow(self.patientEntriesLabel)
 		layout.addRow("Enter number of patients:", self.numberOfPatients)
 		layout.addRow(self.patiendidsLabel)
 		layout.addRow(showPatients)
-		layout.addRow(self.radio3)
-		layout.addRow(self.parameterFrame)
-		layout.addRow(confirm)
+		layout.addRow(self.parameterEntriesLabel)
+		layout.addRow("Enter number of patients:", self.numberOfPatients2)
+		layout.addRow("Enter parameter: ", self.parameter)
+		layout.addRow(self.patiendidsLabel2)
+		layout.addRow(showPatients2)
 
 		self.setLayout(layout)
 
-		self.mode = 0
-		self.parameterFrame.hide()
-
-	def btnstate(self, button):
-		if button == self.radio1:
-			self.patientIdFrame.show()
-			self.parameterFrame.hide()
-			self.mode = 0
-		if button == self.radio2:
-			self.patientIdFrame.hide()
-			self.parameterFrame.hide()
-			self.mode = 1
-		if button == self.radio3:
-			self.patientIdFrame.hide()
-			self.parameterFrame.show()
-			self.mode = 2
-
-	def getPatientData(self, parent, patientid, database):
-		if self.mode == 0:
-			self.loadPatient(parent, patientid, database)
-		if self.mode == 1:
-			patientid = interface.startInterface(["interface", "db_asic_scheme.json", "dataDensity", "bestPatients", "entriesTotal", 1, database])
-			if patientid == -1:
-				QMessageBox.critical(self, "Error", "No patient found, table seems to be empty.", QMessageBox.Ok)
-			else:
-				self.loadPatient(parent, patientid, database)
-		if self.mode == 2:
-			parameters = self.parameter.text().replace(" ", "").split(",")
-			patientid = interface.startInterface(["interface", "db_asic_scheme.json", "dataDensity", "bestPatients"] + parameters + [1, database])
-			if patientid == -1:
-				QMessageBox.critical(self, "Error", "No patient with the speficied criteria found.", QMessageBox.Ok)
-			else:
-				self.loadPatient(parent, patientid, database)
 
 	def loadPatient(self, parent, patientid, database):
 		filename = os.getcwd()+"\\ndas\\local_data\\imported_patients\\{}_patient_{}.csv".format(database, str(patientid))
@@ -121,4 +83,15 @@ class DatabaseSettingsWidget(QWidget):
 		elif database == "asic_data_sepsis":
 			db = "sepsis"
 		patientids = interface.startInterface(["interface", "db_asic_scheme.json", "dataDensity", "bestPatients", "entriesTotal", numberOfPatients, db])
+		print(patientids)
 		self.patiendidsLabel.setText(''.join(patientids))
+
+	def showPatientsWithParameter(self, parent, numberOfPatients, database, parameters):
+		db = ""
+		if database == "asic_data_mimic":
+			db = "mimic"
+		elif database == "asic_data_sepsis":
+			db = "sepsis"
+		patientids = interface.startInterface(["interface", "db_asic_scheme.json", "dataDensity", "bestPatients", parameters.replace(",", "+"), numberOfPatients, db])
+		print(patientids)
+		self.patiendidsLabel2.setText(''.join(patientids))
