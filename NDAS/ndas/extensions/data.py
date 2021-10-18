@@ -3,7 +3,7 @@ from ndas.importer import *
 from ndas.utils import logger
 
 _dataframe = None
-_imputed_dataframe = None
+_imputed_dataframe = pd.DataFrame()
 _dataframe_labels = None
 _available_importer = []
 _active_instance = None
@@ -153,6 +153,8 @@ def get_full_dataframe():
     global _dataframe
     if _dataframe is not None:
         return _dataframe
+    else:
+        return None
 
 
 def set_imputed_dataframe(df):
@@ -180,8 +182,10 @@ def get_imputed_dataframe():
 
     """
     global _imputed_dataframe
-    if _imputed_dataframe is not None:
+    if _imputed_dataframe is not None and not _imputed_dataframe.empty:
         return _imputed_dataframe
+    else:
+        return None
 
 
 def get_dataframe_labels():
@@ -233,7 +237,7 @@ def format_for_save():
             'dataframe_labels': _dataframe_labels,
             'data_slider_start': data_slider_start,
             'data_slider_end': data_slider_end, 
-            'imputed_dataframe':_imputed_dataframe.to_numpy()}
+            'imputed_dataframe': _imputed_dataframe.to_numpy()}
 
 
 def restore_from_save(data: dict):
@@ -248,4 +252,4 @@ def restore_from_save(data: dict):
     _dataframe = pd.DataFrame.from_records(data['dataframe'], columns=_dataframe_labels)
     data_slider_start = data['data_slider_start']
     data_slider_end = data['data_slider_end']
-    _imputed_dataframe = data['imputed_dataframe']
+    _imputed_dataframe = pd.DataFrame.from_records(data['imputed_dataframe'], columns=_dataframe_labels)
