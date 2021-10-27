@@ -53,7 +53,7 @@ class DatabaseSettingsWidget(QWidget):
 		layout.addRow(showPatients)
 		layout.addRow(self.parameterEntriesLabel)
 		layout.addRow("Enter number of patients:", self.numberOfPatients2)
-		layout.addRow("Enter parameter: ", self.parameter)
+		layout.addRow("Enter parameters: ", self.parameter)
 		layout.addRow(self.patiendidsLabel2)
 		layout.addRow(showPatients2)
 
@@ -82,8 +82,12 @@ class DatabaseSettingsWidget(QWidget):
 			db = "mimic"
 		elif database == "asic_data_sepsis":
 			db = "sepsis"
-		patientids = interface.startInterface(["interface", "db_asic_scheme.json", "dataDensity", "bestPatients", "entriesTotal", numberOfPatients, db])
-		print(patientids)
+		result = interface.startInterface(["interface", "db_asic_scheme.json", "dataDensity", "bestPatients", "entriesTotal", numberOfPatients, db])
+		patientids = ["Patient-ID | Number of entries\n", "----------------\n"]
+		for patient in result:
+			patientSplit = patient.split("\t")
+			patientids.append(patientSplit[0] + " | " + patientSplit[1])
+
 		self.patiendidsLabel.setText(''.join(patientids))
 
 	def showPatientsWithParameter(self, parent, numberOfPatients, database, parameters):
@@ -92,6 +96,9 @@ class DatabaseSettingsWidget(QWidget):
 			db = "mimic"
 		elif database == "asic_data_sepsis":
 			db = "sepsis"
-		patientids = interface.startInterface(["interface", "db_asic_scheme.json", "dataDensity", "bestPatients", parameters.replace(",", "+"), numberOfPatients, db])
-		print(patientids)
+		result = interface.startInterface(["interface", "db_asic_scheme.json", "dataDensity", "bestPatients", parameters.replace(",", "+"), numberOfPatients, db])
+		patientids = ["Patient-ID | Number of relevant entries\n", "----------------\n"]
+		for patient in result:
+			patientSplit = patient.split("\t")
+			patientids.append(patientSplit[0] + " | " + patientSplit[1])
 		self.patiendidsLabel2.setText(''.join(patientids))
