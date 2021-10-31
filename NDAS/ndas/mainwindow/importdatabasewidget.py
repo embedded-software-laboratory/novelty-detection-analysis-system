@@ -1,4 +1,5 @@
 from PyQt5.QtWidgets import *
+from PyQt5.QtCore import *
 import os
 from ndas.extensions import data
 from ndas.database_interface import interface
@@ -26,7 +27,12 @@ class DatabaseSettingsWidget(QWidget):
 		self.patientEntriesLabel = QLabel()
 		self.patientEntriesLabel.setText("Show the patients who has the most entries in total in the database:")
 		self.numberOfPatients = QLineEdit()
+		self.patientIdsScrollbar = QScrollArea()
+		self.patientIdsScrollbar.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
+		self.patientIdsScrollbar.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+		self.patientIdsScrollbar.setWidgetResizable(True)
 		self.patiendidsLabel = QLabel()
+		self.patientIdsScrollbar.setWidget(self.patiendidsLabel)
 		showPatients = QPushButton("Show patient ids")
 		showPatients.clicked.connect(lambda: self.showPatients(parent, self.numberOfPatients.text(), database.currentText()))
 
@@ -34,7 +40,12 @@ class DatabaseSettingsWidget(QWidget):
 		self.parameterEntriesLabel.setText("Show the patients who has the most entries for a specific parameter:")
 		self.numberOfPatients2 = QLineEdit()
 		self.parameter = QLineEdit()
+		self.patientIdsScrollbar2 = QScrollArea()
+		self.patientIdsScrollbar2.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
+		self.patientIdsScrollbar2.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+		self.patientIdsScrollbar2.setWidgetResizable(True)
 		self.patiendidsLabel2 = QLabel()
+		self.patientIdsScrollbar2.setWidget(self.patiendidsLabel2)
 		showPatients2 = QPushButton("Show patient ids")
 		showPatients2.clicked.connect(lambda: self.showPatientsWithParameter(parent, self.numberOfPatients2.text(), database.currentText(), self.parameter.text()))
 
@@ -49,12 +60,12 @@ class DatabaseSettingsWidget(QWidget):
 		layout.addRow(confirm)
 		layout.addRow(self.patientEntriesLabel)
 		layout.addRow("Enter number of patients:", self.numberOfPatients)
-		layout.addRow(self.patiendidsLabel)
+		layout.addRow(self.patientIdsScrollbar)
 		layout.addRow(showPatients)
 		layout.addRow(self.parameterEntriesLabel)
 		layout.addRow("Enter number of patients:", self.numberOfPatients2)
 		layout.addRow("Enter parameters: ", self.parameter)
-		layout.addRow(self.patiendidsLabel2)
+		layout.addRow(self.patientIdsScrollbar2)
 		layout.addRow(showPatients2)
 
 		self.setLayout(layout)
