@@ -95,10 +95,14 @@ class DatabaseSettingsWidget(QWidget):
 			db = "sepsis"
 		result = interface.startInterface(["interface", "db_asic_scheme.json", "dataDensity", "bestPatients", "entriesTotal", numberOfPatients, db])
 		patientids = ["Patient-ID | Number of entries\n", "----------------\n"]
-		for patient in result:
-			patientSplit = patient.split("\t")
-			patientids.append(patientSplit[0] + " | " + patientSplit[1])
-
+		if result == -1:
+			patientids = ["No result found"]
+		elif result == -2:
+			patientids = ["An error occured, please enter a valid number."]
+		else:
+			for patient in result:
+				patientSplit = patient.split("\t")
+				patientids.append(patientSplit[0] + " | " + patientSplit[1])
 		self.patiendidsLabel.setText(''.join(patientids))
 
 	def showPatientsWithParameter(self, parent, numberOfPatients, database, parameters):
@@ -109,7 +113,12 @@ class DatabaseSettingsWidget(QWidget):
 			db = "sepsis"
 		result = interface.startInterface(["interface", "db_asic_scheme.json", "dataDensity", "bestPatients", parameters.replace(",", "+"), numberOfPatients, db])
 		patientids = ["Patient-ID | Number of relevant entries\n", "----------------\n"]
-		for patient in result:
-			patientSplit = patient.split("\t")
-			patientids.append(patientSplit[0] + " | " + patientSplit[1])
+		if result == -1:
+			patientids = ["No result found"]
+		elif result == -2:
+			patientids = ["An error occured, please enter a valid number and valid parameters."]
+		else:
+			for patient in result:
+				patientSplit = patient.split("\t")
+				patientids.append(patientSplit[0] + " | " + patientSplit[1])
 		self.patiendidsLabel2.setText(''.join(patientids))
