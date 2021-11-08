@@ -111,8 +111,8 @@ class DatabaseSettingsWidget(QWidget):
 			db = "mimic"
 		elif database == "asic_data_sepsis":
 			db = "sepsis"
-		result = interface.startInterface(["interface", "db_asic_scheme.json", "dataDensity", "bestPatients", parameters.replace(",", "+"), numberOfPatients, db])
-		patientids = ["Patient-ID | Number of relevant entries\n", "----------------\n"]
+		result = interface.startInterface(["interface", "db_asic_scheme.json", "dataDensity", "bestPatients", parameters, numberOfPatients, db])
+		patientids = []
 		if result == -1:
 			patientids = ["No result found"]
 		elif result == -2:
@@ -120,5 +120,8 @@ class DatabaseSettingsWidget(QWidget):
 		else:
 			for patient in result:
 				patientSplit = patient.split("\t")
-				patientids.append(patientSplit[0] + " | " + patientSplit[1])
+				temp = patientSplit[0]
+				for i in range(len(patientSplit)-1):
+					temp = temp + " | " + patientSplit[i+1]
+				patientids.append(temp)
 		self.patiendidsLabel2.setText(''.join(patientids))
