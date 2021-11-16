@@ -3,6 +3,8 @@ from PyQt5.QtCore import *
 import os
 from ndas.extensions import data
 from ndas.database_interface import interface
+from ndas.mainwindow.selectparameterswidget import SelectParametersWindow
+
 
 class ImportDatabaseWindow(QMainWindow):
 	def __init__(self, parent=None):
@@ -18,6 +20,8 @@ class ImportDatabaseWindow(QMainWindow):
 class DatabaseSettingsWidget(QWidget):
 	def __init__(self, parent=None):
 		super().__init__(parent)
+		self.parameters=""
+
 		database = QComboBox()
 		database.addItems({"asic_data_mimic", "asic_data_sepsis"})
 		self.selectLabel = QLabel()
@@ -39,7 +43,9 @@ class DatabaseSettingsWidget(QWidget):
 		self.parameterEntriesLabel = QLabel()
 		self.parameterEntriesLabel.setText("Show the patients who has the most entries for a specific parameter:")
 		self.numberOfPatients2 = QLineEdit()
-		self.parameter = QLineEdit()
+		self.parameter = QPushButton("Choose parameters...")
+		self.parameter.clicked.connect(lambda: self.chooseParameters())
+		self.selectedParameters = QLabel()
 		self.patientIdsScrollbar2 = QScrollArea()
 		self.patientIdsScrollbar2.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
 		self.patientIdsScrollbar2.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
@@ -47,7 +53,7 @@ class DatabaseSettingsWidget(QWidget):
 		self.patiendidsLabel2 = QLabel()
 		self.patientIdsScrollbar2.setWidget(self.patiendidsLabel2)
 		showPatients2 = QPushButton("Show patient ids")
-		showPatients2.clicked.connect(lambda: self.showPatientsWithParameter(parent, self.numberOfPatients2.text(), database.currentText(), self.parameter.text()))
+		showPatients2.clicked.connect(lambda: self.showPatientsWithParameter(parent, self.numberOfPatients2.text(), database.currentText()))
 
 		confirm = QPushButton("Confirm")
 		confirm.clicked.connect(lambda: self.loadPatient(parent, self.patientId.text(), database.currentText()))
@@ -64,7 +70,8 @@ class DatabaseSettingsWidget(QWidget):
 		layout.addRow(showPatients)
 		layout.addRow(self.parameterEntriesLabel)
 		layout.addRow("Enter number of patients:", self.numberOfPatients2)
-		layout.addRow("Enter parameters: ", self.parameter)
+		layout.addRow(self.parameter)
+		layout.addRow("Selected parameters: ", self.selectedParameters)
 		layout.addRow(self.patientIdsScrollbar2)
 		layout.addRow(showPatients2)
 
@@ -105,13 +112,13 @@ class DatabaseSettingsWidget(QWidget):
 				patientids.append(patientSplit[0] + " | " + patientSplit[1])
 		self.patiendidsLabel.setText(''.join(patientids))
 
-	def showPatientsWithParameter(self, parent, numberOfPatients, database, parameters):
+	def showPatientsWithParameter(self, parent, numberOfPatients, database):
 		db = ""
 		if database == "asic_data_mimic":
 			db = "mimic"
 		elif database == "asic_data_sepsis":
 			db = "sepsis"
-		result = interface.startInterface(["interface", "db_asic_scheme.json", "dataDensity", "bestPatients", parameters, numberOfPatients, db])
+		result = interface.startInterface(["interface", "db_asic_scheme.json", "dataDensity", "bestPatients", self.parameters, numberOfPatients, db])
 		patientids = []
 		if result == -1:
 			patientids = ["No result found"]
@@ -125,3 +132,12 @@ class DatabaseSettingsWidget(QWidget):
 					temp = temp + " | " + patientSplit[i+1]
 				patientids.append(temp)
 		self.patiendidsLabel2.setText(''.join(patientids))
+
+	def chooseParameters(self):
+		self.selectParameters = SelectParametersWindow(self)
+		self.selectParameters.show()
+
+	def setSelectedParameters(self, parameters, label):
+		self.selectedParameters.setText(label)
+		self.parameters = parameters
+		print(self.parameters)
