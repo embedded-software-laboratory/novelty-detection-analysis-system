@@ -2,6 +2,7 @@ import bisect
 import copy
 import math
 import time
+import datetime
 
 import numpy as np
 from scipy import stats
@@ -9,6 +10,7 @@ from scipy.spatial import distance
 
 from ndas.algorithms.basedetector import BaseDetector
 from ndas.misc.parameter import ArgumentType
+from ndas.extensions import plots
 
 
 class SW_ABSAD_MOD(BaseDetector):
@@ -58,6 +60,24 @@ class SW_ABSAD_MOD(BaseDetector):
             _df = _df.join(single_column)
         return _df
 
+    @staticmethod
+    def insort_right(a, x, lo=0, hi=None):
+        """Insert item x in list a, and keep it sorted assuming a is sorted.
+        If x is already in a, insert it to the right of the rightmost x.
+        Optional args lo (default 0) and hi (default len(a)) bound the
+        slice of a to be searched.
+        """
+
+        if lo < 0:
+            raise ValueError('lo must be non-negative')
+        if hi is None:
+            hi = len(a)
+        while lo < hi:
+            mid = (lo+hi)//2
+            if x[1] < a[mid, 1]: hi = mid
+            else: lo = mid+1
+        return np.insert(a, lo, x, axis=0)
+
     def calculate_relevant_subspaces(self, current_vector, mean_vector):
         """
         Dabei wird der jte Wert des Vektors jeweils einzeln mit jeder anderen Dimension,
@@ -82,7 +102,6 @@ class SW_ABSAD_MOD(BaseDetector):
         """
         l_vector = current_vector - mean_vector
         l_vector[l_vector == 0] = 10 ** -5
-
         pcos = [0.0 for _ in range(self.num_data_dimensions)]
         for j in range(self.num_data_dimensions):
             pcosj = 0.0
@@ -106,9 +125,11 @@ class SW_ABSAD_MOD(BaseDetector):
         die zur Berechnung einer entsprechenden Kurve verwendet werden. Besonders häufig
         wird der Gaußsche Kernel verwendet.
         """
-        min_value = los_sliding_window[los_sliding_window != 0]
-        if len(min_value) == 0:
-            min_value = [0.00002]
+        min_value_array = los_sliding_window[los_sliding_window != 0]
+        if len(min_value_array) == 0:
+            min_value = 0.00002
+        else:
+            min_value = min(min_value_array)
 
         '''
         Da Werte die genau bei 0 liegen die
@@ -117,8 +138,7 @@ class SW_ABSAD_MOD(BaseDetector):
         '''
         for current_point in range(len(los_sliding_window)):
             if los_sliding_window[current_point] == 0:
-                los_sliding_window[current_point] = min(min_value) / 2
-
+                los_sliding_window[current_point] = min_value / 2
         kde = stats.gaussian_kde(los_sliding_window[~np.isnan(los_sliding_window)], self.bandwidth)
 
         '''
@@ -130,9 +150,15 @@ class SW_ABSAD_MOD(BaseDetector):
         in die Berechnung des CL mit einbezogen wird.
         '''
         CL = 0
-        confidence_interval = 0
-        while confidence_interval < self.confidence_level:  # first training: and CL < 5
-            CL = CL + 0.001
+        for i in range(11):
+            while kde.integrate_box_1d(-10, CL+(1/(2**i))) < self.confidence_level:  # first training: and CL < 5
+                CL = CL + (1/(2**i))
+
+        CL = round(CL, 3) - 0.001
+        confidence_interval = kde.integrate_box_1d(-10, CL)
+
+        while confidence_interval < self.confidence_level:
+            CL += 0.001
             confidence_interval = kde.integrate_box_1d(-10, CL)
 
         return CL
@@ -198,6 +224,8 @@ class SW_ABSAD_MOD(BaseDetector):
 
         if self.use_columns[0] != '':
             df = self.get_column_subset(df, self.use_columns)
+        else:
+            df = df[[df.columns[0]]+list(plots.registered_plots.keys())]
 
         if self.replace_zeroes:
             df = df.replace(0, np.NaN)
@@ -271,6 +299,7 @@ class SW_ABSAD_MOD(BaseDetector):
 
         mad_table = np.array([np.nan for _ in range(self.num_data_dimensions)])
 
+
         '''
         Alle Parameter werden in eine samples-Matrix eingefügt und z-normalisiert. Dies hat zur
         Folge, dass alle Parameter gleich gewichtet werden. Besonders wenn sich die Werte,
@@ -317,7 +346,7 @@ class SW_ABSAD_MOD(BaseDetector):
         number_outlier_treshold = 5
         next_position = 0
         next_variance_position = 0
-
+        save = self.TablePositionStruct(len(df_without_offset), self.num_data_dimensions, self.windowlength)
         while sample_counter < len(df_without_offset):
             '''
             Konsistenzcheck. Prüft ob eine große Lücke zwischen den letzten Messungen war.
@@ -482,7 +511,6 @@ class SW_ABSAD_MOD(BaseDetector):
                     current_vector = sliding_window_normalized[current_point]
 
                     subspace = self.calculate_relevant_subspaces(current_vector, mean_vector)
-
                     relevant_subspace_col = np.vstack([sliding_window_normalized[current_point], subspace])
                     relevant_subspace_col[0, :][relevant_subspace_col[1, :] == 0] = np.nan
                     relevant_subspace_col = np.delete(relevant_subspace_col, 1, 0)
@@ -566,9 +594,8 @@ class SW_ABSAD_MOD(BaseDetector):
             '''
             self.signal_percentage(int((sample_counter / len(df_without_offset)) * 100))
 
-            _next_position_save = next_position
+            # _next_position_save = next_position
 
-            save = self.TablePositionStruct(len(df_without_offset), self.num_data_dimensions, self.windowlength)
             save.next_position = next_position
             save.sliding_window_normalized = copy.deepcopy(sliding_window_normalized)
             save.distance_table = copy.deepcopy(distance_table)
@@ -583,7 +610,6 @@ class SW_ABSAD_MOD(BaseDetector):
 
             current_point = next_position
             next_position = (next_position + 1) % self.windowlength
-
             '''
             Die Varianz-Tabelle wird geupdatet indem der neue Wert dem Sliding Window
             hinzugefügt wird und die Varianz neuberechnet wird
@@ -618,6 +644,15 @@ class SW_ABSAD_MOD(BaseDetector):
             Punktes und des aus dem Sliding Window herausgenommenen Punktes, angepasst
             werden.
             '''
+            '''
+            kNN_curr_point = kNN[:self.windowlength, current_point]
+            neighbors_one = kNNDist[:self.windowlength, self.k, 1]
+            neighbors_zero = (kNNDist[:self.windowlength, self.k, 0]).astype(int)
+            distance_table_curr_point = distance_table[:self.windowlength, current_point]
+            boolean_mask = (distance_table_curr_point*((-1)**kNN_curr_point) > neighbors_one*((-1)**kNN_curr_point)) | (distance_table_curr_point == neighbors_one*kNN_curr_point)
+            kNN[:self.windowlength, neighbors_zero][boolean_mask, boolean_mask] = kNN_curr_point[boolean_mask]
+            kNN[:self.windowlength, current_point][boolean_mask] = (np.ones((self.windowlength,)) - kNN_curr_point)[boolean_mask]
+            '''
             for window_point in range(self.windowlength):
                 if kNN[window_point, current_point] == 1:
                     next_neighbor = kNNDist[window_point, self.k]
@@ -631,22 +666,16 @@ class SW_ABSAD_MOD(BaseDetector):
                         kNN[window_point, current_point] = 1
                         kNN[window_point, int(k_neighbor[0])] = 0
 
-                kNNDist_without_current_point = [i for i in kNNDist[window_point] if i[0] != current_point]
-
-                _keys = [r[1] for r in kNNDist_without_current_point]
-                _index = bisect.bisect(_keys, distance_table[window_point, current_point])
-
-                kNNDist_without_current_point.insert(_index,
-                                                     (current_point, distance_table[window_point, current_point]))
-                kNNDist[window_point] = copy.deepcopy(kNNDist_without_current_point)
+            kNNDist_sliding_window = kNNDist[:self.windowlength]
+            kNNDist_sliding_window = (kNNDist_sliding_window[kNNDist_sliding_window[:, :, 0] != current_point]).reshape(self.windowlength, -1, 2)
+            kNNDist_sliding_window = np.array([self.insort_right(row, [current_point, distance_kNN]) for row, distance_kNN in zip(kNNDist_sliding_window, distance_table[:self.windowlength, current_point])])
+            kNNDist[:self.windowlength] = copy.deepcopy(kNNDist_sliding_window)
 
             '''
             Zur Bestimmung des Referenzdatensatzes muss die SNN Tabelle geupdated werden
             ODER muss sie? War bisher nicht so! TODO prüfen
             '''
-            for j in range(self.windowlength):
-                is_in_knn_bool = np.logical_and(kNN[current_point], kNN[j])
-                sNN[current_point, j] = sum([int(e) for e in is_in_knn_bool])
+            sNN[current_point, :self.windowlength] = np.count_nonzero(np.logical_and(kNN[:self.windowlength], kNN[current_point]), axis=1)
 
             relevant_points = self.get_reference_set(snn=sNN[current_point], data=sliding_window_normalized)
             if len(relevant_points):
@@ -761,12 +790,10 @@ class SW_ABSAD_MOD(BaseDetector):
 
             # Iteration step
             sample_counter = sample_counter + 1
-
         df['outlier_table'] = outlier_table[:-1]
         df['relevantcol'] = (LOSsubsortges[:, self.num_data_dimensions - 1])[:-10]
         df['LOS'] = LOS_complete[:-10]
         df['controllimit'] = cl_complete_table
-
         '''
         Jetzt werden die erkannten Outlier zu einem Result-Set hinzugefügt.
         Dieses wird vom Programm benötigt, um die Outlier zu markieren.
