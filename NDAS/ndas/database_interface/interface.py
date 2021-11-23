@@ -170,14 +170,23 @@ def startInterface(argv):
 		result = result[1:]
 		if result == []:
 			return -1
-		convertedRows = []
+		convertedRowsTemp = []
+		smallestTimestamp = -1
 		for row in result:
 			row = row.split("\t")
 			row = row[1:]
 			temp = list(row)
 			temp[0] = datetime.strptime(temp[0], "%Y-%m-%d %H:%M:%S").timestamp()
+			if temp[0] < smallestTimestamp or smallestTimestamp == -1:
+				smallestTimestamp = temp[0]
 			row = tuple(temp)
-			convertedRows.append(row)
+			convertedRowsTemp.append(row)
+			convertedRows = [] 
+		for row in convertedRowsTemp:
+			temp = list(row)
+			temp[0] = temp[0] - smallestTimestamp
+			convertedRows.append(tuple(temp))
+
 		if not os.path.exists(os.getcwd() + "\\ndas\\local_data\\imported_patients"):
 			os.makedirs(os.getcwd() + "\\ndas\\local_data\\imported_patients")
 		filename = os.getcwd()+"\\ndas\\local_data\\imported_patients\\{}_patient_{}.csv".format(argv[4], argv[3])
