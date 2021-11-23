@@ -523,7 +523,7 @@ class MainWindow(QMainWindow):
         """
         Toggles the visibility of the connecting lines
         """
-        current_plot_selection = self.plot_selector.currentText()
+        current_plot_selection = self.plot_selector.currentText().split()[0]
         current_pl_checkbox_state = self.toggle_plot_lines.isChecked()
         plots.set_plot_line_status(current_plot_selection, current_pl_checkbox_state)
         plots.plot_layout_widget.set_line_item_visibility(current_pl_checkbox_state)
@@ -533,7 +533,7 @@ class MainWindow(QMainWindow):
         """
         Toggles the visibility of the scatter plot points
         """
-        current_plot_selection = self.plot_selector.currentText()
+        current_plot_selection = self.plot_selector.currentText().split()[0]
         current_pp_checkbox_state = self.toggle_plot_points.isChecked()
         plots.set_plot_point_status(current_plot_selection, current_pp_checkbox_state)
         plots.plot_layout_widget.set_point_item_visibility(current_pp_checkbox_state)
@@ -543,19 +543,19 @@ class MainWindow(QMainWindow):
         """
         Loads the currently selected active plot
         """
-        if not self.plot_selector.currentText():
+        if not self.plot_selector.currentText().split()[0]:
             plots.set_plot_active("")
 
-        if isinstance(self.plot_selector.currentText(), str):
-            current_plot_selection = self.plot_selector.currentText()
+        if isinstance(self.plot_selector.currentText().split()[0], str):
+            current_plot_selection = self.plot_selector.currentText().split()[0]
             current_pp_checkbox_state = self.toggle_plot_points.isChecked()
             current_pl_checkbox_state = self.toggle_plot_lines.isChecked()
             plots.set_plot_point_status(current_plot_selection, current_pp_checkbox_state)
             plots.set_plot_line_status(current_plot_selection, current_pl_checkbox_state)
-            plots.set_plot_active(self.plot_selector.currentText())
+            plots.set_plot_active(self.plot_selector.currentText().split()[0])
 
         else:
-            for plot_name in self.plot_selector.currentText():
+            for plot_name in self.plot_selector.currentText().split()[0]:
                 plots.set_plot_active(plot_name)
 
         self.update_statistics()
@@ -1057,7 +1057,7 @@ class MainWindow(QMainWindow):
             self.plot_selector.setDisabled(False)
             self.tab_statistics.plot_selector.setDisabled(False)
             for k, v in plots.registered_plots.items():
-                self.plot_selector.addItem(plots.registered_plots[k].plot_name)
+                self.plot_selector.addItem(plots.registered_plots[k].plot_name  + " (" +str(len(v.main_dot_plot.x_data)) + ")")
                 self.tab_statistics.plot_selector.addItem(plots.registered_plots[k].plot_name)
 
     def _confirm_error(self, title, text):
