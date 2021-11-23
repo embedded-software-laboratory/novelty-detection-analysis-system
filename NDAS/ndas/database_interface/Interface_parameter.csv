@@ -1,0 +1,263 @@
+Name;Datenbank;Tabellen;Identifier
+24h-Bilanz;mimiciii;outputevents;43372
+AF_gemessen;mimiciii;chartevents;618, 3603
+AF_eingestellt;mimiciii;chartevents;619, 224688
+Amylase;mimiciii;chartevents,labevents;220581, 775, 50867
+BE_arteriell;mimiciii;chartevents;776, 224828, 74
+Bicarbonat_arteriell;mimiciii;labevents;50882, 50803
+Bilirubin_ges;mimiciii;chartevents,labevents;225690, 50885, 51464
+CK;mimiciii;chartevents,labevents;225634, 50910
+Compliance;mimiciii;chartevents;131, 132
+DAP;mimiciii;chartevents;225310, 8368, 220051, 8555
+FiO2_gemessen;mimiciii;chartevents;3420, 3422, 223835
+GOT;mimiciii;chartevents;3801
+GPT;mimiciii;chartevents;3802
+HF;mimiciii;chartevents;211, 220045
+Harnstoff;mimiciii;chartevents;51006
+Haematokrit;mimiciii;chartevents,labevents;813, 51221
+Haemoglobin;mimiciii;chartevents,labevents;814, 220228, 51222, 50811
+I:E_gemessen;mimiciii;chartevents;221
+INR;mimiciii;chartevents,labevents;1530, 227467, 51237
+Kreatinin;mimiciii;chartevents,labevents;1525, 220615, 50912
+Koerperkerntemperatur;mimiciii;chartevents;676
+Laktat_arteriell;mimiciii;labevents;50813
+Leukozyten;mimiciii;labevents;51486
+Lipase;mimiciii;chartevents,labevents;225672,  50956
+MAP;mimiciii;chartevents;52, 220052, 225312
+PEEP_gemessen;mimiciii;chartevents,labevents;505, 50819
+PEEP_eingestellt;mimiciii;chartevents;506, 7220339
+SAP;mimiciii;chartevents;51, 225309, 6701
+SaO2;mimiciii;chartevents;834, 220227
+SpO2;mimiciii;chartevents;646, 220277
+SzvO2;mimiciii;chartevents;227549, 226541, 838, 223772
+ZVD;mimiciii;chartevents;113, 220074
+pH_arteriell;mimiciii;chartevents,labevents;4753, 223830, 51491
+pTT;mimiciii;chartevents,labevents;227466, 1533, 3796, 51275
+paCO2;mimiciii;chartevents;778
+paO2;mimiciii;chartevents;779
+CK-MB;mimiciii;chartevents;227445
+PCWP;mimiciii;chartevents;504223771
+MPAP;mimiciii;chartevents;491, 220061
+HI_kontinuierlich;mimiciii;chartevents;1378
+Troponin;mimiciii;chartevents,labevents;851, 51003
+Thrombozyten;mimiciii;chartevents,labevents;828, 3789, 227457, 51265
+Albumin;mimiciii;chartevents,labevents;1521, 227456, 50862
+SV_kontinuierlich;mimiciii;chartevents;2776
+HZV_kontinuierlich;mimiciii;outputevents;44920, 40909, 44970, 41946
+BNP;mimiciii;chartevents;227446
+SVI_kontinuierlich;mimiciii;chartevents;625
+Inhalatives_NO;mimiciii;chartevents;7988
+PVRI;mimiciii;chartevents;513
+DPAP;mimiciii;chartevents;220060
+SVRI;mimiciii;chartevents;627
+P_EI_(peak_endinsp.);mimiciii;chartevents;224695, 535, 507
+P_EI_(plat.);mimiciii;chartevents;543, 224696
+SPAP;mimiciii;chartevents;220059
+etCO2;mimiciii;chartevents;1817
+CRP;mimiciii;chartevents;227444
+Norepinephrin;mimiciii;inputevents_mv;221906
+Propofol;mimiciii;inputevents_mv;222168
+Epinephrin;mimiciii;chartevents;5752
+Vasopressin;mimiciii;inputevents_cv;30051
+Dobutamin;mimiciii;inputevents_cv;30042
+Furosemid;mimiciii;inputevents_mv;221794
+Rocuronium;mimiciii;chartevents;1052
+Hydrocortison;mimiciii;chartevents;4312
+Midazolam;mimiciii;inputevents_cv;4312
+Morphin;mimiciii;inputevents_cv;30153
+Milrinon;mimiciii;inputevents_cv;30125
+Prednisolon;mimiciii;chartevents;4929
+Dexamethason;mimiciii;chartevents;7349
+Fentanyl;mimiciii;chartevents;1342
+Tidalvolumen;mimiciii;chartevents;2311
+deltaP;mimiciii;chartevents;2921
+HI_Bolus;mimiciii;chartevents;228177, 116
+ECMO;mimiciii;chartevents;224660, 5931, 6758
+Dexmedetomidin;mimiciii;inputevents_mv;225150
+AF_gemessen;sepsis;ptassessment_view;12767, 58181, 8804, 28338
+AF_eingestellt;sepsis;ptassessment_view;8718, 58096, 8798
+Amylase;sepsis;ptlabresult_view;8527, 53260
+BE_arteriell;sepsis;ptlabresult_view;10588, 15136, 44513
+Bicarbonat_arteriell;sepsis;ptlabresult_view;17156
+Bilirubin_ges;sepsis;ptlabresult_view;8343, 45146, 43820, 53064
+CK;sepsis;ptlabresult_view;4957
+Compliance;sepsis;ptassessment_view;12640
+DAP;sepsis;ptassessment_view;3365, 3369, 3370, 4355, 4357, 9847
+FiO2_gemessen;sepsis;ptassessment_view;2970, 47047, 60582, 45463, 58669, 55121
+FiO2_eingestellt;sepsis;ptassessment_view;2962
+HF;sepsis;ptassessment_view;4745, 4746, 13595, 13596
+Harnstoff;sepsis;ptlabresult_view;15539, 52588
+Horovitz-Quotient;sepsis;ptassessment_view,ptlabresult_view;55, 10066, 49892
+Haematokrit;sepsis;ptlabresult_view;19762, 53386
+Haemoglobin;sepsis;ptlabresult_view;3869, 16964, 37071, 53324
+I:E_gemessen;sepsis;ptassessment_view;45191, 58145, 6250
+I:E_eingestellt;sepsis;ptassessment_view;57981, 58130
+INR;sepsis;ptlabresult_view;816, 52740
+Kreatinin;sepsis;ptlabresult_view;8374, 52734
+Koerperkerntemperatur;sepsis;ptassessment_view;5015, 14367, 1370
+Laktat_arteriell;sepsis;ptlabresult_view;16947
+Leukozyten;sepsis;ptlabresult_view;5029, 53534
+Lipase;sepsis;ptlabresult_view;8521, 53037
+MAP;sepsis;ptassessment_view;3364, 3366, 3367, 4358, 4359, 9849
+PEEP_gemessen;sepsis;ptassessment_view;8732, 58078, 505, 28210, 45465, 58671, 60580, 15988
+PEEP_eingestellt;sepsis;ptassessment_view;8726, 58112, 8789
+SAP;sepsis;ptassessment_view;3368, 3371, 3372, 4353, 4354, 9844
+SaO2;sepsis;ptlabresult_view;16905, 10656
+SpO2;sepsis;ptassessment_view;402, 403, 21974
+SzvO2;sepsis;ptlabresult_view;118, 4663, 4672
+ZVD;sepsis;ptassessment_view;5112
+pH_arteriell;sepsis;ptlabresult_view;11500
+pTT;sepsis;ptlabresult_view;16807
+paCO2;sepsis;ptlabresult_view;4392
+paO2;sepsis;ptassessment_view;1021
+Lagerungstherapie;sepsis;ptassessment_view;58398
+EVLWI;sepsis;ptassessment_view;45283, 11184
+CK-MB;sepsis;ptlabresult_view;8503, 44353, 52684
+PCWP;sepsis;ptassessment_view;744
+MPAP;sepsis;ptassessment_view;3375
+HI_kontinuierlich;sepsis;ptassessment_view;15509, 45387
+Troponin;sepsis;ptlabresult_view;53380, 26499, 15498
+Thrombozyten;sepsis;ptlabresult_view;53352, 22858
+Albumin;sepsis;ptlabresult_view;44440, 8536, 35323
+SV_kontinuierlich;sepsis;ptassessment_view;5140
+HZV_kontinuierlich;sepsis;ptassessment_view;6433
+BNP;sepsis;ptlabresult_view;44212, 22077
+Inhalatives_NO;sepsis;ptassessment_view;22179
+PVRI;sepsis;ptassessment_view;1064, 45291
+DPAP;sepsis;ptassessment_view;3374
+PCT;sepsis;ptlabresult_view;10269, 53198, 20011, 21979
+SVRI;sepsis;ptassessment_view;11937, 45366
+GEDVI;sepsis;ptassessment_view;16702
+P_EI_(peak_endinsp.);sepsis;ptassessment_view;3027, 58174, 16023
+P_EI_(insp.);sepsis;ptassessment_view;14381, 45591
+P_EI_(plat.);sepsis;ptassessment_view;14129
+P_EI_(mean);sepsis;ptassessment_view;8750, 8833
+SPAP;sepsis;ptassessment_view;3373
+etCO2;sepsis;ptassessment_view;6120, 21504
+CRP;sepsis;ptlabresult_view;11233, 45122, 45210, 52679
+Norepinephrin;sepsis;ptmedication_view;689
+Propofol;sepsis;ptmedication_view;4785, 1260
+Clonidin;sepsis;ptmedication_view;1156
+Epinephrin;sepsis;ptmedication_view;47
+Vasopressin;sepsis;ptmedication_view;2942
+Dobutamin;sepsis;ptmedication_view;737
+Levosimedan;sepsis;ptmedication_view;3433
+Furosemid;sepsis;ptmedication_view;137
+Sufentanil;sepsis;ptmedication_view;2423
+Rocuronium;sepsis;ptmedication_view;654, 3825
+Hydrocortison;sepsis;ptmedication_view;2661, 2685
+Midazolam;sepsis;ptmedication_view;2236, 5387
+Morphin;sepsis;ptmedication_view;165
+Ketanest;sepsis;ptmedication_view;296, 2826
+Milrinon;sepsis;ptmedication_view;2371
+Terlipressin;sepsis;ptmedication_view;3910
+Prednisolon;sepsis;ptmedication_view;2000
+Dexamethason;sepsis;ptmedication_view;2410
+Fentanyl;sepsis;ptmedication_view;1259
+Tidalvolumen;sepsis;ptassessment_view;22760
+HZV_Bolus;sepsis;ptassessment_view;677
+HI_Bolus;sepsis;ptassessment_view;14742, 45359
+SVI_Bolus;sepsis;ptassessment_view;16774,  45350
+ECMO;sepsis;ptassessment_view;29643
+AF_spontan;sepsis;ptassessment_view;8758, 58158
+Gasfluss_extrakorporal;sepsis;ptassessment_view;30656, 6115
+Gaszusammensetzung;sepsis;ptassessment_view;28178
+Iloprost;sepsis;ptmedication_view;3052
+Dexmedetomidin;sepsis;ptmedication_view;3454
+Isofluran;sepsis;ptassessment_view;23920, 50093
+Fludrocortison;sepsis;ptmedication_view;3125
+Horovitz-Quotient;asic;asic_data;horovitz
+paO2;asic;asic_data;pao2
+FiO2_gemessen;asic;asic_data;fio2_gemessen
+I:E_gemessen;asic;asic_data;ie_gemessen
+Koerperkerntemperatur;asic;asic_data;koerperkerntemperatur
+MAP;asic;asic_data;map
+PEEP_gemessen;asic;asic_data;peep_gemessen
+AF_gemessen;asic;asic_data;atemfrequenz_gemessen
+HF;asic;asic_data;herzfrequenz
+Amylase;asic;asic_data;amylase
+BE_arteriell;asic;asic_data;be_arteriell
+Bicarbonat_arteriell;asic;asic_data;bicarbonat_arteriell
+Bilirubin_ges;asic;asic_data;bilirubin_ges
+CK;asic;asic_data;ck
+Compliance;asic;asic_data;compliance
+DAP;asic;asic_data;dap
+Haematokrit;asic;asic_data;haematokrit
+Haemoglobin;asic;asic_data;haemoglobin
+INR;asic;asic_data;inr
+Kreatinin;asic;asic_data;kreatinin
+Laktat_arteriell;asic;asic_data;lactat
+Leukozyten;asic;asic_data;leukozyten
+Lipase;asic;asic_data;lipase
+SAP;asic;asic_data;sap
+SaO2;asic;asic_data;sao2
+SzvO2;asic;asic_data;szvo2
+ZVD;asic;asic_data;zvd
+pH_arteriell;asic;asic_data;ph
+pTT;asic;asic_data;ptt
+paCO2;asic;asic_data;paco2
+EVLWI;asic;asic_data;evlwi
+CK-MB;asic;asic_data;ck-mb
+PCWP;asic;asic_data;pcwp
+MPAP;asic;asic_data;mpap
+HI_kontinuierlich;asic;asic_data;khi
+Albumin;asic;asic_data;albumin
+HZV_kontinuierlich;asic;asic_data;khzv
+BNP;asic;asic_data;bnp
+PVRI;asic;asic_data;pvri
+DPAP;asic;asic_data;dpap
+PCT;asic;asic_data;pct
+SVRI;asic;asic_data;svri
+P_EI_(peak_endinsp.);asic;asic_data;p_ei_peak
+SPAP;asic;asic_data;spap
+etCO2;asic;asic_data;etco2
+CRP;asic;asic_data;crp
+HZV_Bolus;asic;asic_data;bhzv
+HI_Bolus;asic;asic_data;bhi
+SVI;asic;asic_data;svi
+AF_spontan;asic;asic_data;af_spontan
+Gasfluss_extrakorporal;asic;asic_data;gasfluss
+Gaszusammensetzung;asic;asic_data;gaszusammensetzung_o2
+Norepinephrin;asic;asic_data;norepinephrin
+Propofol;asic;asic_data;propofol
+Isofluran;asic;asic_data;isofluran
+Clonidin;asic;asic_data;clonidin
+Epinephrin;asic;asic_data;epinephrin
+Vasopressin;asic;asic_data;vasopressin
+Dobutamin;asic;asic_data;dobutamin
+Levosimedan;asic;asic_data;levosimendan
+Furosemid;asic;asic_data;furosemid
+Sufentanil;asic;asic_data;sufentanil
+Rocuronium;asic;asic_data;rocuronium
+Hydrocortison;asic;asic_data;hydrocortison
+Midazolam;asic;asic_data;midazolam
+Morphin;asic;asic_data;morphin
+Ketanest;asic;asic_data;ketanest
+Milrinon;asic;asic_data;milrinon
+Terlipressin;asic;asic_data;terlipressin
+Prednisolon;asic;asic_data;prednisolon
+Dexamethason;asic;asic_data;dexamethason
+Fentanyl;asic;asic_data;fentanyl
+Iloprost;asic;asic_data;iloprost
+Dexmedetomidin;asic;asic_data;dexmedetomidin
+Fludrocortison;asic;asic_data;fludrocortison
+SpO2;asic;asic_data;spo2
+Troponin;asic;asic_data;troponin
+Thrombozyten;asic;asic_data;thrombozyten
+SV_kontinuierlich;asic;asic_data;schlagvolumen
+Harnstoff;asic;asic_data;harnstoff
+GOT;asic;asic_data;got
+GPT;asic;asic_data;gpt
+Inhalatives_NO;asic;asic_data;no_inhalativ
+deltaP;asic;asic_data;deltap
+ECMO;asic;asic_data;ecmo
+GEDVI;asic;asic_data;gedvi
+24h-Bilanz;asic;asic_data;output_24h
+AF_eingestellt;asic;asic_data;atemfrequenz_eingestellt
+FiO2_eingestellt;asic;asic_data;fio2_eingestellt
+I:E_eingestellt;asic;asic_data;ie_eingestellt
+PEEP_eingestellt;asic;asic_data;peep_eingestellt
+Tidalvolumen;asic;asic_data;tidalvolumen
+P_EI_(insp.);asic;asic_data;p_ei_insp
+P_EI_(plat.);asic;asic_data;p_ei_plat
+P_EI_(mean);asic;asic_data;p_ei_mean
