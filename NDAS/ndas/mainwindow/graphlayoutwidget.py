@@ -5,7 +5,7 @@ from PyQt5.QtWidgets import QApplication, QGraphicsRectItem
 from pyqtgraph.Qt import QtCore
 from PyQt5.QtGui import *
 
-from ndas.extensions import annotations
+from ndas.extensions import algorithms, annotations
 from ndas.misc.colors import Color
 
 

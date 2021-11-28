@@ -7,13 +7,13 @@ from ndas.mainwindow import graphlayoutwidget
 from ndas.misc import graphbox
 from ndas.misc.colors import Color
 from ndas.utils import logger, regression_analysis
-from re import search
 
 registered_plots = {}
 plot_layout_widget = None
 
 draw_outlier_series_box = False
 outlier_series_threshold = 5
+exclusion_substrings = []
 
 
 def init_graphs(config):
@@ -24,7 +24,7 @@ def init_graphs(config):
     ----------
     config
     """
-    global plot_layout_widget, draw_outlier_series_box, outlier_series_threshold
+    global plot_layout_widget, draw_outlier_series_box, outlier_series_threshold, exclusion_substrings
 
     if config["use_dark_mode"]:
         pg.setConfigOption('background', 'k')
@@ -35,6 +35,7 @@ def init_graphs(config):
 
     draw_outlier_series_box = config["draw_outlier_series_box"]
     outlier_series_threshold = config["outlier_series_threshold"]
+    exclusion_substrings = [str(v) for v in config["exclusion_substrings"]]
 
     pg.setConfigOptions(antialias=True)
     plot_layout_widget = graphlayoutwidget.GraphLayoutWidget()
@@ -183,6 +184,14 @@ def add_spline_regression_curve():
         update_plot_view()
 
 
+def get_registered_plot_keys():
+    """
+    Returns the keys of registered plots excluding "LOS"
+    """
+    global registered_plots
+    return [k for k, v in registered_plots.items() if "LOS" not in k]
+
+
 def register_available_plots(current_active_plot=None):
     """
     Registers all plots for the available data
@@ -192,7 +201,7 @@ def register_available_plots(current_active_plot=None):
     current_active_plot
 
     """
-    global registered_plots
+    global registered_plots, exclusion_substrings
     registered_plots = {}
 
     plot_layout_widget.clear_plots()
@@ -203,7 +212,7 @@ def register_available_plots(current_active_plot=None):
 
     for idx, col in enumerate(columns[1:]):
         temp_data = df[col]
-        if not temp_data.dropna().empty and not search(r'ID|gender|age|ethnicity|height|weight|ICD', labels[idx + 1]):
+        if not temp_data.dropna().empty and not any(pattern in labels[idx + 1] for pattern in exclusion_substrings):
             temp_time = df[columns[0]]
             temp_df = pd.DataFrame({columns[0]: temp_time, col: temp_data})
             temp_df.dropna(axis=0, inplace=True)

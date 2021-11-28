@@ -16,7 +16,7 @@ class DataInspectionWidget(QWidget):
         self.layout = QGridLayout(self)
         self.tableView = QTableView(self)
         self.tableView.setSortingEnabled(True)
-        self.tableView.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+        self.tableView.horizontalHeader().setSectionResizeMode(QHeaderView.Interactive)
         self.layout.addWidget(self.tableView, 0, 0)
 
         self.model = None
@@ -82,6 +82,8 @@ class DataframeModel(QAbstractTableModel):
         Highlights selected data
         Required to reimplement.
 
+        Use int for ID to avoid scientific notation
+
         Parameters
         ----------
         index
@@ -89,7 +91,10 @@ class DataframeModel(QAbstractTableModel):
         """
         if index.isValid():
             if role == Qt.DisplayRole:
-                return float(self._data.iloc[index.row(), index.column()])
+                if "ID" in self._data.columns[index.column()]:
+                    return int(self._data.iloc[index.row(), index.column()])
+                else:
+                    return float(self._data.iloc[index.row(), index.column()])
         return None
 
     def headerData(self, section, orientation, role):

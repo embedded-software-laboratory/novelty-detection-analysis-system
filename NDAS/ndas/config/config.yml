@@ -15,55 +15,73 @@ physiologicalinfo:
   temperature:
     low: 25
     high: 45
+    nisd-pla-thr: 1.8
     aliases: ["temp", "t", "c", "TempC"]
   heartrate:
     low: 15
     high: 230
+    nisd-pla-thr: 15
     aliases: ["hr", "HR"]
   pamean:
     low: 1
     high: 98
+    nisd-pla-thr: 10
     aliases: [ ]
   pasystolic:
     low: 5
     high: 140
+    nisd-pla-thr: 10
     aliases: [ ]
   padiastolic:
     low: 1
     high: 93
+    nisd-pla-thr: 10
     aliases: [ ]
   systemicmean:
     low: 25
     high: 210
+    nisd-pla-thr: 18
     aliases: ["pMe"]
   systemicdiastolic:
     low: 20
     high: 180
+    nisd-pla-thr: 15
     aliases: ["pDi"]
   systemicsystolic:
     low: 35
     high: 280
+    nisd-pla-thr: 25
     aliases: ["pSy"]
   respiration:
     low: 4
     high: 65
-    aliases: ["RR"]
+    nisd-pla-thr: 7.5
+    aliases: ["rr", "RR"]
   sao2:
     low: 20.5
     high: 100
-    aliases: ["SaO2"]
+    nisd-pla-thr: 5
+    aliases: ["sao2", "SaO2"]
   end-tidal-co2:
     low: 18
     high: 49
-    aliases: ["etCO2"]
+    nisd-pla-thr: 6
+    aliases: ["etco2", "etCO2"]
   central-venous-pressure:
     low: -10
     high: 50
-    aliases: ["CVP"]
+    nisd-pla-thr: 10
+    aliases: ["cvp", "CVP"]
+  default:
+    low: 0
+    high: 100
+    nisd-pla-thr: 10
+    aliases: [ ]
 algorithms:
 savestate:
 plots:
   draw_outlier_series_box: True
   outlier_series_threshold: 5
   use_dark_mode: False
+  exclusion_substrings: ["ID", "gender", "age", "ethnicity", "height", "weight", "ICD"]
 

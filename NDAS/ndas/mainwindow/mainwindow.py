@@ -1,16 +1,18 @@
 from PyQt5.QtCore import (pyqtSlot, QTimer)
-from PyQt5.QtGui import QIntValidator, QDoubleValidator, QIcon
+from PyQt5.QtGui import QDoubleValidator, QIntValidator, QIcon
 from PyQt5.QtWidgets import *
 
-from ndas.extensions import algorithms, data, savestate, plots, annotations
-from ndas.mainwindow import statgraphwidgets, datageneratorwidget, benchmarkwidget, datainspectionwidget, datamedicalimputationwidget
-from ndas.misc import rangeslider, loggerwidget, parameter
-from ndas.utils import stats
 import logging
+import numpy as np
+import os
+
+from ndas.extensions import algorithms, annotations, data, plots, savestate
+from ndas.mainwindow import datamedicalimputationwidget, statgraphwidgets, datainspectionwidget, benchmarkwidget
 from ndas.mainwindow.sshsettingswidget import SSHSettingsWindow
 from ndas.mainwindow.databasesettingswidget import DatabaseSettingsWindow
 from ndas.mainwindow.importdatabasewidget import ImportDatabaseWindow
-import os
+from ndas.misc import loggerwidget, parameter, rangeslider
+from ndas.utils import stats
 
 
 class MainWindow(QMainWindow):
@@ -53,15 +55,13 @@ class MainWindow(QMainWindow):
         self.tab_datamedimputation.setAutoFillBackground(True)
         self.tab_datainspector = datainspectionwidget.DataInspectionWidget()
         self.tab_datainspector.setAutoFillBackground(True)
-        self.tab_datagenerator = datageneratorwidget.DataGeneratorWidget()
+        # self.tab_datagenerator = datageneratorwidget.DataGeneratorWidget()
 
-        self.tab_datagenerator.generated_data_signal.connect(
-            lambda df, labels: self.data_import_result_slot(df, labels))
-        self.tab_datagenerator.register_annotation_plot_signal.connect(
-            lambda name: annotations.register_plot_annotation(name))
-        self.tab_datagenerator.update_labels_signal.connect(lambda: self.plot_layout_widget.update_labels())
+        # self.tab_datagenerator.generated_data_signal.connect( lambda df, labels: self.data_import_result_slot(df, labels))
+        # self.tab_datagenerator.register_annotation_plot_signal.connect( lambda name: annotations.register_plot_annotation(name))
+        # self.tab_datagenerator.update_labels_signal.connect(lambda: self.plot_layout_widget.update_labels())
 
-        self.tab_datagenerator.setAutoFillBackground(True)
+        # self.tab_datagenerator.setAutoFillBackground(True)
         self.tab_benchmark = benchmarkwidget.BenchmarkWidget(threadpool_obj)
         self.tab_benchmark.setAutoFillBackground(True)
         self.tab_statistics = statgraphwidgets.StatsGraphWidget()
@@ -69,10 +69,10 @@ class MainWindow(QMainWindow):
 
         self.main_widget.addTab(self.tab_annotation, "Annotation")
         self.main_widget.addTab(self.tab_datamedimputation, 'Data Imputation')
-        self.main_widget.addTab(self.tab_datainspector, "Data Inspector")
-        self.main_widget.addTab(self.tab_datagenerator, "Data Generator")
-        self.main_widget.addTab(self.tab_benchmark, "Benchmark")
         self.main_widget.addTab(self.tab_statistics, "Statistics")
+        self.main_widget.addTab(self.tab_datainspector, "Data Inspector")
+        # self.main_widget.addTab(self.tab_datagenerator, "Data Generator")
+        self.main_widget.addTab(self.tab_benchmark, "Benchmark")
 
         self.main_grid = QGridLayout(self.main_widget)
         self.tab_annotation.setLayout(self.main_grid)
@@ -140,6 +140,36 @@ class MainWindow(QMainWindow):
         self.annotation_groupbox_layout.addWidget(self.annotation_invert_btn)
         self.annotation_groupbox_layout.addWidget(self.annotate_deselect_btn)
 
+        self.novelty_selection_groupbox = QGroupBox("Novelty Selection")
+        self.novelty_selection_groupbox_layout = QHBoxLayout()
+        self.novelty_selection_groupbox.setLayout(self.novelty_selection_groupbox_layout)
+
+        self.novelty_selection_number_active_label = QLabel("Marked: ")
+        self.novelty_selection_number_active = QLabel("0")
+        self.novelty_selection_number_selected_label = QLabel("Selected: ")
+        self.novelty_selection_number_selected = QLabel("0")
+
+        self.novelty_selection_add_btn = QPushButton(" Mark")
+        self.novelty_selection_add_btn.setIcon(QIcon('ndas/img/plus-line.svg'))
+        self.novelty_selection_remove_btn = QPushButton(" Unmark")
+        self.novelty_selection_remove_btn.setIcon(QIcon('ndas/img/minus-line.svg'))
+        self.novelty_selection_invert_btn = QPushButton(" Invert Marking")
+        self.novelty_selection_invert_btn.setIcon(QIcon('ndas/img/convert-arrow.svg'))
+
+        self.novelty_selection_label_layout = QHBoxLayout()
+        self.novelty_selection_label_layout.addWidget(self.novelty_selection_number_active_label)
+        self.novelty_selection_label_layout.addWidget(self.novelty_selection_number_active)
+        self.novelty_selection_label_layout.addWidget(self.novelty_selection_number_selected_label)
+        self.novelty_selection_label_layout.addWidget(self.novelty_selection_number_selected)
+        self.novelty_selection_groupbox_layout.addLayout(self.novelty_selection_label_layout)
+
+        self.novelty_selection_spacer = QSpacerItem(20, 0, QSizePolicy.Expanding, QSizePolicy.Minimum)
+        self.novelty_selection_groupbox_layout.addItem(self.novelty_selection_spacer)
+
+        self.novelty_selection_groupbox_layout.addWidget(self.novelty_selection_add_btn)
+        self.novelty_selection_groupbox_layout.addWidget(self.novelty_selection_remove_btn)
+        self.novelty_selection_groupbox_layout.addWidget(self.novelty_selection_invert_btn)
+
         self.analysis_options_groupbox = QGroupBox("Analysis Settings")
         self.analysis_options_groupbox_layout = QVBoxLayout()
         self.analysis_options_groupbox.setLayout(self.analysis_options_groupbox_layout)
@@ -153,10 +183,12 @@ class MainWindow(QMainWindow):
         self.analysis_additional_options = QVBoxLayout()
         self.analysis_run_btn = QPushButton("Run")
         self.analysis_run_btn.setIcon(self.style().standardIcon(getattr(QStyle, 'SP_CommandLink')))
+        self.analysis_remove_detected_btn = QPushButton("Remove Selected Outliers")
 
         self.analysis_options_groupbox_layout.addLayout(self.active_analysis_algorithm_layout)
         self.analysis_options_groupbox_layout.addLayout(self.analysis_additional_options)
         self.analysis_options_groupbox_layout.addWidget(self.analysis_run_btn)
+        self.analysis_options_groupbox_layout.addWidget(self.analysis_remove_detected_btn)
 
         self.data_selection_groupbox = QGroupBox("Data Slicing")
         self.data_selection_groupbox_layout = QVBoxLayout()
@@ -390,9 +422,10 @@ class MainWindow(QMainWindow):
         """
         self.central_layout = QGridLayout()
         self.central_layout.addWidget(self.annotation_groupbox, 0, 0)
-        self.central_layout.addWidget(self.plot_layout_widget, 1, 0)
+        self.central_layout.addWidget(self.novelty_selection_groupbox, 1, 0)
+        self.central_layout.addWidget(self.plot_layout_widget, 2, 0)
 
-        self.central_layout.addLayout(self.btn_layout, 0, 2, 2, 3)
+        self.central_layout.addLayout(self.btn_layout, 0, 2, 3, 3)
 
         self.main_grid.addLayout(self.central_layout, 0, 0)
         self.main_grid.addLayout(self.progress_bar_layout, 1, 0)
@@ -472,6 +505,7 @@ class MainWindow(QMainWindow):
         """
         self.reset_view_btn.clicked.connect(lambda: self.plot_widget.autoRange())
         self.analysis_run_btn.clicked.connect(lambda: self.run_detection())
+        self.analysis_remove_detected_btn.clicked.connect(lambda: self.remove_detected_points())
 
         self.active_analysis_algorithm.currentIndexChanged.connect(lambda: self.change_algorithm_slot())
         self.active_analysis_algorithm.currentIndexChanged.connect(
@@ -490,6 +524,10 @@ class MainWindow(QMainWindow):
             lambda: self.plot_layout_widget.delabel_selection())
         self.annotate_deselect_btn.clicked.connect(lambda: self.plot_layout_widget.deselect_all())
         self.annotation_invert_btn.clicked.connect(lambda: self.plot_layout_widget.invert_selection())
+
+        self.novelty_selection_add_btn.clicked.connect(lambda: self.on_mark_selected_clicked())
+        self.novelty_selection_remove_btn.clicked.connect(lambda: self.on_unmark_selected_clicked())
+        self.novelty_selection_invert_btn.clicked.connect(lambda: self.on_invert_marking_selected_clicked())
 
         self.plot_layout_widget.mouse_moved_signal.connect(lambda x, y: self.mouse_moved_slot(x, y))
         self.plot_layout_widget.fps_updated_signal.connect(lambda fps: self.fps_updated_slot(fps))
@@ -610,8 +648,9 @@ class MainWindow(QMainWindow):
                 q_input.setValue(arg.default)
             elif arg.type == parameter.ArgumentType.FLOAT:
                 q_input = QDoubleSpinBox()
+                q_input.setDecimals(3)
                 q_input.setValue(arg.default)
-                q_input.setSingleStep(0.1)
+                q_input.setSingleStep(0.01)
                 q_input.setMinimum(arg.minimum)
                 q_input.setMaximum(arg.maximum)
             elif arg.type == parameter.ArgumentType.BOOL:
@@ -777,6 +816,22 @@ class MainWindow(QMainWindow):
         self.progress_bar.show()
 
     @pyqtSlot()
+    def remove_detected_points(self):
+        columns_with_novelties = algorithms.get_plots_with_detected_novelties()
+        df = data.get_full_dataframe()
+        time_column = data.get_dataframe_index_column()
+        for column in columns_with_novelties:
+            novelties = algorithms.get_detected_novelties(column)
+            df[column][df[time_column].isin([k for k, v in novelties.items() if v == 1])] = np.nan
+        self.update_values_in_current_dataset(df)
+
+    def update_values_in_current_dataset(self, df):
+        data.set_dataframe(df, [])
+        plots.register_available_plots(plots.get_active_plot()[0])
+        self.tab_datainspector.set_data(data.get_dataframe())
+        datamedicalimputationwidget.DataMedicalImputationWidget.on_import_data(self.tab_datamedimputation)
+
+    @pyqtSlot()
     def set_algorithm_result(self, val):
         """
         Sets the results of algorithms for visualization
@@ -803,6 +858,7 @@ class MainWindow(QMainWindow):
             self.stats_number_of_data_points.setText(stats.get_number_data_points(active_plot))
             self.stats_num_primary_novelties.setText(stats.get_number_novelties(active_plot, 1))
             self.stats_num_secondary_novelties.setText(stats.get_number_novelties(active_plot, 2))
+            self.novelty_selection_number_active.setText(stats.get_number_novelties(active_plot, 'all'))
             self.stats_data_range.setText(stats.get_range_dp(active_plot))
             self.stats_mean.setText(stats.get_mean(active_plot))
             self.stats_std.setText(stats.get_std(active_plot))
@@ -1059,6 +1115,7 @@ class MainWindow(QMainWindow):
             for k, v in plots.registered_plots.items():
                 self.plot_selector.addItem(plots.registered_plots[k].plot_name  + " (" +str(len(v.main_dot_plot.x_data)) + ")")
                 self.tab_statistics.plot_selector.addItem(plots.registered_plots[k].plot_name)
+        self.tab_benchmark.data_generator_settings_widget.update_plot_selection()
 
     def _confirm_error(self, title, text):
         """
@@ -1169,6 +1226,7 @@ class MainWindow(QMainWindow):
         number_selected
         """
         self.annotation_number_selected.setText("%s" % number_selected)
+        self.novelty_selection_number_selected.setText("%s" % number_selected)
 
     @pyqtSlot()
     def point_labeling_changed_slot(self, number_labeled: int):
@@ -1179,3 +1237,38 @@ class MainWindow(QMainWindow):
         number_labeled
         """
         self.annotation_number_active.setText("%s" % number_labeled)
+
+    def on_mark_selected_clicked(self):
+        print("test")
+        current_plot = plots.get_active_plot()[0]
+        current_novelties = algorithms.get_detected_novelties(current_plot)
+        selected_points = annotations.get_all_selection_points()
+        for point in selected_points:
+            current_novelties[point.x] = 1
+        self.set_updated_novelties(current_novelties, current_plot)
+
+    def on_unmark_selected_clicked(self):
+        current_plot = plots.get_active_plot()[0]
+        current_novelties = algorithms.get_detected_novelties(current_plot)
+        selected_points = annotations.get_all_selection_points()
+        for point in selected_points:
+            current_novelties[point.x] = 0
+        self.set_updated_novelties(current_novelties, current_plot)
+
+    def on_invert_marking_selected_clicked(self):
+        current_plot = plots.get_active_plot()[0]
+        current_novelties = algorithms.get_detected_novelties(current_plot)
+        selected_points = annotations.get_all_selection_points()
+        for point in selected_points:
+            if point.x in current_novelties:
+                current_novelties[point.x] = 1 - sorted((0, current_novelties[point.x], 1))[1]
+            else:
+                current_novelties[point.x] = 1
+        self.set_updated_novelties(current_novelties, current_plot)
+
+    def set_updated_novelties(self, plot_primary_novelties, plot_name):
+        algorithms.set_detected_novelties(plot_name, plot_primary_novelties)
+        plots.add_plot_novelties(plot_name, algorithms.get_detected_novelties(plot_name))
+
+        plots.update_plot_view()
+        self.update_statistics()

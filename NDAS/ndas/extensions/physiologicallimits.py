@@ -15,6 +15,7 @@ def init_physiological_info(config):
         if add_physiological_dt(k):
             add_physiological_dt_high_limit(k, v["high"])
             add_physiological_dt_low_limit(k, v["low"])
+            add_physiological_dt_nisd_pla_thr(k, v["nisd-pla-thr"])
             for alias in v["aliases"]:
                 add_physiological_dt_alias(k, alias)
 
@@ -76,6 +77,27 @@ def add_physiological_dt_low_limit(name: str, low: float) -> bool:
     else:
         physiological_data_types[name].set_low(low)
         logger.physicalinfo.debug("Added new low limit to physiological data type %s: %s" % (name, str(low)))
+        return True
+
+
+def add_physiological_dt_nisd_pla_thr(name: str, nisd_pla_thr: float) -> bool:
+    """
+    Adds a new low limit to a physiological data type.
+
+    Parameters
+    ----------
+    name : str
+        The name of the physiological data type
+    nisd_pla_thr : float
+        The low limit
+    """
+    global physiological_data_types
+    if name not in physiological_data_types.keys():
+        logger.physicalinfo.error("Physiological data type not found: %s" % name)
+        return False
+    else:
+        physiological_data_types[name].set_nisd_pla_thr(nisd_pla_thr)
+        logger.physicalinfo.debug("Added new NISD-PLA threshold to physiological data type %s: %s" % (name, str(nisd_pla_thr)))
         return True
 
 
@@ -155,6 +177,7 @@ class PhysiologicalDataType:
         self.id = pid
         self.high = None
         self.low = None
+        self.nisd_pla_thr = None
         self.aliases = []
 
     def set_high(self, high: float):
@@ -162,6 +185,9 @@ class PhysiologicalDataType:
 
     def set_low(self, low: float):
         self.low = low
+
+    def set_nisd_pla_thr(self, nisd_pla_thr: float):
+        self.nisd_pla_thr = nisd_pla_thr
 
     def add_alias(self, alias: str):
         self.aliases.append(alias)

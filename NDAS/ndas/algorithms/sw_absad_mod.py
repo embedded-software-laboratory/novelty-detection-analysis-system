@@ -22,22 +22,22 @@ class SW_ABSAD_MOD(BaseDetector):
         super(SW_ABSAD_MOD, self).__init__(*args, **kwargs)
 
         self.register_parameter("replaceZeroes", ArgumentType.BOOL, False)
-        self.register_parameter("replacePhysOutlier", ArgumentType.BOOL, False)
+        self.register_parameter("replacePhysOutlier", ArgumentType.BOOL, True)
         self.register_parameter("useCLmod", ArgumentType.BOOL, False)
         self.register_parameter("retrainAfterGap", ArgumentType.BOOL, False)
-        self.register_parameter("varianceCheck", ArgumentType.BOOL, False)
-        self.register_parameter("cleanTrainingWindow", ArgumentType.BOOL, False)
-        self.register_parameter("windowLength", ArgumentType.INTEGER, 300, 1)
+        self.register_parameter("varianceCheck", ArgumentType.BOOL, True)
+        self.register_parameter("cleanTrainingWindow", ArgumentType.BOOL, True)
+        self.register_parameter("windowLength", ArgumentType.INTEGER, 400, 1)
         self.register_parameter("theta", ArgumentType.FLOAT, 0.5, 0, 0.99,
                                 tooltip="Parameter to calculate relevant subspaces.")
-        self.register_parameter("confidence", ArgumentType.FLOAT, 0.99, 0, 1)
-        self.register_parameter("k", ArgumentType.INTEGER, 70, 0,
+        self.register_parameter("confidence", ArgumentType.FLOAT, 0.998, 0, 1)
+        self.register_parameter("k", ArgumentType.INTEGER, 100, 0,
                                 tooltip="Use the k nearest neighbors for estimation.")
-        self.register_parameter("s", ArgumentType.INTEGER, 70, 0,
+        self.register_parameter("s", ArgumentType.INTEGER, 100, 0,
                                 tooltip="The size of the reference set.")
 
         # self.register_parameter("useColumns", ArgumentType.STRING, "",
-        # tooltip="Use only this list of columns to run the algorithmn. Leave empty for all columns.")
+        # tooltip="Use only this list of columns to run the algorithm. Leave empty for all columns.")
 
     @staticmethod
     def get_cosine_similarity(x, y):
@@ -130,7 +130,6 @@ class SW_ABSAD_MOD(BaseDetector):
             min_value = 0.00002
         else:
             min_value = min(min_value_array)
-
         '''
         Da Werte die genau bei 0 liegen die
         Kurve überproportional beeinflussen könnten, werden vor der Berechnung des CL
@@ -140,7 +139,6 @@ class SW_ABSAD_MOD(BaseDetector):
             if los_sliding_window[current_point] == 0:
                 los_sliding_window[current_point] = min_value / 2
         kde = stats.gaussian_kde(los_sliding_window[~np.isnan(los_sliding_window)], self.bandwidth)
-
         '''
         In der konkreten Implementierung wird die
         gaussian_kde.integrate_box_1d Funktion des scipy.stats packages in Python gewählt.
@@ -151,13 +149,13 @@ class SW_ABSAD_MOD(BaseDetector):
         '''
         CL = 0
         for i in range(11):
-            while kde.integrate_box_1d(-10, CL+(1/(2**i))) < self.confidence_level:  # first training: and CL < 5
+            while round(kde.integrate_box_1d(-10, CL+(1/(2**i))), 10) < self.confidence_level:  # first training: and CL < 5
                 CL = CL + (1/(2**i))
 
         CL = round(CL, 3) - 0.001
         confidence_interval = kde.integrate_box_1d(-10, CL)
 
-        while confidence_interval < self.confidence_level:
+        while round(confidence_interval, 10) < self.confidence_level:
             CL += 0.001
             confidence_interval = kde.integrate_box_1d(-10, CL)
 
@@ -225,7 +223,7 @@ class SW_ABSAD_MOD(BaseDetector):
         if self.use_columns[0] != '':
             df = self.get_column_subset(df, self.use_columns)
         else:
-            df = df[[df.columns[0]]+list(plots.registered_plots.keys())]
+            df = df[[df.columns[0]]+[x for x in plots.registered_plots.keys() if x in df.columns and not df[x].dropna().empty]]
 
         if self.replace_zeroes:
             df = df.replace(0, np.NaN)

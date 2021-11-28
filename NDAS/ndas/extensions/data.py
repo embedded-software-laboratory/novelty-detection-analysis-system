@@ -208,6 +208,16 @@ def get_dataframe_columns():
     return False
 
 
+def get_dataframe_index_column():
+    """
+    Returns the first column identifier
+    """
+    global _dataframe
+    if _dataframe is not None:
+        return _dataframe.columns.tolist()[0]
+    return False
+
+
 def get_dataframe_length():
     """
     Returns the length of the data

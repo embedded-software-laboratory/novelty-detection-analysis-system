@@ -204,6 +204,10 @@ class DataMedicalImputationWidget(QWidget):
         self.DataToggle_label2.setStyleSheet('color: lightGray')
         self.DataToggle_layout.addWidget(self.DataToggle_label2, alignment=Qt.AlignCenter)
         self.Data_Visualization_Settings_Layout.addLayout(self.DataToggle_layout)
+
+        self.apply_results_button = QPushButton('Apply imputation results onto loaded dataset')
+        self.apply_results_button.clicked.connect(lambda: self.on_click_apply_results())
+        self.Data_Visualization_Settings_Layout.addWidget(self.apply_results_button)
         self.layout_right.addWidget(self.Data_Visualization_Settings, alignment=Qt.AlignTop)
 
         """
@@ -327,6 +331,9 @@ class DataMedicalImputationWidget(QWidget):
         for Plot in self.Graphs:
             Plot.autoRange()
             Plot.setXRange(self.Dataframe['tOffset'].dropna().min(), self.Dataframe['tOffset'].dropna().max())
+
+    def on_click_apply_results(self):
+        self.main_window.update_values_in_current_dataset(data.get_imputed_dataframe())
 
     def on_toggle_show_imputed_data(self, state):
         """

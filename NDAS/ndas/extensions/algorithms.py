@@ -120,7 +120,17 @@ def get_detected_novelties(plot_name):
     plot_name
     """
     global _detected_novelties
-    return _detected_novelties[plot_name]
+    if plot_name in _detected_novelties:
+        return _detected_novelties[plot_name]
+    return {}
+
+
+def get_plots_with_detected_novelties():
+    """
+    Returns the plots for which novelties were detected
+    """
+    global _detected_novelties
+    return _detected_novelties.keys()
 
 
 def restore_from_save(data: list):

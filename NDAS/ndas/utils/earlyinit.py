@@ -116,6 +116,7 @@ def check_libraries():
     """
     Checks if all libraries are installed
     """
+    # TODO: Update with newly used packages
     modules = {
         'csv': _missing_package_error_str("csv"),
         'pickle': _missing_package_error_str("pickle"),
