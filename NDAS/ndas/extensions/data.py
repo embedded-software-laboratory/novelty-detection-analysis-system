@@ -173,6 +173,14 @@ def set_imputed_dataframe(df):
     _imputed_dataframe = df
 
 
+def reset_imputed_dataframe():
+    """
+    Resets the imputed dataframe if a new regular dataframe is set
+    """
+    global _imputed_dataframe
+    _imputed_dataframe = None
+
+
 def get_imputed_dataframe():
     """
     Returns the full data

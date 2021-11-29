@@ -581,6 +581,9 @@ class MainWindow(QMainWindow):
         """
         Loads the currently selected active plot
         """
+        if not self.plot_selector.currentText().split():
+            return
+
         if not self.plot_selector.currentText().split()[0]:
             plots.set_plot_active("")
 

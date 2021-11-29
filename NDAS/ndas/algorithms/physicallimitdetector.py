@@ -54,7 +54,6 @@ class PhysicalLimitDetector(BaseDetector):
             if phys_info:
                 self.signal_add_infinite_line(c, "physical outlier lower limit", phys_info.low)
                 self.signal_add_infinite_line(c, "physical outlier upper limit", phys_info.high)
-
                 for index, row in data.iterrows():
                     if row[c] > phys_info.high or row[c] < phys_info.low:
                         novelty_data[row[time_column]] = 1

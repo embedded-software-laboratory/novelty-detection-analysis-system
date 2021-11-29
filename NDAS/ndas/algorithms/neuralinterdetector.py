@@ -1,7 +1,7 @@
 import numpy as np
 from ndas.algorithms.basedetector import BaseDetector  # Import the basedetector class
-from ndas.misc.parameter import ArgumentType
 from ndas.dataimputationalgorithms.base_imputation import BaseImputation
+from ndas.extensions import plots
 from kneed import KneeLocator
 
 
@@ -44,14 +44,14 @@ class NeuralInterDetector(BaseDetector):
         # Calculate the Neural Inter Imputation
         imputed_dataset = BaseImputation().base_imputation(dataframe=datasets, method_string='neural inter')
 
-        # Get the additional arguments
         time_column = datasets.columns[0]
+        used_columns = [col for col in datasets.columns if col in plots.get_registered_plot_keys()]
 
-        status_length = 90 / len(datasets.columns[1:10])
+        status_length = 90 / len(used_columns)
         current_status = 10.0
+        self.signal_percentage(int(current_status) % 100)
         result = {}
-        for c in datasets.columns[1:10]:
-            self.signal_percentage(int(current_status) % 100)
+        for c in used_columns:
             novelty_data = {}
             data = datasets[[c]]
             if np.count_nonzero(~np.isnan(data.values)) > 0:
@@ -59,7 +59,7 @@ class NeuralInterDetector(BaseDetector):
                 data_diff = (data - imputed_data).abs()
                 sorted_data_diff = np.sort(data_diff.values, axis=None)
                 sorted_data_diff = sorted_data_diff[~np.isnan(sorted_data_diff)]
-                threshold_value = KneeLocator(range(len(sorted_data_diff)), sorted_data_diff, S=1, curve='convex',
+                threshold_value = KneeLocator(range(len(sorted_data_diff)), sorted_data_diff, S=0.9, curve='convex',
                                               direction='increasing').knee_y
 
                 for index, row in data_diff.iterrows():
@@ -70,5 +70,6 @@ class NeuralInterDetector(BaseDetector):
 
             result[c] = novelty_data
             current_status += status_length
+            self.signal_percentage(int(current_status) % 100)
 
         return result

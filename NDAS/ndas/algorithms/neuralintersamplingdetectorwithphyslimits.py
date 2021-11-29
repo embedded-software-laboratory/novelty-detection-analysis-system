@@ -3,11 +3,8 @@ import pandas as pd
 from ndas.algorithms.basedetector import BaseDetector  # Import the basedetector class
 from ndas.misc.parameter import ArgumentType
 from ndas.dataimputationalgorithms.base_imputation import BaseImputation
+from ndas.extensions import plots
 from kneed import KneeLocator
-import matplotlib
-matplotlib.use("Agg")
-from matplotlib import pyplot as plt
-from scipy import ndimage
 
 
 class NeuralInterSamplingDetectorWithPhysicalLimits(BaseDetector):
@@ -26,8 +23,7 @@ class NeuralInterSamplingDetectorWithPhysicalLimits(BaseDetector):
         kwargs
         """
         super(NeuralInterSamplingDetectorWithPhysicalLimits, self).__init__(*args, **kwargs)
-        self.register_parameter("Use Diff-Smoothing", ArgumentType.BOOL, False, tooltip="Smoothes Differences before Threshold-Detection. Not recommended.")
-        self.register_parameter("S", ArgumentType.FLOAT, 1, 0, 10, tooltip="Parameter for the aggressiveness of error detection.")
+        self.register_parameter("S", ArgumentType.FLOAT, 0.9, 0, 10, tooltip="Parameter for the aggressiveness of error detection.")
 
     def detect(self, datasets, **kwargs) -> dict:
         """ Return novelties in given dataset
@@ -47,8 +43,8 @@ class NeuralInterSamplingDetectorWithPhysicalLimits(BaseDetector):
         novelties : dict
             A dict of plots with novelties with observation offset as key
         """
-        self.use_diff_smoothing = bool(kwargs["Use Diff-Smoothing"])
         self.s_value = float(kwargs["S"])
+
         clipped_dataset = datasets.copy(deep=True)
         for c in datasets.columns[1:10]:
             phys_info = self.get_physiological_information(c)
@@ -70,11 +66,12 @@ class NeuralInterSamplingDetectorWithPhysicalLimits(BaseDetector):
         imputed_dataset = imputation_accumulated / 50
         # Get the additional arguments
         time_column = datasets.columns[0]
+        used_columns = [col for col in datasets.columns if col in plots.get_registered_plot_keys()]
 
-        status_length = 25 / len(datasets.columns[1:10])
+        status_length = 25 / len(used_columns)
         current_status = 75.0
         result = {}
-        for c in datasets.columns[1:10]:
+        for c in used_columns:
             self.signal_percentage(int(current_status) % 100)
             novelty_data = {}
             data = clipped_dataset[[c]]
@@ -83,13 +80,8 @@ class NeuralInterSamplingDetectorWithPhysicalLimits(BaseDetector):
                 data_diff = (data - imputed_data).abs()
                 sorted_data_diff = np.sort(data_diff.values, axis=None)
                 sorted_data_diff = sorted_data_diff[~np.isnan(sorted_data_diff)]
-                if self.use_diff_smoothing:
-                    sorted_data_diff = ndimage.gaussian_filter1d(sorted_data_diff, sigma=1, mode='nearest')
-                plt.plot(range(len(sorted_data_diff)), sorted_data_diff)
                 knee_result = KneeLocator(range(len(sorted_data_diff)), sorted_data_diff, S=self.s_value, curve='convex', direction='increasing')
                 threshold_value = knee_result.knee_y
-                plt.axhline(threshold_value)
-                plt.axvline(knee_result.knee)
                 for index, row in data_diff.iterrows():
                     if row[c] > threshold_value:
                         novelty_data[datasets[time_column].values[index]] = 1
@@ -108,9 +100,4 @@ class NeuralInterSamplingDetectorWithPhysicalLimits(BaseDetector):
 
             result[c] = novelty_data
             current_status += status_length
-        fig = plt.gcf()
-        fig.set_size_inches(18.5, 10.5)
-        plt.savefig("C:\\Users\\AlexanderKruschewsky\\PycharmProjects\\pythonProject\\test2.png", dpi=300)
-        fig.clear()
-        plt.close(fig)
         return result
