@@ -1,7 +1,5 @@
 import numpy as np
 from . import pandas_interpolation
-from . import sklearn_imputation
-from . import keras_imputation
 import pandas as pd
 from scipy.stats import mode
 import logging
@@ -14,8 +12,8 @@ class BaseImputation:
 
     def __init__(self):
         self.Pandas_Interpolation = pandas_interpolation.PandasInterpolation()
-        self.Sklearn_Imputation = sklearn_imputation.SklearnImputation()
-        self.Keras_Imputation = keras_imputation.KerasImputation()
+        # self.Sklearn_Imputation = sklearn_imputation.SklearnImputation()
+        # self.Keras_Imputation = keras_imputation.KerasImputation()
         # self.Methods = {'uniform random': self.Sklearn_Imputation.uni_random_imputation, 'normal random': self.Sklearn_Imputation.norm_random_imputation, 'adjusted normal random': self.Sklearn_Imputation.fit_norm_random_imputation, 'mean': self.Sklearn_Imputation.mean_imputation, 'median': self.Sklearn_Imputation.median_imputation, 'mean non-fit': self.Sklearn_Imputation.mean_nf_imputation, 'median non-fit': self.Sklearn_Imputation.median_nf_imputation, 'interpolate': self.Pandas_Interpolation.simple_interpolation,  'polynomial': self.Pandas_Interpolation.polynomial_interpolation,  'spline': self.Pandas_Interpolation.spline_interpolation, 'neural inter': self.Pandas_Interpolation.neural_interpolation, 'neural inter mask': self.Pandas_Interpolation.neural_interpolation_mask, 'neural inter mask round': self.Pandas_Interpolation.neural_interpolation_mask_round, 'mice': self.Sklearn_Imputation.mice_imputation, 'knn': self.Sklearn_Imputation.knn_imputation, 'bayesian':  self.Sklearn_Imputation.bayesian_imputation, 'mlp': self.Sklearn_Imputation.mlp_imputation, 'svr': self.Sklearn_Imputation.svr_imputation, 'tree': self.Sklearn_Imputation.tree_imputation, 'extra_tree': self.Sklearn_Imputation.extra_tree_imputation, 'ransac': self.Sklearn_Imputation.ransac_imputation, 'sgd': self.Sklearn_Imputation.sgd_imputation, 'ada_boost': self.Sklearn_Imputation.ada_imputation, 'mice_ts': self.Keras_Imputation.mice_imputation, 'bayesian_ts':  self.Keras_Imputation.bayesian_imputation, 'mlp_ts': self.Keras_Imputation.mlp_imputation, 'svr_ts': self.Keras_Imputation.svr_imputation, 'tree_ts': self.Keras_Imputation.tree_imputation, 'extra_tree_ts': self.Keras_Imputation.extra_tree_imputation, 'ransac_ts': self.Keras_Imputation.ransac_imputation, 'sgd_ts': self.Keras_Imputation.sgd_imputation, 'ada_boost_ts': self.Keras_Imputation.ada_imputation, 'keras lstm': self.Keras_Imputation.kerlstm_imputation, 'keras nn': self.Keras_Imputation.kernn_imputation, 'keras nn sliding window': self.Keras_Imputation.kernn_sw_imputation, 'keras lstm sliding window': self.Keras_Imputation.kerlstm_sw_imputation, 'keras gan 8 epochs sliding window': self.Keras_Imputation.kergan_sw_imputation8, 'keras gan 10 epochs sliding window': self.Keras_Imputation.kergan_sw_imputation5, 'keras gan 5 epochs sliding window': self.Keras_Imputation.kergan_sw_imputation10, 'keras gan 15 epochs sliding window': self.Keras_Imputation.kergan_sw_imputation15, 'keras gan 20 epochs sliding window': self.Keras_Imputation.kergan_sw_imputation20}
         self.Methods = {'interpolate': self.Pandas_Interpolation.simple_interpolation,  'spline': self.Pandas_Interpolation.spline_interpolation, 'neural inter': self.Pandas_Interpolation.neural_interpolation, 'neural inter mask': self.Pandas_Interpolation.neural_interpolation_mask, 'neural inter mask round': self.Pandas_Interpolation.neural_interpolation_mask_round}
 
