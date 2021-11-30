@@ -241,7 +241,7 @@ class DataMedicalImputationWidget(QWidget):
         self.v_lines = []
         self.h_lines = []
         self.Show_Graph_Checkboxes = []
-        for row_num in range(1, self.layout_left.rowCount()):
+        for row_num in range(self.layout_left.rowCount()):
             self.layout_left.setRowStretch(row_num, 0)
 
     def create_graph_for_each_series(self, list_of_columns):
@@ -330,7 +330,7 @@ class DataMedicalImputationWidget(QWidget):
         self.Graphs[index].setVisible(state)
         self.layout_left.update()
 
-    def on_click_set_range(self):
+    def on_click_set_range(self, redraw_graphs=False):
         """
         Sets the Range for Data to be Visualized and calls Data Visualization
         """
@@ -338,7 +338,10 @@ class DataMedicalImputationWidget(QWidget):
         upper_limit = int(float(self.data_selection_end.text()))
         time_column = self.Dataframe.columns[0]
         if self.Dataframe[time_column].empty:
-            self.visualize_data(self.Dataframe)
+            if redraw_graphs:
+                self.visualize_data_and_redraw_graphs(self.Dataframe)
+            else:
+                self.visualize_data(self.Dataframe)
         else:
             if lower_limit >= self.Dataframe[time_column].dropna().max():
                 lower_index = -1
@@ -348,19 +351,25 @@ class DataMedicalImputationWidget(QWidget):
                 upper_index = -1
             else:
                 upper_index = self.Dataframe[time_column].le(upper_limit).iloc[::-1].idxmax()
-            self.visualize_data(self.Dataframe.iloc[lower_index:upper_index])
+            if redraw_graphs:
+                self.visualize_data_and_redraw_graphs(self.Dataframe)
+            else:
+                self.visualize_data(self.Dataframe)
 
         self.bar_plot.setXRange(lower_limit, upper_limit)
         for Plot in self.Graphs:
             Plot.autoRange()
             Plot.setXRange(lower_limit, upper_limit)
 
-    def on_click_reset_range(self):
+    def on_click_reset_range(self, redraw_graphs=False):
         """
         Resets the Range for Data to be Visualized and calls Data Visualization
         """
         time_column = self.Dataframe.columns[0]
-        self.visualize_data(self.Dataframe)
+        if redraw_graphs:
+            self.visualize_data_and_redraw_graphs(self.Dataframe)
+        else:
+            self.visualize_data(self.Dataframe)
         self.data_selection_start.setText(str(self.Dataframe[time_column].dropna().min()))
         self.data_selection_end.setText(str(self.Dataframe[time_column].dropna().max()))
         self.update_data_selection_slider()
@@ -400,7 +409,7 @@ class DataMedicalImputationWidget(QWidget):
             self.data_selection_slider.setDisabled(False)
             self.data_selection_slider.setRangeLimit(self.Dataframe[time_column].dropna().min(), self.Dataframe[time_column].dropna().max())
 
-            self.on_click_reset_range()
+            self.on_click_reset_range(redraw_graphs=True)
             self.data_selection_slider.valueChanged.connect(lambda start_value, end_value: self.update_data_selection_text(start_value, end_value))
             self.data_selection_start.textChanged.connect(lambda: self.update_data_selection_slider())
             self.data_selection_end.textChanged.connect(lambda: self.update_data_selection_slider())
@@ -409,7 +418,6 @@ class DataMedicalImputationWidget(QWidget):
             self.DataToggle.setDisabled(False)
             self.apply_results_button.setDisabled(False)
             self.DataToggle_label2.setStyleSheet('color: black')
-
 
     def on_mouse_moved_over_graph(self, pos, i):
         """
@@ -432,6 +440,11 @@ class DataMedicalImputationWidget(QWidget):
         self.main_window.x_label.setText('x=%0.01f' % point.x())
         self.main_window.y_label.setText('y=%0.01f' % point.y())
 
+    def visualize_data_and_redraw_graphs(self, update_dataframe):
+        used_columns = [col for col in update_dataframe.columns if col in plots.get_registered_plot_keys()]
+        self.create_graph_for_each_series(used_columns)
+        self.visualize_data(update_dataframe)
+
     def visualize_data(self, update_dataframe):
         """
         Visualizes the Graphs and Patient Information
@@ -440,7 +453,6 @@ class DataMedicalImputationWidget(QWidget):
         """
         time_column = update_dataframe.columns[0]
         used_columns = [col for col in update_dataframe.columns if col in plots.get_registered_plot_keys()]
-        self.create_graph_for_each_series(used_columns)
 
         for i, col in enumerate(used_columns):
             self.Show_Graph_Checkboxes[i].setChecked(not update_dataframe[col].isnull().all())
@@ -465,6 +477,7 @@ class DataMedicalImputationWidget(QWidget):
                 self.bar_plot.show()
                 self.Patient_Information_ICD_Label.show()
                 self.ICD_Grid_Widget.show()
+                self.layout_left.setRowStretch(0, 1)
                 self.ICD_Labels[i].setToolTip(self.ICD_Labels[i].toolTip()+"\n")
                 self.ICD_Labels[i].setStyleSheet('color: black')
                 list_of_value_change_indices = local_icd_series[(local_icd_series.diff() != 0)].index.tolist()

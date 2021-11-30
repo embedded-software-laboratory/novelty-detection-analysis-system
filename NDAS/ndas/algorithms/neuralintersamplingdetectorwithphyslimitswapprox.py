@@ -80,7 +80,7 @@ class NeuralInterSamplingDetectorWithPhysicalLimitsWithApprox(BaseDetector):
         for c in used_columns:
             novelty_data = {}
             data = clipped_dataset[[c]]
-            if np.count_nonzero(~np.isnan(data.values)) > 2:
+            if np.count_nonzero(~np.isnan(data.values)) > 10:
                 imputed_data = imputed_dataset[[c]].iloc[data.index]
                 data_diff = (data - imputed_data).abs()
                 sorted_data_diff = np.sort(data_diff.values, axis=None)

@@ -21,7 +21,7 @@ physiologicalinfo:
   heartrate:
     low: 15
     high: 230
-    nisd-pla-thr: 15
+    nisd-pla-thr: 18
     unit: "bpm"
     aliases: ["hr", "HR"]
   pamean:
@@ -45,25 +45,25 @@ physiologicalinfo:
   systemicmean:
     low: 25
     high: 210
-    nisd-pla-thr: 18
+    nisd-pla-thr: 20
     unit: "mmHg"
     aliases: ["bpm", "pMe"]
   systemicdiastolic:
     low: 20
     high: 180
-    nisd-pla-thr: 15
+    nisd-pla-thr: 17
     unit: "mmHg"
     aliases: ["bpd", "pDi"]
   systemicsystolic:
     low: 35
     high: 280
-    nisd-pla-thr: 25
+    nisd-pla-thr: 27
     unit: "mmHg"
     aliases: ["bps", "pSy"]
   respiration:
     low: 4
     high: 65
-    nisd-pla-thr: 7.5
+    nisd-pla-thr: 9
     unit: "bpm"
     aliases: ["rr", "RR"]
   sao2:

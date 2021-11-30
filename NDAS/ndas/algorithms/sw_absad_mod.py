@@ -5,6 +5,7 @@ import time
 import datetime
 
 import numpy as np
+import pandas as pd
 from scipy import stats
 from scipy.spatial import distance
 
@@ -788,10 +789,10 @@ class SW_ABSAD_MOD(BaseDetector):
 
             # Iteration step
             sample_counter = sample_counter + 1
-        df['outlier_table'] = outlier_table[:-1]
-        df['relevantcol'] = (LOSsubsortges[:, self.num_data_dimensions - 1])[:-10]
-        df['LOS'] = LOS_complete[:-10]
-        df['controllimit'] = cl_complete_table
+        df['outlier_table'] = pd.Series(outlier_table[:-1], index=df_without_offset.index)
+        df['relevantcol'] = pd.Series((LOSsubsortges[:, self.num_data_dimensions - 1])[:-10], index=df_without_offset.index)
+        df['LOS'] = pd.Series(LOS_complete[:-10], index=df_without_offset.index)
+        df['controllimit'] = pd.Series(cl_complete_table, index=df_without_offset.index)
         '''
         Jetzt werden die erkannten Outlier zu einem Result-Set hinzugefügt.
         Dieses wird vom Programm benötigt, um die Outlier zu markieren.
@@ -808,7 +809,8 @@ class SW_ABSAD_MOD(BaseDetector):
             _counter = 0
 
             for index, row in df.iterrows():
-                outlier_for_column[row[0]] = row['outlier_table']
+                if index in df_without_offset.index:
+                    outlier_for_column[row[0]] = row['outlier_table']
 
             # for every time value
             for key, value in outlier_for_column.items():

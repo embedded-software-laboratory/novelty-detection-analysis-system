@@ -109,6 +109,8 @@ class PandasInterpolation:
 
         for pre_col in pre_trained_columns:
             found_column = next((col for col in dafr.columns if physiologicallimits.is_alias_of(col, pre_col)), False)
+            if found_column and physiologicallimits.get_physical_dt(pre_col).low < 0:
+                dafr[found_column] -= physiologicallimits.get_physical_dt(pre_col).low
 
             if found_column and all(map(any, repeat(iter((x != 0 and not np.isnan(x)) for x in dafr[found_column]), 10))):
                 phys_lim = physiologicallimits.get_physical_dt(pre_col)
@@ -136,6 +138,10 @@ class PandasInterpolation:
                 for j in pre_trained_columns:
                     list_of_outside_info.append(dict_of_other_medians[j] * median)
 
-                dict_of_inputs[k] = np.clip(np.column_stack([dict_of_inputs[k]] + list_of_outside_info), phys_lim.low, phys_lim.high)
+                if phys_lim.low < 0:
+                    dict_of_inputs[k] = np.clip((np.column_stack([dict_of_inputs[k]] + list_of_outside_info) + phys_lim.low), phys_lim.low, phys_lim.high)
+
+                else:
+                    dict_of_inputs[k] = np.clip(np.column_stack([dict_of_inputs[k]] + list_of_outside_info), phys_lim.low, phys_lim.high)
 
         return dict_of_inputs
