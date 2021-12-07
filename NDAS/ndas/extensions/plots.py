@@ -76,7 +76,7 @@ def register_plot(name: str, x_data: any, y_data: any, x_label: str, y_label: st
         return False
 
     plot_scatter = pg.ScatterPlotItem(x=x_data_numpy, y=y_data_numpy, brush=pg.mkBrush(Color.BLUE.value),
-                                      pen=pg.mkPen(color='w', width=0.4),
+                                      pen=pg.mkPen(color='w', width=0.4, hoverable=True),
                                       size=10)
     plot_line = pg.PlotDataItem(x=x_data_numpy, y=y_data_numpy, pen=Color.BLUE.value)
 
@@ -420,7 +420,7 @@ def add_plot_novelties(plot_name: str, novelties: dict):
 
     plot_scatter = pg.ScatterPlotItem(x=x_data_numpy, y=y_data_numpy, brush=_get_brush_map(novelty_data),
                                       pen=_get_pen_map(novelty_data),
-                                      size=10)
+                                      size=10, hoverable=True)
     plot_line = pg.PlotDataItem(x=x_data_numpy, y=y_data_numpy, pen=Color.BLUE.value)
 
     primary_point_plot_item = SinglePointPlotItem(plot_item_name=reg_plot.main_dot_plot.plot_item_name, x_data=x_data,

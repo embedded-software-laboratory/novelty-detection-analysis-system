@@ -240,6 +240,16 @@ class GraphLayoutWidget(pg.GraphicsLayoutWidget):
         self.update_labels()
         self.main_plot.autoRange()
 
+        self.main_dot_plot_item.opts['hoverable'] = True
+        self.main_dot_plot_item.sigHovered.connect(self.showTooltip)
+
+
+    def showTooltip(self, plot, points):
+        if len(points) > 0:
+            self.main_dot_plot_item.setToolTip("Value: " +str(points[0].pos()[1]) + "\nTimestamp: " + str(points[0].pos()[0]))
+        else: 
+            self.main_dot_plot_item.setToolTip(None)
+
     def set_line_item_visibility(self, status):
         """
         Changes the visibility of the connecting lines
