@@ -15,6 +15,8 @@ def init_physiological_info(config):
         if add_physiological_dt(k):
             add_physiological_dt_high_limit(k, v["high"])
             add_physiological_dt_low_limit(k, v["low"])
+            add_physiological_dt_nisd_pla_thr(k, v["nisd-pla-thr"])
+            add_physiological_dt_unit(k, v["unit"])
             for alias in v["aliases"]:
                 add_physiological_dt_alias(k, alias)
 
@@ -79,6 +81,48 @@ def add_physiological_dt_low_limit(name: str, low: float) -> bool:
         return True
 
 
+def add_physiological_dt_nisd_pla_thr(name: str, nisd_pla_thr: float) -> bool:
+    """
+    Adds a new NISD-PLA threshold to a physiological data type.
+
+    Parameters
+    ----------
+    name : str
+        The name of the physiological data type
+    nisd_pla_thr : float
+        The low limit
+    """
+    global physiological_data_types
+    if name not in physiological_data_types.keys():
+        logger.physicalinfo.error("Physiological data type not found: %s" % name)
+        return False
+    else:
+        physiological_data_types[name].set_nisd_pla_thr(nisd_pla_thr)
+        logger.physicalinfo.debug("Added new NISD-PLA threshold to physiological data type %s: %s" % (name, str(nisd_pla_thr)))
+        return True
+
+
+def add_physiological_dt_unit(name: str, unit: str) -> bool:
+    """
+    Adds a new unit to a physiological data type.
+
+    Parameters
+    ----------
+    name : str
+        The name of the physiological data type
+    unit : str
+        The low limit
+    """
+    global physiological_data_types
+    if name not in physiological_data_types.keys():
+        logger.physicalinfo.error("Physiological data type not found: %s" % name)
+        return False
+    else:
+        physiological_data_types[name].set_unit(unit)
+        logger.physicalinfo.debug("Added new unit to physiological data type %s: %s" % (name, str(unit)))
+        return True
+
+
 def add_physiological_dt_alias(name: str, alias: str) -> bool:
     """
     Adds a new alias to a physiological data type
@@ -123,6 +167,23 @@ def is_alias_in_use(alias: str) -> bool:
     return False
 
 
+def is_alias_of(alias: str, pid: str) -> bool:
+    """
+    Checks if the alias is belongs to the provided pid
+
+    Parameters
+    ----------
+    alias : str
+        The alias to check
+    pid   : str
+        The pid to check
+    """
+    alias_datatype = get_physical_dt(alias)
+    if alias_datatype:
+        return alias_datatype.id in pid
+    return False
+
+
 def get_physical_dt(name: str):
     """
     Returns the physiological data type object
@@ -155,6 +216,8 @@ class PhysiologicalDataType:
         self.id = pid
         self.high = None
         self.low = None
+        self.nisd_pla_thr = None
+        self.unit = ""
         self.aliases = []
 
     def set_high(self, high: float):
@@ -162,6 +225,12 @@ class PhysiologicalDataType:
 
     def set_low(self, low: float):
         self.low = low
+
+    def set_nisd_pla_thr(self, nisd_pla_thr: float):
+        self.nisd_pla_thr = nisd_pla_thr
+
+    def set_unit(self, unit: str):
+        self.unit = unit
 
     def add_alias(self, alias: str):
         self.aliases.append(alias)

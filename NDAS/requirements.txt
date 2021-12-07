@@ -10,3 +10,6 @@ qtwidgets==0.18
 bs4==0.01
 lxml==4.6.3
 seaborn==0.11.1
+scikit-learn==0.24.2
+keras==2.6.0
+tensorflow==2.6.0

@@ -4,10 +4,9 @@ from PyQt5 import QtGui, QtCore
 from PyQt5.QtCore import (pyqtSignal)
 from PyQt5.QtWidgets import *
 
-from ndas.extensions import algorithms
+from ndas.extensions import algorithms, annotations, data, plots
 from ndas.mainwindow import benchmarkplotwidget
 from ndas.misc import datageneratorform, algorithmselectorform
-from ndas.utils import datagenerator
 
 
 class BenchmarkWidget(QStackedWidget):
@@ -172,26 +171,6 @@ class DataSelectionStackedWidgetPage(MasterStackedWidgetPage):
         self.number_of_dimensions_layout.addWidget(self.number_of_dimensions)
         self.number_of_dimensions.valueChanged.connect(lambda val: self.number_dimensions_changed(val))
 
-        self.dataset_length_layout = QHBoxLayout()
-        self.dataset_length_label = QLabel("Entries per Dimension:")
-        self.dataset_length = QSpinBox()
-        self.dataset_length.setMinimumWidth(100)
-        self.dataset_length.setMinimum(100)
-        self.dataset_length.setMaximum(10000)
-        self.dataset_length.setValue(1000)
-        self.dataset_length_layout.addWidget(self.dataset_length_label)
-        self.dataset_length_layout.addWidget(self.dataset_length)
-
-        self.dataset_length_observation_step_layout = QHBoxLayout()
-        self.dataset_length_observation_step_label = QLabel("Observation Step")
-        self.dataset_length_observation_step = QSpinBox()
-        self.dataset_length_observation_step.setMinimumWidth(100)
-        self.dataset_length_observation_step.setMinimum(1)
-        self.dataset_length_observation_step.setMaximum(100)
-        self.dataset_length_observation_step.setValue(1)
-        self.dataset_length_observation_step_layout.addWidget(self.dataset_length_observation_step_label)
-        self.dataset_length_observation_step_layout.addWidget(self.dataset_length_observation_step)
-
         self.dataset_passes_layout = QHBoxLayout()
         self.dataset_passes_label = QLabel("Passes:")
         self.dataset_passes = QSpinBox()
@@ -207,8 +186,6 @@ class DataSelectionStackedWidgetPage(MasterStackedWidgetPage):
         self.data_modification_groupbox.setLayout(self.data_modification_groupbox_layout)
 
         self.prepare_groupbox_layout.addLayout(self.number_of_dimensions_layout)
-        self.prepare_groupbox_layout.addLayout(self.dataset_length_layout)
-        self.prepare_groupbox_layout.addLayout(self.dataset_length_observation_step_layout)
 
         self.horizontal_spacer = QSpacerItem(100, 0, QSizePolicy.Expanding, QSizePolicy.Minimum)
         self.prepare_groupbox_layout.addItem(self.horizontal_spacer)
@@ -243,10 +220,33 @@ class DataSelectionStackedWidgetPage(MasterStackedWidgetPage):
             self.elements = self.elements[:-elements_to_remove]
         elif val > len(self.elements):
             elements_to_add = val - len(self.elements)
+            registered_plot_keys = plots.get_registered_plot_keys()
             for _ in range(elements_to_add):
-                new = datageneratorform.DataInputForm(did=len(self.elements) + 1, labeling_option=False, quota=True)
-                self.elements.append(new)
-                self.data_modification_groupbox_layout.addLayout(new.get_layout())
+                selector = QComboBox()
+                if registered_plot_keys:
+                    for k in registered_plot_keys:
+                        selector.addItem(k)
+                    selector.setCurrentIndex(len(self.elements) % len(registered_plot_keys))
+                selector_layout = QHBoxLayout()
+                selector_layout.addWidget(QLabel("Selected Feature:"))
+                selector_layout.addWidget(selector)
+                self.elements.append(selector)
+                self.data_modification_groupbox_layout.addLayout(selector_layout)
+
+    def update_plot_selection(self):
+        """
+        Updates the Options of each Combobox to current registered plots
+        """
+        registered_plot_keys = plots.get_registered_plot_keys()
+        if registered_plot_keys:
+            for i, el in enumerate(self.elements):
+                el.clear()
+                for k in registered_plot_keys:
+                    el.addItem(k)
+                el.setCurrentIndex(i % len(registered_plot_keys))
+        else:
+            for el in self.elements:
+                el.clear()
 
 
 class AlgorithmSelectionStackedWidgetPage(MasterStackedWidgetPage):
@@ -353,15 +353,15 @@ class ResultStackedWidgetPage(MasterStackedWidgetPage):
 
         dim_count = len(data_widget.elements)
         passes = data_widget.dataset_passes.value()
-        length = data_widget.dataset_length.value()
-        step = data_widget.dataset_length_observation_step.value()
+
+        self.used_labels = annotations.get_available_labels()
 
         self.data_store = {}
         self.quick_plot = None
 
         self.table_widget = QTableWidget()
         self.table_widget.setRowCount(algorithm_count * passes * (dim_count + 1))
-        self.table_widget.setColumnCount(15)
+        self.table_widget.setColumnCount(10 + 2*len(annotations.get_available_labels()))
         self.table_widget.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
         self.table_widget.setHorizontalHeaderItem(0, QTableWidgetItem("Name"))
         self.table_widget.setHorizontalHeaderItem(1, QTableWidgetItem("Algorithm"))
@@ -370,40 +370,36 @@ class ResultStackedWidgetPage(MasterStackedWidgetPage):
         self.table_widget.setHorizontalHeaderItem(4, QTableWidgetItem("Points"))
         self.table_widget.setHorizontalHeaderItem(5, QTableWidgetItem("Novelties"))
         self.table_widget.setHorizontalHeaderItem(6, QTableWidgetItem("Discovered"))
-        self.table_widget.setHorizontalHeaderItem(7, QTableWidgetItem("Training"))
-        self.table_widget.setHorizontalHeaderItem(8, QTableWidgetItem("TP (TPR)"))
-        self.table_widget.setHorizontalHeaderItem(9, QTableWidgetItem("TN (TNR)"))
-        self.table_widget.setHorizontalHeaderItem(10, QTableWidgetItem("FP (FPR)"))
-        self.table_widget.setHorizontalHeaderItem(11, QTableWidgetItem("FN (FNR)"))
-        self.table_widget.setHorizontalHeaderItem(12, QTableWidgetItem("F1"))
-        self.table_widget.setHorizontalHeaderItem(13, QTableWidgetItem("MCC"))
-        self.table_widget.setHorizontalHeaderItem(14, QTableWidgetItem("Plot"))
+        self.table_widget.setHorizontalHeaderItem(7, QTableWidgetItem("Blank Positive"))
+        self.table_widget.setHorizontalHeaderItem(8, QTableWidgetItem("Blank Negative"))
+        next_index = 9
+        for label in self.used_labels:
+            self.table_widget.setHorizontalHeaderItem(next_index, QTableWidgetItem(label+" Positive"))
+            self.table_widget.setHorizontalHeaderItem(next_index+1, QTableWidgetItem(label+" Negative"))
+            next_index += 2
+        self.table_widget.setHorizontalHeaderItem(next_index, QTableWidgetItem("Plot"))
 
         self.single_run_progress_bar = []
         self.single_run_total_dimensions = []
         self.single_run_total_points = []
         self.single_run_total_novelties = []
         self.single_run_total_discovered = []
-        self.single_run_total_training = []
-        self.single_run_total_tp = []
-        self.single_run_total_tn = []
-        self.single_run_total_fp = []
-        self.single_run_total_fn = []
-        self.single_run_total_score = []
-        self.single_run_total_mcc = []
+        self.single_run_total_bp = []
+        self.single_run_total_bn = []
+        self.single_run_total_posneg = []
+        for _ in self.used_labels:
+            self.single_run_total_posneg.append(([], []))
         self.single_run_total_plot = []
 
         self.single_dimension_dim = {}
         self.single_dimension_points = {}
         self.single_dimension_novelties = {}
         self.single_dimension_discovered = {}
-        self.single_dimension_training = {}
-        self.single_dimension_true_positives = {}
-        self.single_dimension_true_negatives = {}
-        self.single_dimension_false_positives = {}
-        self.single_dimension_false_negatives = {}
-        self.single_dimension_score = {}
-        self.single_dimension_mcc = {}
+        self.single_dimension_bp = {}
+        self.single_dimension_bn = {}
+        self.single_dimension_posneg = []
+        for _ in self.used_labels:
+            self.single_dimension_posneg.append(({}, {}))
         self.single_dimension_view = {}
 
         run_index = 0
@@ -423,13 +419,11 @@ class ResultStackedWidgetPage(MasterStackedWidgetPage):
                 self.single_run_total_points.append(QTableWidgetItem(""))
                 self.single_run_total_novelties.append(QTableWidgetItem(""))
                 self.single_run_total_discovered.append(QTableWidgetItem(""))
-                self.single_run_total_training.append(QTableWidgetItem(""))
-                self.single_run_total_tp.append(QTableWidgetItem(""))
-                self.single_run_total_tn.append(QTableWidgetItem(""))
-                self.single_run_total_fp.append(QTableWidgetItem(""))
-                self.single_run_total_fn.append(QTableWidgetItem(""))
-                self.single_run_total_score.append(QTableWidgetItem(""))
-                self.single_run_total_mcc.append(QTableWidgetItem(""))
+                self.single_run_total_bp.append(QTableWidgetItem(""))
+                self.single_run_total_bn.append(QTableWidgetItem(""))
+                for pair in self.single_run_total_posneg:
+                    pair[0].append(QTableWidgetItem(""))
+                    pair[1].append(QTableWidgetItem(""))
                 self.single_run_total_plot.append(QTableWidgetItem(""))
 
                 self.table_widget.setItem(run_index * dim_count + run_index, 0,
@@ -446,31 +440,25 @@ class ResultStackedWidgetPage(MasterStackedWidgetPage):
                                           self.single_run_total_novelties[run_index])
                 self.table_widget.setItem((run_index * dim_count + run_index), 6,
                                           self.single_run_total_discovered[run_index])
-                self.table_widget.setItem((run_index * dim_count + run_index), 7,
-                                          self.single_run_total_training[run_index])
-                self.table_widget.setItem((run_index * dim_count + run_index), 8, self.single_run_total_tp[run_index])
-                self.table_widget.setItem((run_index * dim_count + run_index), 9, self.single_run_total_tn[run_index])
-                self.table_widget.setItem((run_index * dim_count + run_index), 10, self.single_run_total_fp[run_index])
-                self.table_widget.setItem((run_index * dim_count + run_index), 11, self.single_run_total_fn[run_index])
-                self.table_widget.setItem((run_index * dim_count + run_index), 12,
-                                          self.single_run_total_score[run_index])
-                self.table_widget.setItem((run_index * dim_count + run_index), 13,
-                                          self.single_run_total_mcc[run_index])
-                self.table_widget.setItem((run_index * dim_count + run_index), 14,
-                                          self.single_run_total_plot[run_index])
+                self.table_widget.setItem((run_index * dim_count + run_index), 7, self.single_run_total_bp[run_index])
+                self.table_widget.setItem((run_index * dim_count + run_index), 8, self.single_run_total_bn[run_index])
+                next_index = 9
+                for pair in self.single_run_total_posneg:
+                    self.table_widget.setItem((run_index * dim_count + run_index), next_index, pair[0][run_index])
+                    self.table_widget.setItem((run_index * dim_count + run_index), next_index+1, pair[1][run_index])
+                    next_index += 2
+                self.table_widget.setItem((run_index * dim_count + run_index), next_index, self.single_run_total_plot[run_index])
                 self.color_row(self.table_widget, (run_index * dim_count + run_index), QtGui.QColor(227, 227, 227))
 
                 self.single_dimension_dim[run_index] = {}
                 self.single_dimension_points[run_index] = {}
                 self.single_dimension_novelties[run_index] = {}
                 self.single_dimension_discovered[run_index] = {}
-                self.single_dimension_training[run_index] = {}
-                self.single_dimension_true_positives[run_index] = {}
-                self.single_dimension_true_negatives[run_index] = {}
-                self.single_dimension_false_positives[run_index] = {}
-                self.single_dimension_false_negatives[run_index] = {}
-                self.single_dimension_score[run_index] = {}
-                self.single_dimension_mcc[run_index] = {}
+                self.single_dimension_bp[run_index] = {}
+                self.single_dimension_bn[run_index] = {}
+                for pair in self.single_dimension_posneg:
+                    pair[0][run_index] = {}
+                    pair[1][run_index] = {}
                 self.single_dimension_view[run_index] = {}
 
                 for dim_ in range(dim_count):
@@ -478,13 +466,11 @@ class ResultStackedWidgetPage(MasterStackedWidgetPage):
                     self.single_dimension_points[run_index][dim_index] = QTableWidgetItem("")
                     self.single_dimension_novelties[run_index][dim_index] = QTableWidgetItem("")
                     self.single_dimension_discovered[run_index][dim_index] = QTableWidgetItem("")
-                    self.single_dimension_training[run_index][dim_index] = QTableWidgetItem("")
-                    self.single_dimension_true_positives[run_index][dim_index] = QTableWidgetItem("")
-                    self.single_dimension_true_negatives[run_index][dim_index] = QTableWidgetItem("")
-                    self.single_dimension_false_positives[run_index][dim_index] = QTableWidgetItem("")
-                    self.single_dimension_false_negatives[run_index][dim_index] = QTableWidgetItem("")
-                    self.single_dimension_score[run_index][dim_index] = QTableWidgetItem("")
-                    self.single_dimension_mcc[run_index][dim_index] = QTableWidgetItem("")
+                    self.single_dimension_bp[run_index][dim_index] = QTableWidgetItem("")
+                    self.single_dimension_bn[run_index][dim_index] = QTableWidgetItem("")
+                    for pair in self.single_dimension_posneg:
+                        pair[0][run_index][dim_index] = QTableWidgetItem("")
+                        pair[1][run_index][dim_index] = QTableWidgetItem("")
                     self.single_dimension_view[run_index][dim_index] = QPushButton("View")
                     self.single_dimension_view[run_index][dim_index].setEnabled(False)
 
@@ -501,21 +487,15 @@ class ResultStackedWidgetPage(MasterStackedWidgetPage):
                     self.table_widget.setItem(run_index * dim_count + dim_index + run_index + 1, 6,
                                               self.single_dimension_discovered[run_index][dim_index])
                     self.table_widget.setItem(run_index * dim_count + dim_index + run_index + 1, 7,
-                                              self.single_dimension_training[run_index][dim_index])
+                                              self.single_dimension_bp[run_index][dim_index])
                     self.table_widget.setItem(run_index * dim_count + dim_index + run_index + 1, 8,
-                                              self.single_dimension_true_positives[run_index][dim_index])
-                    self.table_widget.setItem(run_index * dim_count + dim_index + run_index + 1, 9,
-                                              self.single_dimension_true_negatives[run_index][dim_index])
-                    self.table_widget.setItem(run_index * dim_count + dim_index + run_index + 1, 10,
-                                              self.single_dimension_false_positives[run_index][dim_index])
-                    self.table_widget.setItem(run_index * dim_count + dim_index + run_index + 1, 11,
-                                              self.single_dimension_false_negatives[run_index][dim_index])
-                    self.table_widget.setItem(run_index * dim_count + dim_index + run_index + 1, 12,
-                                              self.single_dimension_score[run_index][dim_index])
-                    self.table_widget.setItem(run_index * dim_count + dim_index + run_index + 1, 13,
-                                              self.single_dimension_mcc[run_index][dim_index])
-                    self.table_widget.setCellWidget((run_index * dim_count + dim_index + run_index + 1), 14,
-                                                    self.single_dimension_view[run_index][dim_index])
+                                              self.single_dimension_bn[run_index][dim_index])
+                    next_index = 9
+                    for pair in self.single_dimension_posneg:
+                        self.table_widget.setItem(run_index * dim_count + dim_index + run_index + 1, next_index, pair[0][run_index][dim_index])
+                        self.table_widget.setItem(run_index * dim_count + dim_index + run_index + 1, next_index+1, pair[1][run_index][dim_index])
+                        next_index += 2
+                    self.table_widget.setCellWidget((run_index * dim_count + dim_index + run_index + 1), next_index, self.single_dimension_view[run_index][dim_index])
 
                     dim_index = (dim_index + 1) % dim_count
 
@@ -523,7 +503,7 @@ class ResultStackedWidgetPage(MasterStackedWidgetPage):
 
         run_index = 0
         for single_pass in range(passes):
-            df, all_novelties = self.generate_test_data(data_widget.elements, length, step)
+            df, all_novelties = self.generate_test_data(data_widget.elements)
 
             for single_algorithm in cfg:
                 self.run_detection(single_algorithm, df, all_novelties, run_index=run_index)
@@ -540,68 +520,22 @@ class ResultStackedWidgetPage(MasterStackedWidgetPage):
         self.main_layout.addWidget(self.back_button, 10, 1, QtCore.Qt.AlignBottom)
         self.back_button.clicked.connect(lambda: self.restart_signal.emit())
 
-    def generate_test_data(self, elements, length, observation_step):
+    def generate_test_data(self, elements):
         """
-        Generates test data samples based on the given parameters.
+        Generates test data samples based on the given selection.
 
         Parameters
         ----------
         elements
-        length
-        observation_step
         """
-        df = pd.DataFrame()
+        columns = []
+        for el in elements:
+            columns.append(str(el.currentText()))
+        columns[:] = [x for x in columns if x]
+        df = data.get_full_dataframe()[[data.get_dataframe_index_column()]+columns]
 
-        range_start = 0
-        range_stop = int(length) * int(observation_step)
-        range_step = int(observation_step)
+        all_dim_novelties = {k: v for k, v in annotations.get_all_labeled_points().items() if k in columns}
 
-        df["observation"] = range(range_start, range_stop, range_step)
-
-        all_dim_novelties = []
-
-        for i, element in enumerate(elements):
-            all_dim_novelties.append(i)
-            all_dim_novelties[i] = []
-
-            data = datagenerator.generate_data(datagenerator.get_random_int(1337, 420420), element.get_distribution(),
-                                               element.get_mu(), element.get_sigma(), int(length))
-
-            flow = element.get_flow()
-            data = datagenerator.generate_flow(datagenerator.get_random_int(1337, 420420), data, flow)
-
-            for novelty_generator in element.novelty_generators:
-                if novelty_generator.get_groupbox_state():
-                    novelties = {}
-
-                    if isinstance(novelty_generator, datageneratorform.DataInputForm.PointNoveltyGeneratorForm):
-                        number_outlier = int(len(data) * novelty_generator.get_quota())
-                        novelties = datagenerator.generate_point_outliers(data,
-                                                                          number_outlier,
-                                                                          novelty_generator.get_range_start(),
-                                                                          novelty_generator.get_range_end())
-
-                    elif (
-                            isinstance(novelty_generator,
-                                       datageneratorform.DataInputForm.CollectiveNoveltyGeneratorForm)):
-                        number_outlier = int(len(data) * novelty_generator.get_quota())
-                        novelties = datagenerator.generate_collective_outliers(data,
-                                                                               number_outlier,
-                                                                               novelty_generator.get_range_start(),
-                                                                               novelty_generator.get_range_end())
-
-                    elif (isinstance(novelty_generator,
-                                     datageneratorform.DataInputForm.MissingDataConditionChangeNoveltyGeneratorForm)):
-                        novelties = datagenerator.generate_condition_change_gap(data,
-                                                                                novelty_generator.get_range_start(),
-                                                                                novelty_generator.get_range_end())
-
-                    for k, v in novelties.items():
-                        data[k] = v
-
-                    all_dim_novelties[i].append(novelties)
-
-            df[element.get_name()] = data
         return df, all_dim_novelties
 
     def run_detection(self, cfg, data, all_dim_novelties, run_index):
@@ -611,7 +545,7 @@ class ResultStackedWidgetPage(MasterStackedWidgetPage):
 
         inc = algorithms.get_specific_algorithm_instance(klass, data, parameter)
         inc.signals.status_signal.connect(lambda val: self.progress_bar_update_slot(val, run_index))
-        inc.signals.result_signal.connect(lambda val: self.process_result(val, all_dim_novelties, run_index))
+        inc.signals.result_signal.connect(lambda val: self.process_result(val, data, all_dim_novelties, run_index))
         inc.signals.error_signal.connect(lambda val: self.progress_bar_error_slot(val, run_index))
 
         if not inc.are_required_arguments_satisfied(**parameter):
@@ -666,13 +600,14 @@ class ResultStackedWidgetPage(MasterStackedWidgetPage):
         self.single_run_progress_bar[run_index].setValue(0)
         self.single_run_progress_bar[run_index].setStyleSheet("QProgressBar::chunk ""{""background-color: red;""}")
 
-    def process_result(self, val, all_dim_novelties, run_index):
+    def process_result(self, val, df, all_dim_novelties, run_index):
         """
-        The result is processed by counting TP, TN, FP, FN, etc.
+        The result is processed by counting positive and negative classification for each label category.
 
         Parameters
         ----------
         val
+        df
         all_dim_novelties
         run_index
         """
@@ -681,45 +616,59 @@ class ResultStackedWidgetPage(MasterStackedWidgetPage):
         total_points = 0
         total_novelties = 0
         total_discovered = 0
-        total_training = 0
-        total_tp = 0
-        total_tn = 0
-        total_fp = 0
-        total_fn = 0
-
-        for k, v in val.items():
-
+        total_bp = 0
+        total_bn = 0
+        total_posneg = []
+        for _ in self.used_labels:
+            total_posneg.append((0, 0))
+        val = {k: v for k, v in val.items() if k in df.columns}
+        for k, v_in in val.items():
+            local_df = df[[data.get_dataframe_index_column(), k]]
+            np_of_nan_indices = local_df[local_df[k].isnull()][data.get_dataframe_index_column()].values
+            v = {k: v for k, v in v_in.items() if k not in np_of_nan_indices}
             if dim_index >= len(all_dim_novelties):
                 continue
 
-            concat_novelty_dict = {}
-            for novelty_dict in all_dim_novelties[dim_index]:
-                concat_novelty_dict.update(novelty_dict)
+            concat_novelty_dict = {point.x: point.label for point in all_dim_novelties[k]}
 
             remove_from_novelty_count = 0
-            true_positives = 0
-            true_negatives = 0
-            false_positives = 0
-            false_negatives = 0
+            bp = 0
+            bn = 0
+            posneg = []
+            for _ in self.used_labels:
+                posneg.append((0, 0))
             for time_offset, value in v.items():
                 if (value == -1 or value == -2) and time_offset in concat_novelty_dict:
-                    remove_from_novelty_count = remove_from_novelty_count + 1
+                    remove_from_novelty_count += 1
+
                 if value == 1 and time_offset in concat_novelty_dict:
-                    true_positives = true_positives + 1
+                    bp += 1
+                    for i, label in reversed(list(enumerate(self.used_labels))):
+                        if label in concat_novelty_dict[time_offset]:
+                            bp -= 1
+                            posneg[i] = (posneg[i][0]+1, posneg[i][1])
+                            break
+
                 elif value == 1 and time_offset not in concat_novelty_dict:
-                    false_positives = false_positives + 1
+                    bp += 1
+
                 elif (value == 0 or value == 2) and time_offset in concat_novelty_dict:
-                    false_negatives = false_negatives + 1
+                    bn += 1
+                    for i, label in reversed(list(enumerate(self.used_labels))):
+                        if label in concat_novelty_dict[time_offset]:
+                            bn -= 1
+                            posneg[i] = (posneg[i][0], posneg[i][1]+1)
+                            break
+
                 elif (value == 0 or value == 2) and time_offset not in concat_novelty_dict:
-                    true_negatives = true_negatives + 1
+                    bn += 1
 
             self.single_dimension_dim[run_index][dim_index].setText(str(k))
             self.single_dimension_points[run_index][dim_index].setText(str(len(v)))
             total_points = total_points + len(v)
 
             dim_novelties = -remove_from_novelty_count
-            for novelty_dict in all_dim_novelties[dim_index]:
-                dim_novelties = dim_novelties + len(novelty_dict)
+            dim_novelties = dim_novelties + len(concat_novelty_dict)
             self.single_dimension_novelties[run_index][dim_index].setText(str(dim_novelties))
             total_novelties = total_novelties + dim_novelties
 
@@ -727,113 +676,53 @@ class ResultStackedWidgetPage(MasterStackedWidgetPage):
             self.single_dimension_discovered[run_index][dim_index].setText(str(discovered_novelties))
             total_discovered = total_discovered + discovered_novelties
 
-            training_points = sum(value == -1 for value in v.values())
-            self.single_dimension_training[run_index][dim_index].setText(str(training_points))
-            total_training = total_training + training_points
-
             '''
-            If (true positives + false negatives) = 0 then no positive cases in the input data, 
-            so any analysis of this case has no information, and so no conclusion about how positive cases are handled.
-            You want N/A or something similar as the ratio result, avoiding a division by zero error
-
-            If (true positives + false positives) = 0 then all cases have been predicted to be negative: 
-            this is one end of the ROC curve. Again, you want to recognise and report this possibility 
-            while avoiding a division by zero error.
-            @src: todo. pls google
+            If (positives + negatives) = 0 then you want N/A or something similar as the ratio result, 
+            avoiding a division by zero error
             '''
-
-            if true_positives == false_negatives == 0:
-                dim_tpr = "n/a"
-                dim_fnr = "n/a"
+            if bp+bn > 0:
+                self.single_dimension_bp[run_index][dim_index].setText(str(bp) + "(%.1f%%)" % (100*bp/(bp+bn)))
+                self.single_dimension_bn[run_index][dim_index].setText(str(bn) + "(%.1f%%)" % (100*bn/(bp+bn)))
             else:
-                dim_tpr = np.round_((true_positives / (true_positives + false_negatives)) * 100, 2)
-                dim_fnr = np.round_((false_negatives / (false_negatives + true_positives)) * 100, 2)
-
-            if true_negatives == false_positives == 0:
-                dim_tnr = "n/a"
-                dim_fpr = "n/a"
-            else:
-                dim_tnr = np.round_((true_negatives / (true_negatives + false_positives)) * 100, 2)
-                dim_fpr = np.round_((false_positives / (false_positives + true_negatives)) * 100, 2)
-
-            if true_positives == false_positives == false_negatives == 0:
-                dim_score = "n/a"
-            else:
-                dim_score = np.round_(true_positives / (true_positives + 0.5 * (false_positives + false_negatives)), 2)
-
-            if true_negatives + true_positives + false_negatives + false_positives == 0:
-                dim_mcc = "n/a"
-            else:
-                dim_mcc_N = true_negatives + true_positives + false_negatives + false_positives
-                dim_mcc_S = (true_positives + false_negatives) / dim_mcc_N
-                dim_mcc_P = (true_positives + false_positives) / dim_mcc_N
-                if (dim_mcc_S == 0 or dim_mcc_P == 0):
-                    dim_mcc = "n/a"
+                self.single_dimension_bp[run_index][dim_index].setText(str(bp))
+                self.single_dimension_bn[run_index][dim_index].setText(str(bn))
+            for i, pair in enumerate(posneg):
+                if pair[0]+pair[1] > 0:
+                    self.single_dimension_posneg[i][0][run_index][dim_index].setText(str(pair[0]) + "(%.1f%%)" % (100*pair[0]/(pair[0]+pair[1])))
+                    self.single_dimension_posneg[i][1][run_index][dim_index].setText(str(pair[1]) + "(%.1f%%)" % (100*pair[1]/(pair[0]+pair[1])))
                 else:
-                    dim_mcc = np.round_(((true_positives / dim_mcc_N) - dim_mcc_S * dim_mcc_P) / np.sqrt(
-                        dim_mcc_P * dim_mcc_S * (1 - dim_mcc_S) * (1 - dim_mcc_P)), 2)
-
-            self.single_dimension_true_positives[run_index][dim_index].setText(
-                str(true_positives) + " (" + str(dim_tpr) + "%)")
-            self.single_dimension_true_negatives[run_index][dim_index].setText(
-                str(true_negatives) + " (" + str(dim_tnr) + "%)")
-            self.single_dimension_false_positives[run_index][dim_index].setText(
-                str(false_positives) + " (" + str(dim_fpr) + "%)")
-            self.single_dimension_false_negatives[run_index][dim_index].setText(
-                str(false_negatives) + " (" + str(dim_fnr) + "%)")
-            self.single_dimension_score[run_index][dim_index].setText(str(dim_score))
-            self.single_dimension_mcc[run_index][dim_index].setText(str(dim_mcc))
+                    self.single_dimension_posneg[i][0][run_index][dim_index].setText(str(pair[0]))
+                    self.single_dimension_posneg[i][1][run_index][dim_index].setText(str(pair[1]))
 
             self.single_dimension_view[run_index][dim_index].setEnabled(True)
             self.single_dimension_view[run_index][dim_index].clicked.connect(
                 lambda checked, title=k, novelties=v, dim_i=dim_index, run_i=run_index: self.plot_single_dimension(
                     title, run_i, dim_i, novelties))
 
-            total_tp = total_tp + true_positives
-            total_tn = total_tn + true_negatives
-            total_fp = total_fp + false_positives
-            total_fn = total_fn + false_negatives
+            total_bp = total_bp + bp
+            total_bn = total_bn + bn
+            for i, pair in enumerate(total_posneg):
+                total_posneg[i] = (pair[0]+posneg[i][0], pair[1]+posneg[i][1])
 
             dim_index = dim_index + 1
-
-        if total_tp == total_fn == 0:
-            tpr = "n/a"
-            fnr = "n/a"
-        else:
-            tpr = np.round_((total_tp / (total_tp + total_fn)) * 100, 2)
-            fnr = np.round_((total_fn / (total_fn + total_tp)) * 100, 2)
-
-        if total_tn == total_fp == 0:
-            tnr = "n/a"
-            fpr = "n/a"
-        else:
-            tnr = np.round_((total_tn / (total_tn + total_fp)) * 100, 2)
-            fpr = np.round_((total_fp / (total_fp + total_tn)) * 100, 2)
-
-        if total_tp == total_fp == total_fn == 0:
-            total_score = "n/a"
-        else:
-            total_score = np.round_(total_tp / (total_tp + 0.5 * (total_fp + total_fn)), 2)
-
-        if total_tn + total_tp + total_fn + total_fp == 0:
-            total_mcc = "n/a"
-        else:
-            mcc_N = total_tn + total_tp + total_fn + total_fp
-            mcc_S = (total_tp + total_fn) / mcc_N
-            mcc_P = (total_tp + total_fp) / mcc_N
-            total_mcc = np.round_(
-                ((total_tp / mcc_N) - mcc_S * mcc_P) / np.sqrt(mcc_P * mcc_S * (1 - mcc_S) * (1 - mcc_P)), 2)
 
         self.single_run_total_points[run_index].setText(str(total_points))
         self.single_run_total_novelties[run_index].setText(str(total_novelties))
         self.single_run_total_discovered[run_index].setText(str(total_discovered))
-        self.single_run_total_training[run_index].setText(str(total_training))
-        self.single_run_total_tp[run_index].setText(str(total_tp) + " (" + str(tpr) + "%)")
-        self.single_run_total_tn[run_index].setText(str(total_tn) + " (" + str(tnr) + "%)")
-        self.single_run_total_fp[run_index].setText(str(total_fp) + " (" + str(fpr) + "%)")
-        self.single_run_total_fn[run_index].setText(str(total_fn) + " (" + str(fnr) + "%)")
-        self.single_run_total_score[run_index].setText(str(total_score))
-        self.single_run_total_mcc[run_index].setText(str(total_mcc))
+
+        if total_bn+total_bp > 0:
+            self.single_run_total_bp[run_index].setText(str(total_bp) + "(%.1f%%)" % (100*total_bp/(total_bp+total_bn)))
+            self.single_run_total_bn[run_index].setText(str(total_bn) + "(%.1f%%)" % (100*total_bn/(total_bp+total_bn)))
+        else:
+            self.single_run_total_bp[run_index].setText(str(total_bp))
+            self.single_run_total_bn[run_index].setText(str(total_bn))
+        for i, pair in enumerate(total_posneg):
+            if pair[0]+pair[1] > 0:
+                self.single_run_total_posneg[i][0][run_index].setText(str(pair[0]) + "(%.1f%%)" % (100*pair[0]/(pair[0]+pair[1])))
+                self.single_run_total_posneg[i][1][run_index].setText(str(pair[1]) + "(%.1f%%)" % (100*pair[1]/(pair[0]+pair[1])))
+            else:
+                self.single_run_total_posneg[i][0][run_index].setText(str(pair[0]))
+                self.single_run_total_posneg[i][1][run_index].setText(str(pair[1]))
 
         if self.thread_pool.activeThreadCount() == 0:
             self.back_button.setEnabled(True)

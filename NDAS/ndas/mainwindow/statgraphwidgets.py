@@ -4,7 +4,7 @@ from PyQt5.QtWidgets import *
 from pyqtgraph.Qt import QtCore
 from scipy import stats
 
-from ndas.extensions import data
+from ndas.extensions import data, plots
 from ndas.misc import graphbox
 from ndas.misc.colors import Color
 
@@ -136,8 +136,9 @@ class DensityGraphWidget(StatsGraph):
         self.custom_plot.clear()
 
         plot_data = data.get_dataframe().copy()
-        plot_labels = plot_data.columns.tolist()[1:]
-        time_label = plot_data.columns.tolist()[0]
+        time_label = data.get_dataframe_index_column()
+        plot_labels = plots.get_registered_plot_keys()
+        plot_data = plot_data[[time_label]+plot_labels]
 
         self.set_custom_ticks(plot_labels)
 
@@ -422,8 +423,9 @@ class CorrelationGraphWidget(StatsGraph):
         self.custom_plot.clear()
 
         plot_data = data.get_dataframe().copy()
+        time_label = data.get_dataframe_index_column()
+        plot_data = plot_data[[time_label]+plots.get_registered_plot_keys()]
         plot_labels = [single_label for single_label in plot_data.columns.tolist()[1:] if single_label != active_plot]
-        time_label = plot_data.columns.tolist()[0]
         self.set_custom_ticks(plot_labels)
 
         if plot_data.empty:

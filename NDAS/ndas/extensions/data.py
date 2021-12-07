@@ -173,6 +173,14 @@ def set_imputed_dataframe(df):
     _imputed_dataframe = df
 
 
+def reset_imputed_dataframe():
+    """
+    Resets the imputed dataframe if a new regular dataframe is set
+    """
+    global _imputed_dataframe
+    _imputed_dataframe = None
+
+
 def get_imputed_dataframe():
     """
     Returns the full data
@@ -205,6 +213,16 @@ def get_dataframe_columns():
     global _dataframe
     if _dataframe is not None:
         return _dataframe.columns.tolist()
+    return False
+
+
+def get_dataframe_index_column():
+    """
+    Returns the first column identifier
+    """
+    global _dataframe
+    if _dataframe is not None:
+        return _dataframe.columns.tolist()[0]
     return False
 
 

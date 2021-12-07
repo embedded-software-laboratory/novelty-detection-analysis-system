@@ -5,6 +5,7 @@ import time
 import datetime
 
 import numpy as np
+import pandas as pd
 from scipy import stats
 from scipy.spatial import distance
 
@@ -22,22 +23,22 @@ class SW_ABSAD_MOD(BaseDetector):
         super(SW_ABSAD_MOD, self).__init__(*args, **kwargs)
 
         self.register_parameter("replaceZeroes", ArgumentType.BOOL, False)
-        self.register_parameter("replacePhysOutlier", ArgumentType.BOOL, False)
+        self.register_parameter("replacePhysOutlier", ArgumentType.BOOL, True)
         self.register_parameter("useCLmod", ArgumentType.BOOL, False)
         self.register_parameter("retrainAfterGap", ArgumentType.BOOL, False)
-        self.register_parameter("varianceCheck", ArgumentType.BOOL, False)
-        self.register_parameter("cleanTrainingWindow", ArgumentType.BOOL, False)
-        self.register_parameter("windowLength", ArgumentType.INTEGER, 300, 1)
+        self.register_parameter("varianceCheck", ArgumentType.BOOL, True)
+        self.register_parameter("cleanTrainingWindow", ArgumentType.BOOL, True)
+        self.register_parameter("windowLength", ArgumentType.INTEGER, 400, 1)
         self.register_parameter("theta", ArgumentType.FLOAT, 0.5, 0, 0.99,
                                 tooltip="Parameter to calculate relevant subspaces.")
-        self.register_parameter("confidence", ArgumentType.FLOAT, 0.99, 0, 1)
-        self.register_parameter("k", ArgumentType.INTEGER, 70, 0,
+        self.register_parameter("confidence", ArgumentType.FLOAT, 0.998, 0, 1)
+        self.register_parameter("k", ArgumentType.INTEGER, 100, 0,
                                 tooltip="Use the k nearest neighbors for estimation.")
-        self.register_parameter("s", ArgumentType.INTEGER, 70, 0,
+        self.register_parameter("s", ArgumentType.INTEGER, 100, 0,
                                 tooltip="The size of the reference set.")
 
         # self.register_parameter("useColumns", ArgumentType.STRING, "",
-        # tooltip="Use only this list of columns to run the algorithmn. Leave empty for all columns.")
+        # tooltip="Use only this list of columns to run the algorithm. Leave empty for all columns.")
 
     @staticmethod
     def get_cosine_similarity(x, y):
@@ -130,7 +131,6 @@ class SW_ABSAD_MOD(BaseDetector):
             min_value = 0.00002
         else:
             min_value = min(min_value_array)
-
         '''
         Da Werte die genau bei 0 liegen die
         Kurve überproportional beeinflussen könnten, werden vor der Berechnung des CL
@@ -140,7 +140,6 @@ class SW_ABSAD_MOD(BaseDetector):
             if los_sliding_window[current_point] == 0:
                 los_sliding_window[current_point] = min_value / 2
         kde = stats.gaussian_kde(los_sliding_window[~np.isnan(los_sliding_window)], self.bandwidth)
-
         '''
         In der konkreten Implementierung wird die
         gaussian_kde.integrate_box_1d Funktion des scipy.stats packages in Python gewählt.
@@ -151,13 +150,13 @@ class SW_ABSAD_MOD(BaseDetector):
         '''
         CL = 0
         for i in range(11):
-            while kde.integrate_box_1d(-10, CL+(1/(2**i))) < self.confidence_level:  # first training: and CL < 5
+            while round(kde.integrate_box_1d(-10, CL+(1/(2**i))), 10) < self.confidence_level:  # first training: and CL < 5
                 CL = CL + (1/(2**i))
 
         CL = round(CL, 3) - 0.001
         confidence_interval = kde.integrate_box_1d(-10, CL)
 
-        while confidence_interval < self.confidence_level:
+        while round(confidence_interval, 10) < self.confidence_level:
             CL += 0.001
             confidence_interval = kde.integrate_box_1d(-10, CL)
 
@@ -225,7 +224,7 @@ class SW_ABSAD_MOD(BaseDetector):
         if self.use_columns[0] != '':
             df = self.get_column_subset(df, self.use_columns)
         else:
-            df = df[[df.columns[0]]+list(plots.registered_plots.keys())]
+            df = df[[df.columns[0]]+[x for x in plots.get_registered_plot_keys() if x in df.columns and not df[x].dropna().empty]]
 
         if self.replace_zeroes:
             df = df.replace(0, np.NaN)
@@ -790,10 +789,10 @@ class SW_ABSAD_MOD(BaseDetector):
 
             # Iteration step
             sample_counter = sample_counter + 1
-        df['outlier_table'] = outlier_table[:-1]
-        df['relevantcol'] = (LOSsubsortges[:, self.num_data_dimensions - 1])[:-10]
-        df['LOS'] = LOS_complete[:-10]
-        df['controllimit'] = cl_complete_table
+        df['outlier_table'] = pd.Series(outlier_table[:-1], index=df_without_offset.index)
+        df['relevantcol'] = pd.Series((LOSsubsortges[:, self.num_data_dimensions - 1])[:-10], index=df_without_offset.index)
+        df['LOS'] = pd.Series(LOS_complete[:-10], index=df_without_offset.index)
+        df['controllimit'] = pd.Series(cl_complete_table, index=df_without_offset.index)
         '''
         Jetzt werden die erkannten Outlier zu einem Result-Set hinzugefügt.
         Dieses wird vom Programm benötigt, um die Outlier zu markieren.
@@ -810,7 +809,8 @@ class SW_ABSAD_MOD(BaseDetector):
             _counter = 0
 
             for index, row in df.iterrows():
-                outlier_for_column[row[0]] = row['outlier_table']
+                if index in df_without_offset.index:
+                    outlier_for_column[row[0]] = row['outlier_table']
 
             # for every time value
             for key, value in outlier_for_column.items():

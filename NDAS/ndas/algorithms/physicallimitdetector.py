@@ -1,4 +1,5 @@
 from ndas.algorithms.basedetector import BaseDetector  # Import the basedetector class
+from ndas.extensions import plots
 
 
 class PhysicalLimitDetector(BaseDetector):
@@ -39,11 +40,11 @@ class PhysicalLimitDetector(BaseDetector):
 
         # Get the additional arguments
         time_column = datasets.columns[0]
-
-        status_length = 90 / len(datasets.columns)
+        used_columns = [col for col in datasets.columns if col in plots.get_registered_plot_keys()]
+        status_length = 90 / len(used_columns)
         current_status = 10.0
         result = {}
-        for c in datasets.columns[1:]:
+        for c in used_columns:
             self.signal_percentage(int(current_status + status_length) % 100)
 
             data = datasets[[time_column, c]]
@@ -53,7 +54,6 @@ class PhysicalLimitDetector(BaseDetector):
             if phys_info:
                 self.signal_add_infinite_line(c, "physical outlier lower limit", phys_info.low)
                 self.signal_add_infinite_line(c, "physical outlier upper limit", phys_info.high)
-
                 for index, row in data.iterrows():
                     if row[c] > phys_info.high or row[c] < phys_info.low:
                         novelty_data[row[time_column]] = 1

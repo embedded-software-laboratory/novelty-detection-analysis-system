@@ -15,55 +15,86 @@ physiologicalinfo:
   temperature:
     low: 25
     high: 45
+    nisd-pla-thr: 1.8
+    unit: "deg C"
     aliases: ["temp", "t", "c", "TempC"]
   heartrate:
     low: 15
     high: 230
+    nisd-pla-thr: 18
+    unit: "bpm"
     aliases: ["hr", "HR"]
   pamean:
     low: 1
     high: 98
+    nisd-pla-thr: 10
+    unit: "mmHg"
     aliases: [ ]
   pasystolic:
     low: 5
     high: 140
+    nisd-pla-thr: 10
+    unit: "mmHg"
     aliases: [ ]
   padiastolic:
     low: 1
     high: 93
+    nisd-pla-thr: 10
+    unit: "mmHg"
     aliases: [ ]
   systemicmean:
     low: 25
     high: 210
-    aliases: ["pMe"]
+    nisd-pla-thr: 20
+    unit: "mmHg"
+    aliases: ["bpm", "pMe"]
   systemicdiastolic:
     low: 20
     high: 180
-    aliases: ["pDi"]
+    nisd-pla-thr: 17
+    unit: "mmHg"
+    aliases: ["bpd", "pDi"]
   systemicsystolic:
     low: 35
     high: 280
-    aliases: ["pSy"]
+    nisd-pla-thr: 27
+    unit: "mmHg"
+    aliases: ["bps", "pSy"]
   respiration:
     low: 4
     high: 65
-    aliases: ["RR"]
+    nisd-pla-thr: 9
+    unit: "bpm"
+    aliases: ["rr", "RR"]
   sao2:
     low: 20.5
     high: 100
-    aliases: ["SaO2"]
+    nisd-pla-thr: 5
+    unit: "%"
+    aliases: ["o2", "sao2", "SaO2"]
   end-tidal-co2:
     low: 18
     high: 49
-    aliases: ["etCO2"]
+    nisd-pla-thr: 6
+    unit: "mmHg"
+    aliases: ["co2", "etco2", "etCO2"]
   central-venous-pressure:
     low: -10
     high: 50
-    aliases: ["CVP"]
+    nisd-pla-thr: 10
+    unit: "mmHg"
+    aliases: ["cvp", "CVP"]
+  default:
+    low: 0
+    high: 100
+    nisd-pla-thr: 10
+    unit: ""
+    aliases: [ ]
 algorithms:
 savestate:
 plots:
   draw_outlier_series_box: True
   outlier_series_threshold: 5
   use_dark_mode: False
+  exclusion_substrings: ["ID", "gender", "age", "ethnicity", "height", "weight", "ICD"]
 

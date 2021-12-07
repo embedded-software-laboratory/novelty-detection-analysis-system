@@ -37,6 +37,11 @@ def get_number_novelties(g, klass) -> str:
             r_value = sum(1 for e in g.main_dot_plot.novelties if e not in [-2, -1, 0, 1])
         else:
             r_value = 0
+    elif klass == 'all':
+        if g.main_dot_plot.novelties:
+            r_value = sum(1 for e in g.main_dot_plot.novelties if e not in [-2, -1, 0])
+        else:
+            r_value = 0
     else:
         r_value = 0
 
