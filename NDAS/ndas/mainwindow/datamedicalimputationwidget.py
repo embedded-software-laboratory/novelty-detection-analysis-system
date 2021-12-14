@@ -380,6 +380,13 @@ class DataMedicalImputationWidget(QWidget):
             Plot.setXRange(self.Dataframe[time_column].dropna().min(), self.Dataframe[time_column].dropna().max())
 
     def on_click_apply_results(self):
+        time_col_name = data.get_dataframe_index_column()
+        imputed_data = data.get_imputed_dataframe()
+        expanded_data = data.get_full_dataframe().set_index(time_col_name).reindex(index=imputed_data[time_col_name], columns=[v for v in imputed_data.columns if v != time_col_name]).reset_index()
+        mask = ((imputed_data == expanded_data) | ((imputed_data != imputed_data) & (expanded_data != expanded_data)))*-1+1
+        if isinstance(data.get_mask_dataframe(), pd.DataFrame):
+            mask = (mask+data.get_mask_dataframe()).clip(upper=1)
+        data.set_mask_dataframe(mask)
         self.main_window.update_values_in_current_dataset(data.get_imputed_dataframe())
 
     def on_toggle_show_imputed_data(self, state):
@@ -413,8 +420,7 @@ class DataMedicalImputationWidget(QWidget):
             self.data_selection_slider.valueChanged.connect(lambda start_value, end_value: self.update_data_selection_text(start_value, end_value))
             self.data_selection_start.textChanged.connect(lambda: self.update_data_selection_slider())
             self.data_selection_end.textChanged.connect(lambda: self.update_data_selection_slider())
-            data.set_imputed_dataframe(pd.DataFrame())
-        if data.get_imputed_dataframe() and not data.get_imputed_dataframe().empty:
+        if isinstance(data.get_imputed_dataframe(), pd.DataFrame) and not data.get_imputed_dataframe().empty:
             self.DataToggle.setDisabled(False)
             self.apply_results_button.setDisabled(False)
             self.DataToggle_label2.setStyleSheet('color: black')

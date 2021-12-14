@@ -127,6 +127,7 @@ class AlgorithmInputForm:
                 q_input.setValue(arg.default)
             elif arg.type == parameter.ArgumentType.FLOAT:
                 q_input = QDoubleSpinBox(parent=q_groupbox)
+                q_input.setDecimals(3)
                 q_input.setValue(arg.default)
                 q_input.setSingleStep(0.1)
                 q_input.setMinimum(arg.minimum)

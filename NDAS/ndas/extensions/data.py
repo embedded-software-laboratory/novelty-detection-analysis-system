@@ -3,6 +3,7 @@ from ndas.importer import *
 from ndas.utils import logger
 
 _dataframe = None
+_mask_dataframe = pd.DataFrame()
 _imputed_dataframe = pd.DataFrame()
 _dataframe_labels = None
 _available_importer = []
@@ -178,7 +179,7 @@ def reset_imputed_dataframe():
     Resets the imputed dataframe if a new regular dataframe is set
     """
     global _imputed_dataframe
-    _imputed_dataframe = None
+    _imputed_dataframe = pd.DataFrame()
 
 
 def get_imputed_dataframe():
@@ -192,6 +193,45 @@ def get_imputed_dataframe():
     global _imputed_dataframe
     if _imputed_dataframe is not None and not _imputed_dataframe.empty:
         return _imputed_dataframe
+    else:
+        return None
+
+
+def set_mask_dataframe(df):
+    """
+    Sets the loaded data
+
+    Parameters
+    ----------
+    df
+
+    Returns
+    -------
+
+    """
+    global _mask_dataframe
+    _mask_dataframe = df
+
+
+def reset_mask_dataframe():
+    """
+    Resets the imputed dataframe if a new regular dataframe is set
+    """
+    global _mask_dataframe
+    _mask_dataframe = pd.DataFrame()
+
+
+def get_mask_dataframe():
+    """
+    Returns the full data
+
+    Returns
+    -------
+
+    """
+    global _mask_dataframe
+    if _mask_dataframe is not None and not _mask_dataframe.empty:
+        return _mask_dataframe
     else:
         return None
 
@@ -250,12 +290,13 @@ def format_for_save():
     """
     Formats the data for the save file
     """
-    global _dataframe, _imputed_dataframe, _dataframe_labels, data_slider_start, data_slider_end
+    global _dataframe, _imputed_dataframe, _mask_dataframe, _dataframe_labels, data_slider_start, data_slider_end
     return {'dataframe': _dataframe.to_numpy(),
             'dataframe_labels': _dataframe_labels,
             'data_slider_start': data_slider_start,
             'data_slider_end': data_slider_end, 
-            'imputed_dataframe': _imputed_dataframe.to_numpy()}
+            'imputed_dataframe': _imputed_dataframe.to_numpy(),
+            'mask_dataframe': _mask_dataframe.to_numpy()}
 
 
 def restore_from_save(data: dict):
@@ -265,9 +306,10 @@ def restore_from_save(data: dict):
     ----------
     data
     """
-    global _dataframe, _imputed_dataframe, _dataframe_labels, data_slider_start, data_slider_end
+    global _dataframe, _imputed_dataframe, _mask_dataframe, _dataframe_labels, data_slider_start, data_slider_end
     _dataframe_labels = data['dataframe_labels']
     _dataframe = pd.DataFrame.from_records(data['dataframe'], columns=_dataframe_labels)
     data_slider_start = data['data_slider_start']
     data_slider_end = data['data_slider_end']
-    _imputed_dataframe = pd.DataFrame.from_records(data['imputed_dataframe'], columns=_dataframe_labels)
+    _imputed_dataframe = pd.DataFrame.from_records(data.get('imputed_dataframe', []), columns=_dataframe_labels)
+    _mask_dataframe = pd.DataFrame.from_records(data.get('mask_dataframe', []), columns=_dataframe_labels)

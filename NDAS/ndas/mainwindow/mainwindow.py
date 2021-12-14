@@ -1,3 +1,4 @@
+import pandas as pd
 from PyQt5.QtCore import (pyqtSlot, QTimer)
 from PyQt5.QtGui import QDoubleValidator, QIntValidator, QIcon
 from PyQt5.QtWidgets import *
@@ -402,6 +403,12 @@ class MainWindow(QMainWindow):
         export_mpl_action = QAction("matplotlib", self)
         export_mpl_action.triggered.connect(lambda: self.export_to_mpl())
         export_menu.addAction(export_mpl_action)
+        export_csv_action = QAction("CSV", self)
+        export_csv_action.triggered.connect(lambda: self.export_to_csv())
+        export_menu.addAction(export_csv_action)
+        export_csv_w_mask_action = QAction("CSV with Mask", self)
+        export_csv_w_mask_action.triggered.connect(lambda: self.export_to_csv_w_mask())
+        export_menu.addAction(export_csv_w_mask_action)
 
         settings_menu = self.main_menu.addMenu("Settings")
         ssh_settings_action = QAction("Configure SSH authentification data", self)
@@ -742,6 +749,48 @@ class MainWindow(QMainWindow):
         """
         plots.plot_layout_widget.export("mpl")
 
+    @pyqtSlot()
+    def export_to_csv(self):
+        """
+        Exports current dataframe to csv
+        """
+        options = QFileDialog.Options()
+        # options |= QFileDialog.DontUseNativeDialog
+
+        save_dialog = QFileDialog()
+        save_dialog.setDefaultSuffix('csv')
+        file_name, _ = save_dialog.getSaveFileName(self, "Choose file location", "", "csv (*.csv)", options=options)
+
+        if file_name:
+            if file_name[-4:] != ".csv":
+                file_name = file_name + ".csv"
+
+            df = data.get_full_dataframe()
+            if isinstance(df, pd.DataFrame):
+                df.to_csv(path_or_buf=file_name, index=False)
+
+    @pyqtSlot()
+    def export_to_csv_w_mask(self):
+        """
+        Exports current dataframe and mask to csv
+        """
+        options = QFileDialog.Options()
+        # options |= QFileDialog.DontUseNativeDialog
+
+        save_dialog = QFileDialog()
+        save_dialog.setDefaultSuffix('csv')
+        file_name, _ = save_dialog.getSaveFileName(self, "Choose file location", "", "csv (*.csv)", options=options)
+
+        if file_name:
+            if file_name[-4:] != ".csv":
+                file_name = file_name + ".csv"
+
+            df = data.get_full_dataframe()
+            if isinstance(df, pd.DataFrame):
+                df.to_csv(path_or_buf=file_name, index=False)
+            mask = data.get_mask_dataframe()
+            if isinstance(mask, pd.DataFrame):
+                mask.to_csv(path_or_buf=(file_name[:-4]+"_mask"+file_name[-4:]), index=False)
 
     @pyqtSlot()
     def change_ssh_settings(self):
@@ -907,6 +956,8 @@ class MainWindow(QMainWindow):
         labels
         """
         data.set_dataframe(df, labels)
+        data.reset_imputed_dataframe()
+        data.reset_mask_dataframe()
         plots.register_available_plots()
         annotations.register_plot_annotation()
 
@@ -932,6 +983,7 @@ class MainWindow(QMainWindow):
         if self.main_widget.currentIndex() != 1:
             self.main_widget.setCurrentIndex(0)
         """
+        Notify Imputation Tab about new data
         Notify Imputation Tab about new data
         """
         datamedicalimputationwidget.DataMedicalImputationWidget.on_import_data(self.tab_datamedimputation)
