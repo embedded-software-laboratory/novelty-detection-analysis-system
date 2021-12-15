@@ -411,12 +411,21 @@ class MainWindow(QMainWindow):
         export_menu.addAction(export_csv_w_mask_action)
 
         settings_menu = self.main_menu.addMenu("Settings")
+
         ssh_settings_action = QAction("Configure SSH authentification data", self)
         ssh_settings_action.triggered.connect(lambda: self.change_ssh_settings())
         settings_menu.addAction(ssh_settings_action)
+
         database_settings_action = QAction("Configure database authentification data", self)
         database_settings_action.triggered.connect(lambda: self.change_database_settings())
         settings_menu.addAction(database_settings_action)
+
+        self.showPointToolTips = True
+        activate_tooltips = QAction("Show point tooltips", self, checkable=True)
+        activate_tooltips.triggered.connect(lambda: self.toggleTooltipStatus(activate_tooltips.isChecked()))
+        activate_tooltips.setChecked(True)
+        settings_menu.addAction(activate_tooltips)
+
 
         help_menu = self.main_menu.addMenu('&?')
         about_action = QAction("About", self)
@@ -801,6 +810,14 @@ class MainWindow(QMainWindow):
     def change_database_settings(self):
         self.databasewidget = DatabaseSettingsWindow(self)
         self.databasewidget.show()
+
+    @pyqtSlot()
+    def toggleTooltipStatus(self, isChecked):
+        plots.toggleTooltipFlag(isChecked)
+        if isChecked:
+            self.showPointToolTips = True
+        else:
+            self.showPointToolTips = False
 
     @pyqtSlot()
     def add_new_plot(self, name, x_data, y_data, x_lbl, y_lbl):

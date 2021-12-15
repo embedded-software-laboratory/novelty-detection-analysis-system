@@ -77,8 +77,8 @@ def register_plot(name: str, x_data: any, y_data: any, x_label: str, y_label: st
         return False
 
     plot_scatter = pg.ScatterPlotItem(x=x_data_numpy, y=y_data_numpy, brush=pg.mkBrush(Color.BLUE.value),
-                                      pen=pg.mkPen(color='w', width=0.4, hoverable=True),
-                                      size=10)
+                                      pen=pg.mkPen(color='w', width=0.4),
+                                      size=10, tip=None)
     plot_line = pg.PlotDataItem(x=x_data_numpy, y=y_data_numpy, pen=Color.BLUE.value)
 
     main_dot_plot_item = SinglePointPlotItem(plot_item_name=name, x_data=x_data, y_data=y_data,
@@ -474,6 +474,8 @@ def restore_from_save(data):
             add_plot_novelties(key, _match_timedata_to_novelties(registered_plots[key].main_dot_plot.x_data, data[key]))
     update_plot_view()
 
+def toggleTooltipFlag(flag):
+    plot_layout_widget.toggleTooltipFlag(flag)
 
 class SinglePlotItem:
     """
@@ -535,3 +537,4 @@ class MultiPlot:
         self.line_plot_visible = False
         self.supplementary_plots = []
         self.active = False
+

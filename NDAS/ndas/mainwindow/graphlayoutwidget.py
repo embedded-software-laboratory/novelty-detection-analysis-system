@@ -41,6 +41,8 @@ class GraphLayoutWidget(pg.GraphicsLayoutWidget):
 
     _plot_background_color = 'eeeeee'
 
+    toolTipFlag = True
+
     def __init__(self, *args, **kwargs):
         """
         Initializes the nav plot and the main plot.
@@ -245,7 +247,7 @@ class GraphLayoutWidget(pg.GraphicsLayoutWidget):
 
 
     def showTooltip(self, plot, points):
-        if len(points) > 0:
+        if len(points) > 0 and self.toolTipFlag == True:
             tooltip = "Value: " +str(points[0].pos()[1]) + " " + (self.main_plot_name.split("(")[1])[:-1]+ "\nTimestamp: " + str(points[0].pos()[0])
             for point in annotations.get_labeled_points(self.main_plot_name):
                 state = point.__getstate__()
@@ -254,6 +256,9 @@ class GraphLayoutWidget(pg.GraphicsLayoutWidget):
             self.main_dot_plot_item.setToolTip(tooltip)
         else: 
             self.main_dot_plot_item.setToolTip(None)
+
+    def toggleTooltipFlag(self, flag):
+        self.toolTipFlag = flag
 
     def set_line_item_visibility(self, status):
         """
