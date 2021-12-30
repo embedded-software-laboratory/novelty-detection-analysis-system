@@ -24,7 +24,7 @@ class NeuralInterSamplingDetectorWithPhysicalLimitsWithApprox(BaseDetector):
         kwargs
         """
         super(NeuralInterSamplingDetectorWithPhysicalLimitsWithApprox, self).__init__(*args, **kwargs)
-        self.register_parameter("Aggressiveness", ArgumentType.FLOAT, 0.5, 0, 2, tooltip="Parameter for the aggressiveness of error detection.")
+        self.register_parameter("Aggressiveness", ArgumentType.FLOAT, 0.1, 0, 2, tooltip="Parameter for the aggressiveness of error detection.")
 
     def detect(self, datasets_in, **kwargs) -> dict:
         """ Return novelties in given dataset
