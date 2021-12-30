@@ -11,3 +11,5 @@ class Color(Enum):
     RED = 'fc4e08'
     BLACK = '000000'
     GREY = 'A9A9A9'
+    PURPLE = 'BD4EB8'
+    PINK = 'ebb4ff'

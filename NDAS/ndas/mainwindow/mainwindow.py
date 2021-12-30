@@ -886,19 +886,42 @@ class MainWindow(QMainWindow):
 
     @pyqtSlot()
     def remove_detected_points(self):
-        columns_with_novelties = algorithms.get_plots_with_detected_novelties()
+        columns_with_novelties = [col for col in algorithms.get_plots_with_detected_novelties() if col in plots.get_registered_plot_keys()]
         df = data.get_full_dataframe()
         time_column = data.get_dataframe_index_column()
         for column in columns_with_novelties:
             novelties = algorithms.get_detected_novelties(column)
-            df[column][df[time_column].isin([k for k, v in novelties.items() if v == 1])] = np.nan
+            list_of_novelty_keys = [k for k, v in novelties.items() if v == 1]
+            df.loc[:, column][df[time_column].isin(list_of_novelty_keys)] = np.nan
+            for k in list_of_novelty_keys:
+                novelties[k] = -9
+            algorithms.set_detected_novelties(column, novelties)
+            plots.add_plot_novelties(column, algorithms.get_detected_novelties(column))
         self.update_values_in_current_dataset(df)
+        plots.update_plot_view()
+        self.update_statistics()
 
     def update_values_in_current_dataset(self, df):
         data.set_dataframe(df, [])
-        plots.register_available_plots(plots.get_active_plot()[0])
+        plots.update_available_plots()
         self.tab_datainspector.set_data(data.get_dataframe())
+        # self.set_updated_novelties(algorithms.get_detected_novelties(plots.get_active_plot()[0]), plots.get_active_plot()[0])
         datamedicalimputationwidget.DataMedicalImputationWidget.on_import_data(self.tab_datamedimputation)
+
+    def update_added_values_novelty_color(self, mask_df):
+        columns = plots.get_registered_plot_keys()
+        time_column = data.get_dataframe_index_column()
+        for col in columns:
+            list_nan_timestamps = mask_df[time_column][mask_df[col].values]
+            col_novelties = algorithms.get_detected_novelties(col)
+            for time in list_nan_timestamps:
+                if time not in col_novelties:
+                    col_novelties[time] = -8
+            algorithms.set_detected_novelties(col, col_novelties)
+            plots.add_plot_novelties(col, algorithms.get_detected_novelties(col))
+        plots.update_plot_view()
+        self.update_statistics()
+
 
     @pyqtSlot()
     def set_algorithm_result(self, val):
@@ -975,6 +998,7 @@ class MainWindow(QMainWindow):
         data.set_dataframe(df, labels)
         data.reset_imputed_dataframe()
         data.reset_mask_dataframe()
+        algorithms.reset_detected_novelties()
         plots.register_available_plots()
         annotations.register_plot_annotation()
 

@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 import pyqtgraph as pg
 
-from ndas.extensions import data
+from ndas.extensions import data, algorithms
 from ndas.mainwindow import graphlayoutwidget
 from ndas.misc import graphbox
 from ndas.misc.colors import Color
@@ -86,6 +86,52 @@ def register_plot(name: str, x_data: any, y_data: any, x_label: str, y_label: st
     main_line_plot_item = SingleLinePlotItem(plot_item_name=name, x_data=x_data, y_data=y_data, plot_item=plot_line)
 
     registered_plots[name] = MultiPlot(name, x_label, y_label, main_dot_plot_item, main_line_plot_item)
+
+
+def update_plot(name: str, x_data: any, y_data: any):
+    """
+        Registers a new plot with data
+
+        Parameters
+        ----------
+        name
+        x_data
+        y_data
+
+        """
+    global registered_plots
+
+    if name not in registered_plots:
+        logger.plots.error("The plot named %s isn't yet registered." % name)
+        return False
+
+    if not (len(x_data) == len(y_data)):
+        logger.plots.error("X and Y data have not the same length. Failed to add plot %s" % name)
+        return False
+
+    if isinstance(x_data, list):
+        x_data_numpy = np.ndarray(x_data, dtype=np.float32)
+        y_data_numpy = np.ndarray(y_data, dtype=np.float32)
+        x_data = pd.Series(x_data)
+        y_data = pd.Series(y_data)
+    elif isinstance(x_data, pd.Series):
+        x_data_numpy = x_data.to_numpy()
+        y_data_numpy = y_data.to_numpy()
+    else:
+        logger.plots.error("Unsupported data format (%s). Failed to add plot %s" % (str(type(x_data)), name))
+        return False
+
+    reg_plot = registered_plots[name]
+    novelty_data = _match_novelties_to_timedata(x_data, algorithms.get_detected_novelties(name))
+
+    reg_plot.main_dot_plot.x_data = x_data
+    reg_plot.main_dot_plot.y_data = y_data
+    reg_plot.main_dot_plot.plot_item.setData(x_data_numpy, y_data_numpy)
+    reg_plot.main_dot_plot.plot_item.setBrush(_get_brush_map(novelty_data))
+    reg_plot.main_dot_plot.plot_item.setPen(_get_pen_map(novelty_data))
+    reg_plot.main_line_plot.x_data = x_data
+    reg_plot.main_line_plot.y_data = y_data
+    reg_plot.main_line_plot.plot_item.setData(x_data_numpy, y_data_numpy)
 
 
 def add_line(plot_name, line_name, x_data, y_data, color=None, p_width=3):
@@ -224,6 +270,18 @@ def register_available_plots(current_active_plot=None):
         registered_plots[list(registered_plots.keys())[0]].active = True
 
 
+def update_available_plots():
+    df = data.get_dataframe()
+    columns = data.get_dataframe_columns()
+    for col in get_registered_plot_keys():
+        temp_data = df[col]
+        if not temp_data.dropna().empty:
+            temp_time = df[columns[0]]
+            temp_df = pd.DataFrame({columns[0]: temp_time, col: temp_data})
+            temp_df.dropna(axis=0, inplace=True)
+            update_plot(col, temp_df[columns[0]], temp_df[col])
+
+
 def set_plot_active(name):
     """
     Sets a plot as active
@@ -303,7 +361,7 @@ def _get_brush_map(novelty_data: list):
     ----------
     novelty_data
     """
-    color_map = {-2: Color.GREY.value, -1: Color.GREEN.value, 0: Color.BLUE.value, 1: Color.RED.value,
+    color_map = {-9: Color.PURPLE.value, -8: Color.PINK.value, -2: Color.GREY.value, -1: Color.GREEN.value, 0: Color.BLUE.value, 1: Color.RED.value,
                  2: Color.YELLOW.value}
     return [pg.mkBrush(color_map[novelty_point]) for novelty_point in novelty_data]
 
@@ -418,7 +476,6 @@ def add_plot_novelties(plot_name: str, novelties: dict):
         return False
 
     reg_plot = registered_plots[plot_name]
-
     novelty_data = _match_novelties_to_timedata(reg_plot.main_dot_plot.x_data, novelties)
 
     x_data = reg_plot.main_dot_plot.x_data
@@ -439,6 +496,8 @@ def add_plot_novelties(plot_name: str, novelties: dict):
 
     reg_plot.main_dot_plot = primary_point_plot_item
     reg_plot.main_line_plot = primary_line_plot_item
+
+    reg_plot.supplementary_plots = [singleplotitem for singleplotitem in reg_plot.supplementary_plots if not isinstance(singleplotitem.plot_item, graphbox.GraphBoxItem)]
 
     if draw_outlier_series_box:
         for box_item in _get_outlier_boxes(novelty_data, outlier_series_threshold, x_data_numpy, y_data_numpy):

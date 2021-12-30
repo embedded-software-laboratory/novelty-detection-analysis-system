@@ -387,7 +387,10 @@ class DataMedicalImputationWidget(QWidget):
         if isinstance(data.get_mask_dataframe(), pd.DataFrame):
             mask = (mask+data.get_mask_dataframe()).clip(upper=1)
         data.set_mask_dataframe(mask)
+        expanded_data_isnan = (expanded_data != expanded_data)
+        expanded_data_isnan[time_col_name] = imputed_data[time_col_name]
         self.main_window.update_values_in_current_dataset(data.get_imputed_dataframe())
+        self.main_window.update_added_values_novelty_color(expanded_data_isnan)
 
     def on_toggle_show_imputed_data(self, state):
         """
