@@ -35,14 +35,14 @@ class PandasInterpolation:
 
     def polynomial_interpolation(self, dataframe, lim_dir='forward', lim_are='inside'):
         interpolated_time_series, other_series, interpolated_non_series_data = self.dataset_separation(dataframe)
-        interpolated_other_series = other_series.interpolate(method='polynomial', limit_area=lim_are, limit_direction=lim_dir)
+        interpolated_other_series = other_series.interpolate(method='polynomial', order=2, limit_area=lim_are, limit_direction=lim_dir)
 
         result = pd.concat([interpolated_time_series, interpolated_other_series, interpolated_non_series_data], axis=1)
         return result[dataframe.columns]
 
     def spline_interpolation(self, dataframe, lim_dir='forward', lim_are='inside'):
         interpolated_time_series, other_series, interpolated_non_series_data = self.dataset_separation(dataframe)
-        interpolated_other_series = other_series.interpolate(method='spline', limit_area=lim_are, limit_direction=lim_dir)
+        interpolated_other_series = other_series.interpolate(method='spline', order=1, limit_area=lim_are, limit_direction=lim_dir)
 
         result = pd.concat([interpolated_time_series, interpolated_other_series, interpolated_non_series_data], axis=1)
         return result[dataframe.columns]

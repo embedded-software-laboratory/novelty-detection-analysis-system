@@ -125,6 +125,11 @@ def get_detected_novelties(plot_name):
     return {}
 
 
+def reset_detected_novelties():
+    global _detected_novelties
+    _detected_novelties = {}
+
+
 def get_plots_with_detected_novelties():
     """
     Returns the plots for which novelties were detected
