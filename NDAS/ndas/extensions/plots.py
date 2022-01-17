@@ -536,6 +536,9 @@ def restore_from_save(data):
 def toggleTooltipFlag(flag):
     plot_layout_widget.toggleTooltipFlag(flag)
 
+def toggleLabelFlag(flag):
+    plot_layout_widget.toggleLabelFlag(flag)
+
 class SinglePlotItem:
     """
     A plot consisting of multiple plot items

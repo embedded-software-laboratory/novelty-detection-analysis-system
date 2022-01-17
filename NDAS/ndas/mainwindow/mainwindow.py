@@ -426,6 +426,12 @@ class MainWindow(QMainWindow):
         activate_tooltips.setChecked(True)
         settings_menu.addAction(activate_tooltips)
 
+        self.showPointLabels = True
+        activate_labels = QAction("Show point labels", self, checkable=True)
+        activate_labels.triggered.connect(lambda: self.toggleLabelStatus(activate_labels.isChecked()))
+        activate_labels.setChecked(True)
+        settings_menu.addAction(activate_labels)
+
 
         help_menu = self.main_menu.addMenu('&?')
         about_action = QAction("About", self)
@@ -818,6 +824,14 @@ class MainWindow(QMainWindow):
             self.showPointToolTips = True
         else:
             self.showPointToolTips = False
+
+    @pyqtSlot()
+    def toggleLabelStatus(self, isChecked):
+        plots.toggleLabelFlag(isChecked)
+        if isChecked:
+            self.showPointLabels = True
+        else:
+            self.showPointLabels = False
 
     @pyqtSlot()
     def add_new_plot(self, name, x_data, y_data, x_lbl, y_lbl):
