@@ -59,14 +59,17 @@ class NeuralInterDetector(BaseDetector):
                 data_diff = (data - imputed_data).abs()
                 sorted_data_diff = np.sort(data_diff.values, axis=None)
                 sorted_data_diff = sorted_data_diff[~np.isnan(sorted_data_diff)]
-                threshold_value = KneeLocator(range(len(sorted_data_diff)), sorted_data_diff, S=0.9, curve='convex',
+                if (len(sorted_data_diff)) > 1:
+                    threshold_value = KneeLocator(range(len(sorted_data_diff)), sorted_data_diff, S=0.9, curve='convex',
                                               direction='increasing').knee_y
-
-                for index, row in data_diff.iterrows():
-                    if row[c] > threshold_value:
-                        novelty_data[datasets[time_column].values[index]] = 1
-                    else:
-                        novelty_data[datasets[time_column].values[index]] = 0
+                else:
+                    threshold_value = None
+                if threshold_value != None:
+                    for index, row in data_diff.iterrows():
+                        if row[c] > threshold_value:
+                            novelty_data[datasets[time_column].values[index]] = 1
+                        else:
+                            novelty_data[datasets[time_column].values[index]] = 0
 
             result[c] = novelty_data
             current_status += status_length
