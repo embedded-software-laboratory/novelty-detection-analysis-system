@@ -249,7 +249,10 @@ class GraphLayoutWidget(pg.GraphicsLayoutWidget):
 
     def showTooltip(self, plot, points):
         if len(points) > 0 and self.toolTipFlag == True:
-            tooltip = "Value: " +str(round(points[0].pos()[1],3)) + " " + (self.main_plot_name.split("(")[1])[:-1]+ "\nTimestamp: " + str(points[0].pos()[0])
+            if len(self.main_plot_name.split("(")) > 1:
+                tooltip = "Value: " +str(round(points[0].pos()[1],3)) + " " + (self.main_plot_name.split("(")[1])[:-1]+ "\nTimestamp: " + str(points[0].pos()[0])
+            else:
+                tooltip = "Value: " +str(round(points[0].pos()[1],3)) + "\nTimestamp: " + str(points[0].pos()[0])
             for point in annotations.get_labeled_points(self.main_plot_name):
                 state = point.__getstate__()
                 if state[0] == points[0].pos()[1] and state[1] == points[0].pos()[0]:
