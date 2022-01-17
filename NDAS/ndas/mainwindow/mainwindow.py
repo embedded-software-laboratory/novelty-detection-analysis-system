@@ -891,6 +891,14 @@ class MainWindow(QMainWindow):
         time_column = data.get_dataframe_index_column()
         for column in columns_with_novelties:
             novelties = algorithms.get_detected_novelties(column)
+            if column == self.plot_selector.currentText().split()[0]:
+                points_to_remove = []
+                for labeled_point in annotations.get_labeled_points(self.plot_selector.currentText().split()[0]):
+                    if novelties[labeled_point.x] == 1:
+                        points_to_remove.append(labeled_point)
+                for point in points_to_remove:
+                    annotations.remove_labeled_point(column, point)
+
             list_of_novelty_keys = [k for k, v in novelties.items() if v == 1]
             df.loc[:, column][df[time_column].isin(list_of_novelty_keys)] = np.nan
             for k in list_of_novelty_keys:
