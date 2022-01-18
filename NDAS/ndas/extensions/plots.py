@@ -238,6 +238,20 @@ def get_registered_plot_keys():
     return [k for k, v in registered_plots.items() if "LOS" not in k]
 
 
+def get_available_plot_keys(data):
+    """
+    Returns the keys of plottable columns excluding "LOS"
+    """
+    available_plot_keys = []
+    columns = data.columns.tolist()
+
+    for idx, col in enumerate(columns[1:]):
+        temp_data = data[col]
+        if not temp_data.dropna().empty and not any(pattern in columns[idx + 1] for pattern in (exclusion_substrings+["LOS"])):
+            available_plot_keys.append(col)
+    return available_plot_keys
+
+
 def register_available_plots(current_active_plot=None):
     """
     Registers all plots for the available data

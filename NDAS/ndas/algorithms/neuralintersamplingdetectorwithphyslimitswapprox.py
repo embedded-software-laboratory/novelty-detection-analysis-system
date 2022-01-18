@@ -46,7 +46,7 @@ class NeuralInterSamplingDetectorWithPhysicalLimitsWithApprox(BaseDetector):
         """
         datasets = datasets_in.copy(True)
         time_column = datasets.columns[0]
-        used_columns = [col for col in datasets.columns if col in plots.get_registered_plot_keys()]
+        used_columns = [col for col in datasets.columns if col in plots.get_available_plot_keys(datasets)]
         self.s_value = 0.25 + (float(kwargs["Aggressiveness"])/4)
 
         thresholds = {k: ((self.get_physiological_information(k).nisd_pla_thr / (2*self.s_value)) if self.get_physiological_information(k) else (self.get_physiological_information('default').nisd_pla_thr / (2*self.s_value))) for k in used_columns}
@@ -61,7 +61,7 @@ class NeuralInterSamplingDetectorWithPhysicalLimitsWithApprox(BaseDetector):
 
         # Iteration 1
         imputation_accumulated = pd.DataFrame(0, columns=datasets.columns, index=datasets.index)
-        current_status = 0.0
+        current_status = 5.0
         self.signal_percentage(int(current_status) % 100)
         for i in range(50):
             temp_imputation = pd.DataFrame(np.nan, columns=datasets.columns, index=datasets.index)

@@ -51,7 +51,7 @@ class NeuralInterSamplingDetectorWithPhysicalLimits(BaseDetector):
             if phys_info:
                 clipped_dataset[c].where(clipped_dataset[c].between(phys_info.low, phys_info.high), other=np.nan, inplace=True)
         imputation_accumulated = pd.DataFrame(0, columns=datasets.columns, index=datasets.index)
-        current_status = 0.0
+        current_status = 5.0
         for i in range(50):
             self.signal_percentage(int(current_status) % 100)
             temp_imputation = pd.DataFrame(np.nan, columns=datasets.columns, index=datasets.index)
@@ -60,13 +60,13 @@ class NeuralInterSamplingDetectorWithPhysicalLimits(BaseDetector):
             temp_imputation = temp_imputation.where((mask<(1/3)) | (mask>=(2/3)), other= BaseImputation().base_imputation(dataframe=clipped_dataset.where((mask<(1/3)) | (mask>=(2/3)), other=np.nan), method_string='neural inter mask'))
             temp_imputation = temp_imputation.where(mask<(2/3), other= BaseImputation().base_imputation(dataframe=clipped_dataset.where(mask<(2/3), other=np.nan), method_string='neural inter mask'))
             imputation_accumulated = imputation_accumulated + temp_imputation
-            current_status += 1.5
+            current_status += 1.4
 
         # Calculate the Neural Inter Imputation
         imputed_dataset = imputation_accumulated / 50
         # Get the additional arguments
         time_column = datasets.columns[0]
-        used_columns = [col for col in datasets.columns if col in plots.get_registered_plot_keys()]
+        used_columns = [col for col in datasets.columns if col in plots.get_available_plot_keys(datasets)]
 
         status_length = 25 / len(used_columns)
         current_status = 75.0

@@ -352,23 +352,17 @@ class GraphLayoutWidget(pg.GraphicsLayoutWidget):
         """
         bottom_left, top_right = val
 
-        data_point_elements = []
-        for i in range(len(self._x_data)):
-            data_point_elements.append((self._x_data[i], self._y_data[i]))
-
-        points_within = []
-        for (x, y) in data_point_elements:
-            if (x >= bottom_left[0] and x <= top_right[0]):
-                if (y >= bottom_left[1] and y <= top_right[1]):
-                    points_within.append((x, y))
-
         indexes = []
-        for (x, y) in points_within:
-            lx = np.argwhere(self._x_data == x)
-            ly = np.argwhere(self._y_data == y)
-            i = np.intersect1d(lx, ly)[0]
-            e = {'id': i, 'x': x, 'y': y}
-            indexes.append(e)
+        for i in range(len(self._x_data)):
+            x = self._x_data[i]
+            y = self._y_data[i]
+            if bottom_left[0] <= x <= top_right[0]:
+                if bottom_left[1] <= y <= top_right[1]:
+                    lx = np.argwhere(self._x_data == x)
+                    ly = np.argwhere(self._y_data == y)
+                    i = np.intersect1d(lx, ly)[0]
+                    e = {'id': i, 'x': x, 'y': y}
+                    indexes.append(e)
 
         spot_items = self.main_dot_plot_item.points()
         for single_index in list({v['id']: v for v in indexes}.values()):

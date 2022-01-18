@@ -12,8 +12,8 @@ class PandasInterpolation:
     """
     def dataset_separation(self, dataframe):
         df_columns = dataframe.columns
-        index_column = data.get_dataframe_index_column()
-        reg_columns = plots.get_registered_plot_keys()
+        index_column = dataframe.columns[0]
+        reg_columns = plots.get_available_plot_keys(dataframe)
         other_series_columns = [col for col in df_columns if col in reg_columns]
         excluded_columns = [col for col in df_columns if col not in reg_columns+[index_column]]
 
@@ -92,7 +92,7 @@ class PandasInterpolation:
             mask_edges[dataframe[col].first_valid_index():dataframe[col].last_valid_index(), dataframe.columns.get_loc(col)] = 1
         imp_res = self.neural_interpolation(dataframe, filepath)
         for col in imp_res.columns:
-            if col in plots.get_registered_plot_keys():
+            if col in plots.get_available_plot_keys(dataframe):
                 decimals = 0
                 if physiologicallimits.get_physical_dt(col) and physiologicallimits.get_physical_dt(col).id == 'temperature':
                     decimals = 1

@@ -8,7 +8,7 @@ import numpy as np
 import os
 
 from ndas.extensions import algorithms, annotations, data, plots, savestate
-from ndas.mainwindow import datamedicalimputationwidget, statgraphwidgets, datainspectionwidget, benchmarkwidget
+from ndas.mainwindow import datamedicalimputationwidget, statgraphwidgets, datainspectionwidget, benchmarkwidget, masscorrectionwidget
 from ndas.mainwindow.sshsettingswidget import SSHSettingsWindow
 from ndas.mainwindow.databasesettingswidget import DatabaseSettingsWindow
 from ndas.mainwindow.importdatabasewidget import ImportDatabaseWindow
@@ -54,6 +54,8 @@ class MainWindow(QMainWindow):
         self.tab_annotation.setAutoFillBackground(True)
         self.tab_datamedimputation = datamedicalimputationwidget.DataMedicalImputationWidget(main_window=self)
         self.tab_datamedimputation.setAutoFillBackground(True)
+        self.tab_masscorrection = masscorrectionwidget.MassCorrectionWidget(threadpool_obj)
+        self.tab_masscorrection.setAutoFillBackground(True)
         self.tab_datainspector = datainspectionwidget.DataInspectionWidget()
         self.tab_datainspector.setAutoFillBackground(True)
         # self.tab_datagenerator = datageneratorwidget.DataGeneratorWidget()
@@ -70,6 +72,7 @@ class MainWindow(QMainWindow):
 
         self.main_widget.addTab(self.tab_annotation, "Annotation")
         self.main_widget.addTab(self.tab_datamedimputation, 'Data Imputation')
+        self.main_widget.addTab(self.tab_masscorrection, 'Mass Error-Correction')
         self.main_widget.addTab(self.tab_statistics, "Statistics")
         self.main_widget.addTab(self.tab_datainspector, "Data Inspector")
         # self.main_widget.addTab(self.tab_datagenerator, "Data Generator")

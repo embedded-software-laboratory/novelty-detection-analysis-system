@@ -40,7 +40,7 @@ class PhysicalLimitDetector(BaseDetector):
 
         # Get the additional arguments
         time_column = datasets.columns[0]
-        used_columns = [col for col in datasets.columns if col in plots.get_registered_plot_keys()]
+        used_columns = [col for col in datasets.columns if col in plots.get_available_plot_keys(datasets)]
         status_length = 90 / len(used_columns)
         current_status = 10.0
         result = {}

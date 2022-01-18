@@ -224,7 +224,7 @@ class SW_ABSAD_MOD(BaseDetector):
         if self.use_columns[0] != '':
             df = self.get_column_subset(df, self.use_columns)
         else:
-            df = df[[df.columns[0]]+[x for x in plots.get_registered_plot_keys() if x in df.columns and not df[x].dropna().empty]]
+            df = df[[df.columns[0]]+[x for x in plots.get_available_plot_keys(df) if x in df.columns and not df[x].dropna().empty]]
 
         if self.replace_zeroes:
             df = df.replace(0, np.NaN)
