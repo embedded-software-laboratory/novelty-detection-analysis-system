@@ -92,6 +92,7 @@ class DatabaseSettingsWidget(QWidget):
 			data.get_instance().signals.status_signal.connect(lambda status: parent.getParent().progress_bar_update_slot(status))
 			data.get_instance().signals.error_signal.connect(lambda s: parent.getParent().error_msg_slot(s))
 			parent.getParent().thread_pool.start(data.get_instance())
+			parent.getParent().toggleTooltipStatus(parent.getParent().activate_tooltips, True)
 			parent.close()
 
 	def showPatients(self, parent, numberOfPatients, database):

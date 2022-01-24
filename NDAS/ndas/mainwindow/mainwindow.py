@@ -424,10 +424,10 @@ class MainWindow(QMainWindow):
         settings_menu.addAction(database_settings_action)
 
         self.showPointToolTips = True
-        activate_tooltips = QAction("Show point tooltips", self, checkable=True)
-        activate_tooltips.triggered.connect(lambda: self.toggleTooltipStatus(activate_tooltips.isChecked()))
-        activate_tooltips.setChecked(True)
-        settings_menu.addAction(activate_tooltips)
+        self.activate_tooltips = QAction("Show point tooltips", self, checkable=True)
+        self.activate_tooltips.triggered.connect(lambda: self.toggleTooltipStatus(self.activate_tooltips, self.activate_tooltips.isChecked()))
+        self.activate_tooltips.setChecked(True)
+        settings_menu.addAction(self.activate_tooltips)
 
         self.showPointLabels = True
         activate_labels = QAction("Show point labels", self, checkable=True)
@@ -821,8 +821,9 @@ class MainWindow(QMainWindow):
         self.databasewidget.show()
 
     @pyqtSlot()
-    def toggleTooltipStatus(self, isChecked):
+    def toggleTooltipStatus(self, tooltip_checkbox, isChecked):
         plots.toggleTooltipFlag(isChecked)
+        tooltip_checkbox.setChecked(isChecked)
         if isChecked:
             self.showPointToolTips = True
         else:
@@ -1010,6 +1011,7 @@ class MainWindow(QMainWindow):
             data.get_instance().signals.error_signal.connect(lambda s: self.error_msg_slot(s))
             self.thread_pool.start(data.get_instance())
             logging.info("Loaded CSV-File '"+file_name+"'")
+            self.toggleTooltipStatus(self.activate_tooltips, True)
 
     @pyqtSlot()
     def data_import_result_slot(self, df, labels):
@@ -1186,6 +1188,7 @@ class MainWindow(QMainWindow):
             data.get_instance().signals.error_signal.connect(lambda s: self.error_msg_slot(s))
             self.thread_pool.start(data.get_instance())
             logging.info("Loaded Waveform-Files '"+file_names+"'")
+            self.toggleTooltipStatus(self.activate_tooltips, True)
 
     @pyqtSlot()
     def fm_open_wfm_numeric_action(self):
@@ -1204,6 +1207,7 @@ class MainWindow(QMainWindow):
             data.get_instance().signals.error_signal.connect(lambda s: self.error_msg_slot(s))
             self.thread_pool.start(data.get_instance())
             logging.info("Loaded Numeric Waveform-Files '"+file_names+"'")
+            self.toggleTooltipStatus(self.activate_tooltips, True)
 
 
     @pyqtSlot()
