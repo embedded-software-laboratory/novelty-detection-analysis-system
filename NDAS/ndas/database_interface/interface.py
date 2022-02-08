@@ -16,16 +16,24 @@ def startInterface(argv):
 	sshLoginDataFile = open(os.getcwd()+"\\ndas\\local_data\\sshSettings.json")
 	sshLoginData = json.load(sshLoginDataFile)
 
-	databaseConfigurationFile = open(os.getcwd()+"\\ndas\\local_data\\db_asic_scheme.json")
-	databaseConfiguration = json.load(databaseConfigurationFile)
-	# Establish ssh connection to the database server
-	host = "137.226.78.84"
-	port = 22
-	username = sshLoginData["username"]
-	password = sshLoginData["password"]
-	ssh = paramiko.SSHClient()
-	ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-	ssh.connect(host, port, username, password)
+	try:
+		databaseConfigurationFile = open(os.getcwd()+"\\ndas\\local_data\\db_asic_scheme.json")
+		databaseConfiguration = json.load(databaseConfigurationFile)
+		# Establish ssh connection to the database server
+		host = "137.226.78.84"
+		port = 22
+		username = sshLoginData["username"]
+		password = sshLoginData["password"]
+		ssh = paramiko.SSHClient()
+		ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+		ssh.connect(host, port, username, password)
+	
+	except paramiko.ssh_exception.NoValidConnectionsError:
+		return -3
+	except TimeoutError: 
+		return -4
+	except paramiko.ssh_exception.AuthenticationException:
+		return -5
 
 	#----------------------
 	#-----Tables-----------
@@ -72,9 +80,9 @@ def startInterface(argv):
 	#connectionParameters = json.load(parameterFile)
 	#parameterFile.close()
 	#connection = mysql.connector.connect(host=connectionParameters['host'],
-	#                                     database=connectionParameters['dbname'],
-	#                                     user=connectionParameters['user'],
-#                                     password=connectionParameters['password'])
+	#									 database=connectionParameters['dbname'],
+	#									 user=connectionParameters['user'],
+#									 password=connectionParameters['password'])
 	if argv[2] == "dataDensity":
 		if argv[3] == "patientid":
 			if argv[5] == "entriesTotal":
@@ -115,7 +123,10 @@ def startInterface(argv):
 				#stdin, stdout, stderr = ssh.exec_command('mysql -h{} -u{} -p{} SMITH_SepsisDB -e "{}"'.format(databaseConfiguration['host'], databaseConfiguration['username'], databaseConfiguration['password'], dataDensityProcedure))
 				#stdin, stdout, stderr = ssh.exec_command('mysql -h{} -u{} -p{} SMITH_SepsisDB -e "call dataDensity({});"'.format(databaseConfiguration['host'], databaseConfiguration['username'], databaseConfiguration['password'],argv[5]))
 				stdin, stdout, stderr = ssh.exec_command('mysql -h{} -u{} -p{} SMITH_SepsisDB -e "select patientid, entriesTotal from SMITH_ASIC_SCHEME.asic_lookup_{} order by entriesTotal desc limit {};"'.format(databaseConfiguration['host'], databaseConfiguration['username'], databaseConfiguration['password'],argv[6], argv[5]))
-				if stderr.readlines() != []:
+				errors = stderr.readlines()
+				if errors[0] == "ERROR 1045 (28000): Access denied for user '{}'@'interface.smith.embedded.rwth-aachen.de' (using password: YES)\n".format(databaseConfiguration['username']):
+					return -6
+				if errors != []:
 					return -2
 				results = stdout.readlines()
 				results = results[1:]
@@ -149,6 +160,9 @@ def startInterface(argv):
 				#stdin, stdout, stderr = ssh.exec_command('mysql -h{} -u{} -p{} SMITH_SepsisDB -e "{}"'.format(databaseConfiguration['host'], databaseConfiguration['username'], databaseConfiguration['password'], dataDensityProcedure))
 				#stdin, stdout, stderr = ssh.exec_command('mysql -h{} -u{} -p{} SMITH_SepsisDB -e "call dataDensityWithParameter({});"'.format(databaseConfiguration['host'], databaseConfiguration['username'], databaseConfiguration['password'],argv[len(argv)-2]))
 				stdin, stdout, stderr = ssh.exec_command('mysql -h{} -u{} -p{} SMITH_SepsisDB -e "select patientid, {} from (select *, ({}) as numberOfEntries from SMITH_ASIC_SCHEME.asic_lookup_{} order by numberOfEntries desc limit {}) as sub;"'.format(databaseConfiguration['host'], databaseConfiguration['username'], databaseConfiguration['password'],argv[4], argv[4].replace(",","+"), argv[6], argv[5]))
+				errors = stderr.readlines()
+				if errors[0] == "ERROR 1045 (28000): Access denied for user '{}'@'interface.smith.embedded.rwth-aachen.de' (using password: YES)\n".format(databaseConfiguration['username']):
+					return -6
 				if stderr.readlines() != []:
 					print(stderr.readlines())
 					return -2
@@ -173,6 +187,9 @@ def startInterface(argv):
 				firstLine.append(name[0])
 			index+=1
 		stdin, stdout, stderr = ssh.exec_command('mysql -h{} -u{} -p{} SMITH_SepsisDB -e "select * from SMITH_ASIC_SCHEME.{} where patientid = {}"'.format(databaseConfiguration['host'], databaseConfiguration['username'], databaseConfiguration['password'], argv[4], argv[3]))
+		errors = stderr.readlines()
+		if errors[0] == "ERROR 1045 (28000): Access denied for user '{}'@'interface.smith.embedded.rwth-aachen.de' (using password: YES)\n".format(databaseConfiguration['username']):
+			return -6
 		result = stdout.readlines()
 		result = result[1:]
 		if result == []:

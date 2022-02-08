@@ -85,6 +85,14 @@ class DatabaseSettingsWidget(QWidget):
 			result = interface.startInterface(["interface", "db_asic_scheme.json", "selectPatient", str(patientid), database])
 		if result == -1:
 			QMessageBox.critical(self, "Error", "Patient not found.", QMessageBox.Ok)
+		elif result == -3:
+			QMessageBox.critical(self, "Error", "Connection to the database failed, make sure that you are connected to the i11-VPN", QMessageBox.Ok)
+		elif result == -4:
+			QMessageBox.critical(self, "Error", "Could not establish a connection to the database (connection timed out)", QMessageBox.Ok)
+		elif result == -5:
+			QMessageBox.critical(self, "Error", "SSH authentication failed, please make sure that you entered correct authentication data", QMessageBox.Ok)
+		elif result == -6:
+			QMessageBox.critical(self, "Error", "Database authentication failed, please make sure that you entered correct authentication data", QMessageBox.Ok)
 		else:
 			data.set_instance("CSVImporter", filename)
 			data.get_instance().signals.result_signal.connect(
@@ -107,6 +115,14 @@ class DatabaseSettingsWidget(QWidget):
 			patientids = ["No result found"]
 		elif result == -2:
 			patientids = ["An error occured, please enter a valid number."]
+		elif result == -3:
+			QMessageBox.critical(self, "Error", "Connection to the database failed, make sure that you are connected to the i11-VPN", QMessageBox.Ok)
+		elif result == -4:
+			QMessageBox.critical(self, "Error", "Could not establish a connection to the database (connection timed out)", QMessageBox.Ok)
+		elif result == -5:
+			QMessageBox.critical(self, "Error", "SSH authentication failed, please make sure that you entered correct authentication data", QMessageBox.Ok)
+		elif result == -6:
+			QMessageBox.critical(self, "Error", "Database authentication failed, please make sure that you entered correct authentication data", QMessageBox.Ok)
 		else:
 			for patient in result:
 				patientSplit = patient.split("\t")
@@ -125,6 +141,14 @@ class DatabaseSettingsWidget(QWidget):
 			patientids = ["No result found"]
 		elif result == -2:
 			patientids = ["An error occured, please enter a valid number and valid parameters."]
+		elif result == -3:
+			QMessageBox.critical(self, "Error", "Connection to the database failed, make sure that you are connected to the i11-VPN", QMessageBox.Ok)
+		elif result == -4:
+			QMessageBox.critical(self, "Error", "Could not establish a connection to the database (connection timed out)", QMessageBox.Ok)
+		elif result == -5:
+			QMessageBox.critical(self, "Error", "SSH authentication failed, please make sure that you entered correct authentication data", QMessageBox.Ok)
+		elif result == -6:
+			QMessageBox.critical(self, "Error", "Database authentication failed, please make sure that you entered correct authentication data", QMessageBox.Ok)
 		else:
 			for patient in result:
 				patientSplit = patient.split("\t")
@@ -142,3 +166,4 @@ class DatabaseSettingsWidget(QWidget):
 		self.selectedParameters.setText(label)
 		self.parameters = parameters
 		print(self.parameters)
+			
