@@ -435,6 +435,11 @@ class MainWindow(QMainWindow):
         database_settings_action.triggered.connect(lambda: self.change_database_settings())
         settings_menu.addAction(database_settings_action)
         
+        activate_labels = QAction("Show point labels", self, checkable=True)
+        activate_labels.triggered.connect(lambda: self.toggleLabelStatus(activate_labels.isChecked()))
+        activate_labels.setChecked(True)
+        settings_menu.addAction(activate_labels)
+
 
         help_menu = self.main_menu.addMenu('&?')
         about_action = QAction("About", self)
