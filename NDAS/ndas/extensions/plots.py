@@ -208,7 +208,7 @@ def add_linear_regression_line():
 
         regression_line_x, regression_line_y = regression_analysis.get_linear_fitting_line(x_data_np, y_data_np)
         add_line(k, "Linear Fit Line", pd.Series(regression_line_x), pd.Series(regression_line_y))
-        update_plot_view()
+        update_plot_view(retain_zoom=True)
 
 
 def add_spline_regression_curve():
@@ -227,7 +227,7 @@ def add_spline_regression_curve():
         regression_curve_x, regression_curve_y = regression_analysis.get_spline_interpolation_curve(x_data_np,
                                                                                                     y_data_np)
         add_line(k, "Spline Fit Curve", pd.Series(regression_curve_x), pd.Series(regression_curve_y))
-        update_plot_view()
+        update_plot_view(retain_zoom=True)
 
 
 def get_registered_plot_keys():
@@ -341,18 +341,23 @@ def set_plot_point_status(name, status):
         registered_plots[name].dot_plot_visible = status
 
 
-def update_plot_view():
+def update_plot_view(retain_zoom=False):
     """
     Redraws the current plot
     """
-    global registered_plots
+    global registered_plots, plot_layout_widget
     plot_name, _ = get_active_plot()
 
     if not plot_name:
         plot_layout_widget.clear_plots()
     else:
+        ax_x = plot_layout_widget.main_plot.getAxis('bottom').range
+        ax_y = plot_layout_widget.main_plot.getAxis('left').range
         logger.plots.debug("Drawing plot: %s" % registered_plots[plot_name].plot_name)
         plot_layout_widget.draw_registered_plot(registered_plots[plot_name])
+        if retain_zoom:
+            plot_layout_widget.main_plot.setXRange(ax_x[0], ax_x[1], padding=0)
+            plot_layout_widget.main_plot.setYRange(ax_y[0], ax_y[1], padding=0)
 
 
 def get_active_plot():

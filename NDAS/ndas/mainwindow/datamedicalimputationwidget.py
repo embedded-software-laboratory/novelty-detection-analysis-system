@@ -22,14 +22,23 @@ class DataMedicalImputationWidget(QWidget):
         self.main_window = main_window
         self.Dataframe = pd.DataFrame()
 
+        self.left_widget = QWidget()
+        self.scroll = QScrollArea()
+        self.scroll.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
+        self.scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        self.scroll.setWidgetResizable(True)
+        self.scroll.setFrameShape(QFrame.NoFrame)
+        self.scroll.setWidget(self.left_widget)
+
         self.layout = QHBoxLayout(self)
         self.setLayout(self.layout)
         self.layout_left = QGridLayout()
         self.layout_left.setColumnStretch(1, 3)
+        self.left_widget.setLayout(self.layout_left)
         self.bar_plot_label = QLabel('Timeline of diagnoses:\n(hover for details)')
         self.layout_left.addWidget(self.bar_plot_label, 0, 0, alignment=Qt.AlignCenter)
         self.layout_right = QVBoxLayout()
-        self.layout.addLayout(self.layout_left, stretch=6)
+        self.layout.addWidget(self.scroll, stretch=6)
         self.layout.addLayout(self.layout_right)
 
         """
@@ -258,7 +267,7 @@ class DataMedicalImputationWidget(QWidget):
             self.Graph_Plots.append(self.Graphs[i].plot([], [], pen=pg.mkPen(color=(128, 128, 128), width=1), symbol='o', symbolSize=2, symbolBrush='k'))
             self.Graphs[i].setXRange(0, 1)
             self.Graphs[i].setYRange(0, 1)
-            self.Graphs[i].setMouseEnabled(x=False, y=True)
+            self.Graphs[i].setMouseEnabled(x=False, y=False)
             self.Graphs[i].scene().sigMouseMoved.connect(lambda evt, bound_i=i: self.on_mouse_moved_over_graph(evt, bound_i))
             self.v_lines.append(pg.InfiniteLine(pos=(-1), angle=90, pen=(pg.mkPen(self.palette().color(QPalette.Highlight)))))
             self.h_lines.append(pg.InfiniteLine(pos=(-1000), angle=0, pen=(pg.mkPen(self.palette().color(QPalette.Highlight)))))
@@ -484,8 +493,8 @@ class DataMedicalImputationWidget(QWidget):
                 local_icd_series = update_dataframe[icd_col_name]
                 self.bar_plot_label.show()
                 self.bar_plot.show()
-                self.Patient_Information_ICD_Label.show()
-                self.ICD_Grid_Widget.show()
+                # self.Patient_Information_ICD_Label.show()
+                # self.ICD_Grid_Widget.show()
                 self.layout_left.setRowStretch(0, 1)
                 self.ICD_Labels[i].setToolTip(self.ICD_Labels[i].toolTip()+"\n")
                 self.ICD_Labels[i].setStyleSheet('color: black')
@@ -532,6 +541,8 @@ class DataMedicalImputationWidget(QWidget):
             age = update_dataframe['age(90= >89)'].iloc[0]
             if age == 90:
                 self.Patient_Age.setText('Above 89')
+            elif age == -1:
+                self.Patient_Age.setText('Unknown')
             elif age:
                 self.Patient_Age.setText(str(int(float(age))))
 

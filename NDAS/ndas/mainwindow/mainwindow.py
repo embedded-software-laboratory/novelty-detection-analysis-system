@@ -855,7 +855,7 @@ class MainWindow(QMainWindow):
         annotations.register_plot_annotation(name)
 
         self.update_plot_selector()
-        plots.update_plot_view()
+        plots.update_plot_view(retain_zoom=True)
 
     @pyqtSlot()
     def change_algorithm_slot(self):
@@ -926,7 +926,7 @@ class MainWindow(QMainWindow):
             algorithms.set_detected_novelties(column, novelties)
             plots.add_plot_novelties(column, algorithms.get_detected_novelties(column))
         self.update_values_in_current_dataset(df)
-        plots.update_plot_view()
+        plots.update_plot_view(retain_zoom=True)
         self.update_statistics()
 
     def update_values_in_current_dataset(self, df):
@@ -947,7 +947,7 @@ class MainWindow(QMainWindow):
                     col_novelties[time] = -8
             algorithms.set_detected_novelties(col, col_novelties)
             plots.add_plot_novelties(col, algorithms.get_detected_novelties(col))
-        plots.update_plot_view()
+        plots.update_plot_view(retain_zoom=True)
         self.update_statistics()
 
 
@@ -965,7 +965,7 @@ class MainWindow(QMainWindow):
             algorithms.set_detected_novelties(plot_name, plot_primary_novelties)
             plots.add_plot_novelties(plot_name, algorithms.get_detected_novelties(plot_name))
 
-        plots.update_plot_view()
+        plots.update_plot_view(retain_zoom=True)
         self.update_statistics()
 
     @pyqtSlot()
@@ -1154,7 +1154,7 @@ class MainWindow(QMainWindow):
             end = int(self.data_selection_end.text())
 
         data.set_slice(start, end)
-        plots.register_available_plots()
+        # plots.register_available_plots()
         plots.update_plot_view()
         self.tab_datainspector.set_data(data.get_dataframe())
 
@@ -1170,7 +1170,7 @@ class MainWindow(QMainWindow):
         self.data_selection_end.setText(str(end))
         self.data_selection_slider.setRange(start, end)
 
-        plots.register_available_plots()
+        # plots.register_available_plots()
         plots.update_plot_view()
 
     @pyqtSlot()
@@ -1397,5 +1397,5 @@ class MainWindow(QMainWindow):
         algorithms.set_detected_novelties(plot_name, plot_primary_novelties)
         plots.add_plot_novelties(plot_name, algorithms.get_detected_novelties(plot_name))
 
-        plots.update_plot_view()
+        plots.update_plot_view(retain_zoom=True)
         self.update_statistics()

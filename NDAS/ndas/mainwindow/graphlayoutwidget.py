@@ -73,7 +73,7 @@ class GraphLayoutWidget(pg.GraphicsLayoutWidget):
         layout_col
         """
         self.main_plot = self.addPlot(row=layout_row, col=layout_col, viewBox=MultiSelectViewBox())
-        self.main_plot.setMenuEnabled(False)
+        # self.main_plot.setMenuEnabled(False)
         self.main_plot.setAutoVisible(y=True)
         self.main_plot.showGrid(x=True, y=True, alpha=.3)
         self.main_plot.getViewBox().multipoint_selection_changed_signal.connect(lambda val: self._multiselect(val))
@@ -245,7 +245,6 @@ class GraphLayoutWidget(pg.GraphicsLayoutWidget):
 
         self.main_dot_plot_item.opts['hoverable'] = True
         self.main_dot_plot_item.sigHovered.connect(self.showTooltip)
-
 
     def showTooltip(self, plot, points):
         if len(points) > 0 and self.toolTipFlag == True:
