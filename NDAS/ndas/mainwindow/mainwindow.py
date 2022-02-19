@@ -1366,7 +1366,6 @@ class MainWindow(QMainWindow):
         self.annotation_number_active.setText("%s" % number_labeled)
 
     def on_mark_selected_clicked(self):
-        print("test")
         current_plot = plots.get_active_plot()[0]
         current_novelties = algorithms.get_detected_novelties(current_plot)
         selected_points = annotations.get_all_selection_points()
