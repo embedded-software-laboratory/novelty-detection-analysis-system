@@ -9,263 +9,284 @@ import os
 import paramiko
 
 def startInterface(argv):
-	Table = namedtuple('Table', ['name', 'type', 'relevant_columns', 'parameter_identifier_column'])
-	Parameter = namedtuple('Parameter', ['name','database', 'tables', 'parameter_identifier'])
-	currentPath = os.path.dirname(__file__)
+    Table = namedtuple('Table', ['name', 'type', 'relevant_columns', 'parameter_identifier_column'])
+    Parameter = namedtuple('Parameter', ['name','database', 'tables', 'parameter_identifier'])
+    currentPath = os.path.dirname(__file__)
 
-	sshLoginDataFile = open(os.getcwd()+"\\ndas\\local_data\\sshSettings.json")
-	sshLoginData = json.load(sshLoginDataFile)
-
-	try:
-		databaseConfigurationFile = open(os.getcwd()+"\\ndas\\local_data\\db_asic_scheme.json")
-		databaseConfiguration = json.load(databaseConfigurationFile)
-		# Establish ssh connection to the database server
-		host = "137.226.78.84"
-		port = 22
-		username = sshLoginData["username"]
-		password = sshLoginData["password"]
-		ssh = paramiko.SSHClient()
-		ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-		ssh.connect(host, port, username, password)
-	
-	except paramiko.ssh_exception.NoValidConnectionsError:
-		return -3
-	except TimeoutError: 
-		return -4
-	except paramiko.ssh_exception.AuthenticationException:
-		return -5
-
-	#----------------------
-	#-----Tables-----------
-	#----------------------
-	tables = []
-	with open(currentPath + "\\Interface_tables.csv") as parameter_csv:
-		csv_reader_object = csv.reader(parameter_csv, delimiter=";")
-		firstLineFlag = True
-		for row in csv_reader_object:
-			if firstLineFlag:
-				firstLineFlag = False
-				continue
-			tables.append(Table(name=row[0], type=int(row[1]), relevant_columns=row[2], parameter_identifier_column=row[3]))
+    ssh = openSSHConnection()
+    if ssh in [-3,-4,-5]:
+        return ssh
+    databaseConfigurationFile = open(os.getcwd()+"\\ndas\\local_data\\db_asic_scheme.json")
+    databaseConfiguration = json.load(databaseConfigurationFile)
+    #----------------------
+    #-----Tables-----------
+    #----------------------
+    tables = []
+    with open(currentPath + "\\Interface_tables.csv") as parameter_csv:
+        csv_reader_object = csv.reader(parameter_csv, delimiter=";")
+        firstLineFlag = True
+        for row in csv_reader_object:
+            if firstLineFlag:
+                firstLineFlag = False
+                continue
+            tables.append(Table(name=row[0], type=int(row[1]), relevant_columns=row[2], parameter_identifier_column=row[3]))
 
 
-	#----------------------
-	#----Parameter list----
-	#----------------------
-	parameters = []
-	with open(currentPath + "\\Interface_parameter.csv") as parameter_csv:
-		csv_reader_object = csv.reader(parameter_csv, delimiter=";")
-		firstLineFlag = True
-		for row in csv_reader_object:
-			if firstLineFlag:
-				firstLineFlag = False
-				continue
-			parameterTables = row[2].split(",")
-			tableReferences = []
-			for table in tables:
-				for parameterTable in parameterTables:
-					if table.name == parameterTable:
-						tableReferences.append(table)
-			if len(tableReferences) == 0:
-				print("Error reading parameter table: Table(s) not found in parameter " + row[0] + " (Database " + row[1] + ")")
-				continue
-			if tableReferences[0].type == 1:
-				parameterIdentifier = row[3].split(",")
-				parameterIdentifier = list(map(int, parameterIdentifier))
-				parameters.append(Parameter(name=row[0], database=row[1], tables=tableReferences, parameter_identifier=parameterIdentifier))
-			elif tableReferences[0].type == 2:
-				parameters.append(Parameter(name=row[0], database=row[1], tables=tableReferences, parameter_identifier=row[3]))
+    #----------------------
+    #----Parameter list----
+    #----------------------
+    parameters = []
+    with open(currentPath + "\\Interface_parameter.csv") as parameter_csv:
+        csv_reader_object = csv.reader(parameter_csv, delimiter=";")
+        firstLineFlag = True
+        for row in csv_reader_object:
+            if firstLineFlag:
+                firstLineFlag = False
+                continue
+            parameterTables = row[2].split(",")
+            tableReferences = []
+            for table in tables:
+                for parameterTable in parameterTables:
+                    if table.name == parameterTable:
+                        tableReferences.append(table)
+            if len(tableReferences) == 0:
+                print("Error reading parameter table: Table(s) not found in parameter " + row[0] + " (Database " + row[1] + ")")
+                continue
+            if tableReferences[0].type == 1:
+                parameterIdentifier = row[3].split(",")
+                parameterIdentifier = list(map(int, parameterIdentifier))
+                parameters.append(Parameter(name=row[0], database=row[1], tables=tableReferences, parameter_identifier=parameterIdentifier))
+            elif tableReferences[0].type == 2:
+                parameters.append(Parameter(name=row[0], database=row[1], tables=tableReferences, parameter_identifier=row[3]))
 
-	#parameterFile = open(currentPath + "\\" + argv[1])
-	#connectionParameters = json.load(parameterFile)
-	#parameterFile.close()
-	#connection = mysql.connector.connect(host=connectionParameters['host'],
-	#									 database=connectionParameters['dbname'],
-	#									 user=connectionParameters['user'],
-#									 password=connectionParameters['password'])
-	if argv[2] == "dataDensity":
-		if argv[3] == "patientid":
-			if argv[5] == "entriesTotal":
-				# count how many entries exists in the table asic_data_mimic for the given patient id
-				cur.execute("select count(*) from SMITH_ASIC_SCHEME.asic_data_mimic where patientid = {}".format(argv[4]))
-				result = cur.fetchall()
-				print(result)
-				cur.close()
-			else:
-				#count how many entries exists in the table asic_data_mimic for the given patient id where the given parameter column is not null
-				index = 0
-				identifier = ""
-				for arg in argv:
-					if index < 5:
-						index+=1
-						continue
-					found = False
-					for parameter in parameters:
-						if parameter.name == arg and parameter.database == "asic":
-							found = True
-							identifier = identifier + parameter.parameter_identifier + ", "
-					if found == False:
-						print("Unknown parameter " + arg + " in database asic")
-					index+=1
-				identifier = identifier[:-2]
-				identifierComplete = identifier.replace(", ", " and ") + " IS NOT NULL"
-				cur.execute("select count(*) from SMITH_ASIC_SCHEME.asic_data_mimic where patientid = {} and {}".format(argv[4], identifierComplete))
-				result = cur.fetchall()
-				print(result)
-				cur.close()
-		elif argv[3] == "bestPatients":
-			if argv[4] == "entriesTotal":
-				# search for the patient who has the most entries in the given table
-				#stdin, stdout, stderr = ssh.exec_command('mysql -h{} -u{} -p{} SMITH_SepsisDB -e "drop procedure if exists dataDensity; "'.format(databaseConfiguration['host'], databaseConfiguration['username'], databaseConfiguration['password']))
-				#sqlFile = open(currentPath + "\\dataDensity.sql")
-				#dataDensityProcedure = sqlFile.read().replace("$placeholder", argv[6])
-				#sqlFile.close()
-				#stdin, stdout, stderr = ssh.exec_command('mysql -h{} -u{} -p{} SMITH_SepsisDB -e "{}"'.format(databaseConfiguration['host'], databaseConfiguration['username'], databaseConfiguration['password'], dataDensityProcedure))
-				#stdin, stdout, stderr = ssh.exec_command('mysql -h{} -u{} -p{} SMITH_SepsisDB -e "call dataDensity({});"'.format(databaseConfiguration['host'], databaseConfiguration['username'], databaseConfiguration['password'],argv[5]))
-				stdin, stdout, stderr = ssh.exec_command('mysql -h{} -u{} -p{} SMITH_SepsisDB -e "select patientid, entriesTotal from SMITH_ASIC_SCHEME.asic_lookup_{} order by entriesTotal desc limit {};"'.format(databaseConfiguration['host'], databaseConfiguration['username'], databaseConfiguration['password'],argv[6], argv[5]))
-				errors = stderr.readlines()
-				if len(errors) > 0 and errors[0] == "ERROR 1045 (28000): Access denied for user '{}'@'interface.smith.embedded.rwth-aachen.de' (using password: YES)\n".format(databaseConfiguration['username']):
-					return -6
-				if errors != []:
-					return -2
-				results = stdout.readlines()
-				results = results[1:]
-				if results == []:
-					return -1
-				#stdin, stdout, stderr = ssh.exec_command('mysql -h{} -u{} -p{} SMITH_SepsisDB -e "drop procedure if exists dataDensity; "'.format(databaseConfiguration['host'], databaseConfiguration['username'], databaseConfiguration['password']))
-				return results
-			else: 
-				# search for the patient who has the most entries in the given table for the specified parameters
-				#stdin, stdout, stderr = ssh.exec_command('mysql -h{} -u{} -p{} SMITH_SepsisDB -e "drop procedure if exists dataDensityWithParameter; "'.format(databaseConfiguration['host'], databaseConfiguration['username'], databaseConfiguration['password']))
-				#index = 0
-				#identifier = ""
-				#for arg in argv:
-				#	if index < 4:
-				#		index+=1
-				#		continue
-				#	if index == len(argv)-2:
-				#		break
-				#	found = False
-				#	for parameter in parameters:
-				#		if parameter.name == arg and parameter.database == "asic":
-				#			found = True
-				#			identifier = identifier + parameter.parameter_identifier + " and "
-				#	if found == False:
-				#		print("Unknown parameter " + arg + " in database asic")
-				#	index+=1
-				#identifier = identifier[:-4]				
-				#sqlFile = open(currentPath + "\\dataDensityWithParameter.sql")
-				#dataDensityProcedure = sqlFile.read().replace("$placeholder", argv[len(argv)-1]).replace("$identifier", identifier)
-				#sqlFile.close()
-				#stdin, stdout, stderr = ssh.exec_command('mysql -h{} -u{} -p{} SMITH_SepsisDB -e "{}"'.format(databaseConfiguration['host'], databaseConfiguration['username'], databaseConfiguration['password'], dataDensityProcedure))
-				#stdin, stdout, stderr = ssh.exec_command('mysql -h{} -u{} -p{} SMITH_SepsisDB -e "call dataDensityWithParameter({});"'.format(databaseConfiguration['host'], databaseConfiguration['username'], databaseConfiguration['password'],argv[len(argv)-2]))
-				stdin, stdout, stderr = ssh.exec_command('mysql -h{} -u{} -p{} SMITH_SepsisDB -e "select patientid, {} from (select *, ({}) as numberOfEntries from SMITH_ASIC_SCHEME.asic_lookup_{} order by numberOfEntries desc limit {}) as sub;"'.format(databaseConfiguration['host'], databaseConfiguration['username'], databaseConfiguration['password'],argv[4], argv[4].replace(",","+"), argv[6], argv[5]))
-				errors = stderr.readlines()
-				if len(errors) > 0 and errors[0] == "ERROR 1045 (28000): Access denied for user '{}'@'interface.smith.embedded.rwth-aachen.de' (using password: YES)\n".format(databaseConfiguration['username']):
-					return -6
-				if stderr.readlines() != []:
-					print(stderr.readlines())
-					return -2
-				results = stdout.readlines()
-				if results[1:] == []:
-					return -1	
-				return results
-	elif argv[2] == "selectPatient":
-		# selects the patient from the given table (argv[4]) with the specified patient id (argv[3])
-		stdin, stdout, stderr = ssh.exec_command('mysql -h{} -u{} -p{} SMITH_SepsisDB -e "show columns from SMITH_ASIC_SCHEME.{}"'.format(databaseConfiguration['host'], databaseConfiguration['username'], databaseConfiguration['password'], argv[4]))
-		columnNames = stdout.readlines()
-		columnNames = columnNames[2:]
-		firstLine = []
-		units = ["", "mmHg", "mmHg", "%", "", "°C", "mmHg", "cmH2O", "/min", "/min", "mmol/L", "mmol/L", "µmol/L", "U/L", "mL/cmH2O", "mmHg", "%", "mmol/L", "", "µmol/L", "mmol/L", "10^3/µL", "ng/mL", "mmHg", "mmHg", "%", "mmHg", "", "s", "mmHg", "mL/kg", "U/L", "mmHg", "mmHg", "L/min/m2", "µmol/L", "L/min", "pmol/L", "dyn.s/cm-5/m2", "mmHg", "ng/mL", "dyn.s/cm-5/m2", "cmH2O", "mmHg", "%", "nmol/L", "L/min", "L/min/m2", "ml/m2", "/min", "L/min", "%", "µg/kg/min", "mg/h", "mL/h", "mg/h", "µg/kg/min", "IE/min", "µg/kg/min", "µg/kg/min", "mg/h", "µg/h", "mg", "mg", "mg/h", "mg/h", "mg/h", "µg/kg/min", "mg", "mg", "mg", "mg/h", "µg", "µg/kg/h", "mg", "%", "µg/L", "10^3/µL", "mL", "U/L", "mmol/L", "U/L", "U/L", "ppm", "cmH2O", "", "mL/m2", "mL/Tag", "/min", "%", "", "cmH2O", "mL/kg", "cmH2O", "cmH2O", "cmH2O"]
-		index = 0
-		for name in columnNames:
-			print(name)
-			name = name.split()
-			if index < len(units):
-				firstLine.append(name[0] + "(" + units[index] + ")")
-			else:
-				firstLine.append(name[0])
-			index+=1
-		stdin, stdout, stderr = ssh.exec_command('mysql -h{} -u{} -p{} SMITH_SepsisDB -e "select * from SMITH_ASIC_SCHEME.{} where patientid = {}"'.format(databaseConfiguration['host'], databaseConfiguration['username'], databaseConfiguration['password'], argv[4], argv[3]))
-		errors = stderr.readlines()
-		if len(errors) > 0 and errors[0] == "ERROR 1045 (28000): Access denied for user '{}'@'interface.smith.embedded.rwth-aachen.de' (using password: YES)\n".format(databaseConfiguration['username']):
-			return -6
-		result = stdout.readlines()
-		result = result[1:]
-		if result == []:
-			return -1
-		convertedRowsTemp = []
-		smallestTimestamp = -1
-		for row in result:
-			row = row.split("\t")
-			row = row[1:]
-			temp = list(row)
-			temp[0] = datetime.strptime(temp[0], "%Y-%m-%d %H:%M:%S").timestamp()
-			if temp[0] < smallestTimestamp or smallestTimestamp == -1:
-				smallestTimestamp = temp[0]
-			row = tuple(temp)
-			convertedRowsTemp.append(row)
-			convertedRows = [] 
-		for row in convertedRowsTemp:
-			temp = list(row)
-			temp[0] = temp[0] - smallestTimestamp
-			convertedRows.append(tuple(temp))
+    #parameterFile = open(currentPath + "\\" + argv[1])
+    #connectionParameters = json.load(parameterFile)
+    #parameterFile.close()
+    #connection = mysql.connector.connect(host=connectionParameters['host'],
+    #                                     database=connectionParameters['dbname'],
+    #                                     user=connectionParameters['user'],
+#                                     password=connectionParameters['password'])
+    if argv[2] == "dataDensity":
+        if argv[3] == "patientid":
+            if argv[5] == "entriesTotal":
+                # count how many entries exists in the table asic_data_mimic for the given patient id
+                cur.execute("select count(*) from SMITH_ASIC_SCHEME.asic_data_mimic where patientid = {}".format(argv[4]))
+                result = cur.fetchall()
+                print(result)
+                cur.close()
+            else:
+                #count how many entries exists in the table asic_data_mimic for the given patient id where the given parameter column is not null
+                index = 0
+                identifier = ""
+                for arg in argv:
+                    if index < 5:
+                        index+=1
+                        continue
+                    found = False
+                    for parameter in parameters:
+                        if parameter.name == arg and parameter.database == "asic":
+                            found = True
+                            identifier = identifier + parameter.parameter_identifier + ", "
+                    if found == False:
+                        print("Unknown parameter " + arg + " in database asic")
+                    index+=1
+                identifier = identifier[:-2]
+                identifierComplete = identifier.replace(", ", " and ") + " IS NOT NULL"
+                cur.execute("select count(*) from SMITH_ASIC_SCHEME.asic_data_mimic where patientid = {} and {}".format(argv[4], identifierComplete))
+                result = cur.fetchall()
+                print(result)
+                cur.close()
+        elif argv[3] == "bestPatients":
+            if argv[4] == "entriesTotal":
+                # search for the patient who has the most entries in the given table
+                #stdin, stdout, stderr = ssh.exec_command('mysql -h{} -u{} -p{} SMITH_SepsisDB -e "drop procedure if exists dataDensity; "'.format(databaseConfiguration['host'], databaseConfiguration['username'], databaseConfiguration['password']))
+                #sqlFile = open(currentPath + "\\dataDensity.sql")
+                #dataDensityProcedure = sqlFile.read().replace("$placeholder", argv[6])
+                #sqlFile.close()
+                #stdin, stdout, stderr = ssh.exec_command('mysql -h{} -u{} -p{} SMITH_SepsisDB -e "{}"'.format(databaseConfiguration['host'], databaseConfiguration['username'], databaseConfiguration['password'], dataDensityProcedure))
+                #stdin, stdout, stderr = ssh.exec_command('mysql -h{} -u{} -p{} SMITH_SepsisDB -e "call dataDensity({});"'.format(databaseConfiguration['host'], databaseConfiguration['username'], databaseConfiguration['password'],argv[5]))
+                stdin, stdout, stderr = ssh.exec_command('mysql -h{} -u{} -p{} SMITH_SepsisDB -e "select patientid, entriesTotal from SMITH_ASIC_SCHEME.asic_lookup_{} order by entriesTotal desc limit {};"'.format(databaseConfiguration['host'], databaseConfiguration['username'], databaseConfiguration['password'],argv[6], argv[5]))
+                errors = stderr.readlines()
+                if len(errors) > 0 and errors[0] == "ERROR 1045 (28000): Access denied for user '{}'@'interface.smith.embedded.rwth-aachen.de' (using password: YES)\n".format(databaseConfiguration['username']):
+                    return -6
+                if errors != []:
+                    return -2
+                results = stdout.readlines()
+                results = results[1:]
+                if results == []:
+                    return -1
+                #stdin, stdout, stderr = ssh.exec_command('mysql -h{} -u{} -p{} SMITH_SepsisDB -e "drop procedure if exists dataDensity; "'.format(databaseConfiguration['host'], databaseConfiguration['username'], databaseConfiguration['password']))
+                return results
+            else: 
+                # search for the patient who has the most entries in the given table for the specified parameters
+                #stdin, stdout, stderr = ssh.exec_command('mysql -h{} -u{} -p{} SMITH_SepsisDB -e "drop procedure if exists dataDensityWithParameter; "'.format(databaseConfiguration['host'], databaseConfiguration['username'], databaseConfiguration['password']))
+                #index = 0
+                #identifier = ""
+                #for arg in argv:
+                #    if index < 4:
+                #        index+=1
+                #        continue
+                #    if index == len(argv)-2:
+                #        break
+                #    found = False
+                #    for parameter in parameters:
+                #        if parameter.name == arg and parameter.database == "asic":
+                #            found = True
+                #            identifier = identifier + parameter.parameter_identifier + " and "
+                #    if found == False:
+                #        print("Unknown parameter " + arg + " in database asic")
+                #    index+=1
+                #identifier = identifier[:-4]                
+                #sqlFile = open(currentPath + "\\dataDensityWithParameter.sql")
+                #dataDensityProcedure = sqlFile.read().replace("$placeholder", argv[len(argv)-1]).replace("$identifier", identifier)
+                #sqlFile.close()
+                #stdin, stdout, stderr = ssh.exec_command('mysql -h{} -u{} -p{} SMITH_SepsisDB -e "{}"'.format(databaseConfiguration['host'], databaseConfiguration['username'], databaseConfiguration['password'], dataDensityProcedure))
+                #stdin, stdout, stderr = ssh.exec_command('mysql -h{} -u{} -p{} SMITH_SepsisDB -e "call dataDensityWithParameter({});"'.format(databaseConfiguration['host'], databaseConfiguration['username'], databaseConfiguration['password'],argv[len(argv)-2]))
+                stdin, stdout, stderr = ssh.exec_command('mysql -h{} -u{} -p{} SMITH_SepsisDB -e "select patientid, {} from (select *, ({}) as numberOfEntries from SMITH_ASIC_SCHEME.asic_lookup_{} order by numberOfEntries desc limit {}) as sub;"'.format(databaseConfiguration['host'], databaseConfiguration['username'], databaseConfiguration['password'],argv[4], argv[4].replace(",","+"), argv[6], argv[5]))
+                errors = stderr.readlines()
+                if len(errors) > 0 and errors[0] == "ERROR 1045 (28000): Access denied for user '{}'@'interface.smith.embedded.rwth-aachen.de' (using password: YES)\n".format(databaseConfiguration['username']):
+                    return -6
+                if stderr.readlines() != []:
+                    print(stderr.readlines())
+                    return -2
+                results = stdout.readlines()
+                if results[1:] == []:
+                    return -1    
+                return results
+    elif argv[2] == "selectPatient":
+        # selects the patient from the given table (argv[4]) with the specified patient id (argv[3])
+        stdin, stdout, stderr = ssh.exec_command('mysql -h{} -u{} -p{} SMITH_SepsisDB -e "show columns from SMITH_ASIC_SCHEME.{}"'.format(databaseConfiguration['host'], databaseConfiguration['username'], databaseConfiguration['password'], argv[4]))
+        columnNames = stdout.readlines()
+        columnNames = columnNames[2:]
+        firstLine = []
+        units = ["", "mmHg", "mmHg", "%", "", "°C", "mmHg", "cmH2O", "/min", "/min", "mmol/L", "mmol/L", "µmol/L", "U/L", "mL/cmH2O", "mmHg", "%", "mmol/L", "", "µmol/L", "mmol/L", "10^3/µL", "ng/mL", "mmHg", "mmHg", "%", "mmHg", "", "s", "mmHg", "mL/kg", "U/L", "mmHg", "mmHg", "L/min/m2", "µmol/L", "L/min", "pmol/L", "dyn.s/cm-5/m2", "mmHg", "ng/mL", "dyn.s/cm-5/m2", "cmH2O", "mmHg", "%", "nmol/L", "L/min", "L/min/m2", "ml/m2", "/min", "L/min", "%", "µg/kg/min", "mg/h", "mL/h", "mg/h", "µg/kg/min", "IE/min", "µg/kg/min", "µg/kg/min", "mg/h", "µg/h", "mg", "mg", "mg/h", "mg/h", "mg/h", "µg/kg/min", "mg", "mg", "mg", "mg/h", "µg", "µg/kg/h", "mg", "%", "µg/L", "10^3/µL", "mL", "U/L", "mmol/L", "U/L", "U/L", "ppm", "cmH2O", "", "mL/m2", "mL/Tag", "/min", "%", "", "cmH2O", "mL/kg", "cmH2O", "cmH2O", "cmH2O"]
+        index = 0
+        for name in columnNames:
+            print(name)
+            name = name.split()
+            if index < len(units):
+                firstLine.append(name[0] + "(" + units[index] + ")")
+            else:
+                firstLine.append(name[0])
+            index+=1
+        stdin, stdout, stderr = ssh.exec_command('mysql -h{} -u{} -p{} SMITH_SepsisDB -e "select * from SMITH_ASIC_SCHEME.{} where patientid = {}"'.format(databaseConfiguration['host'], databaseConfiguration['username'], databaseConfiguration['password'], argv[4], argv[3]))
+        errors = stderr.readlines()
+        if len(errors) > 0 and errors[0] == "ERROR 1045 (28000): Access denied for user '{}'@'interface.smith.embedded.rwth-aachen.de' (using password: YES)\n".format(databaseConfiguration['username']):
+            return -6
+        result = stdout.readlines()
+        result = result[1:]
+        if result == []:
+            return -1
+        convertedRowsTemp = []
+        smallestTimestamp = -1
+        for row in result:
+            row = row.split("\t")
+            row = row[1:]
+            temp = list(row)
+            temp[0] = datetime.strptime(temp[0], "%Y-%m-%d %H:%M:%S").timestamp()
+            if temp[0] < smallestTimestamp or smallestTimestamp == -1:
+                smallestTimestamp = temp[0]
+            row = tuple(temp)
+            convertedRowsTemp.append(row)
+            convertedRows = [] 
+        for row in convertedRowsTemp:
+            temp = list(row)
+            temp[0] = temp[0] - smallestTimestamp
+            convertedRows.append(tuple(temp))
 
-		if not os.path.exists(os.getcwd() + "\\ndas\\local_data\\imported_patients"):
-			os.makedirs(os.getcwd() + "\\ndas\\local_data\\imported_patients")
-		filename = os.getcwd()+"\\ndas\\local_data\\imported_patients\\{}_patient_{}.csv".format(argv[4], argv[3])
-		file = open(filename, 'w')
-		writer = csv.writer(file, delimiter=";", quoting=csv.QUOTE_ALL)
-		writer.writerow(firstLine)
-		for line in convertedRows:
-			newLine = list(line)
-			writer.writerow(newLine)
-	else:
-		found = False
-		for parameter in parameters:
-			if parameter.name == argv[3] and parameter.database == argv[2]:
-				for table in parameter.tables:
-					identifier = ""
-					result = ""
-					firstLine = table.relevant_columns.split(",")
-					if table.type == 1:
-						for id in parameter.parameter_identifier:
-							identifier = identifier + table.parameter_identifier_column + ' = ' + str(id) + " or "
-						identifier = identifier[:-4]
-						cur.execute('SELECT ' + table.relevant_columns + ' FROM ' + table.name + ' WHERE ' + identifier)
-						result = cur.fetchall()
-					elif table.type == 2:
-						index = 0
-						for arg in argv:
-							if index < 3:
-								index+=1
-								continue
-							if arg == "noNullValues" and index == len(argv)-1:
-								break;
-							found2 = False
-							for parameter2 in parameters:
-								if parameter2.name == arg and parameter2.database == argv[2]:
-									found2 = True
-									firstLine.append(parameter2.parameter_identifier)
-									identifier = identifier + parameter2.parameter_identifier + ", "
-							if found2 == False:
-								print("Unknown parameter " + arg + " in database " + argv[2])
-							index+=1
-						identifier = identifier[:-2]
-						if argv[len(argv)-1] == "noNullValues":
-							identifierComplete = identifier.replace(", ", " and ") + " IS NOT NULL"
-						else:
-							identifierComplete = identifier.replace(", ", " or ") + " IS NOT NULL"
-						cur.execute('SELECT ' + table.relevant_columns + ', ' + identifier + ' FROM ' + table.name + ' WHERE ' + identifierComplete)
-						result = cur.fetchall()
-					file = open("queryResult.csv", 'a')
-					writer = csv.writer(file, delimiter=";", quoting=csv.QUOTE_ALL)
-					writer.writerow(firstLine)
-					for line in result:
-						newLine = list(line)
-						writer.writerow(newLine)	
-				found = True		
-				break
-		if found == False:
-			print("Unknown parameter " + argv[3] + " in database " + argv[2])
-	ssh.close()
+        if not os.path.exists(os.getcwd() + "\\ndas\\local_data\\imported_patients"):
+            os.makedirs(os.getcwd() + "\\ndas\\local_data\\imported_patients")
+        filename = os.getcwd()+"\\ndas\\local_data\\imported_patients\\{}_patient_{}.csv".format(argv[4], argv[3])
+        file = open(filename, 'w')
+        writer = csv.writer(file, delimiter=";", quoting=csv.QUOTE_ALL)
+        writer.writerow(firstLine)
+        for line in convertedRows:
+            newLine = list(line)
+            writer.writerow(newLine)
+    else:
+        found = False
+        for parameter in parameters:
+            if parameter.name == argv[3] and parameter.database == argv[2]:
+                for table in parameter.tables:
+                    identifier = ""
+                    result = ""
+                    firstLine = table.relevant_columns.split(",")
+                    if table.type == 1:
+                        for id in parameter.parameter_identifier:
+                            identifier = identifier + table.parameter_identifier_column + ' = ' + str(id) + " or "
+                        identifier = identifier[:-4]
+                        cur.execute('SELECT ' + table.relevant_columns + ' FROM ' + table.name + ' WHERE ' + identifier)
+                        result = cur.fetchall()
+                    elif table.type == 2:
+                        index = 0
+                        for arg in argv:
+                            if index < 3:
+                                index+=1
+                                continue
+                            if arg == "noNullValues" and index == len(argv)-1:
+                                break;
+                            found2 = False
+                            for parameter2 in parameters:
+                                if parameter2.name == arg and parameter2.database == argv[2]:
+                                    found2 = True
+                                    firstLine.append(parameter2.parameter_identifier)
+                                    identifier = identifier + parameter2.parameter_identifier + ", "
+                            if found2 == False:
+                                print("Unknown parameter " + arg + " in database " + argv[2])
+                            index+=1
+                        identifier = identifier[:-2]
+                        if argv[len(argv)-1] == "noNullValues":
+                            identifierComplete = identifier.replace(", ", " and ") + " IS NOT NULL"
+                        else:
+                            identifierComplete = identifier.replace(", ", " or ") + " IS NOT NULL"
+                        cur.execute('SELECT ' + table.relevant_columns + ', ' + identifier + ' FROM ' + table.name + ' WHERE ' + identifierComplete)
+                        result = cur.fetchall()
+                    file = open("queryResult.csv", 'a')
+                    writer = csv.writer(file, delimiter=";", quoting=csv.QUOTE_ALL)
+                    writer.writerow(firstLine)
+                    for line in result:
+                        newLine = list(line)
+                        writer.writerow(newLine)    
+                found = True        
+                break
+        if found == False:
+            print("Unknown parameter " + argv[3] + " in database " + argv[2])
+    ssh.close()
+    
+    
+def loadPatientIds(table):
+    ssh = openSSHConnection()
+    if ssh in [-3,-4,-5]:
+        return ssh
+    databaseConfigurationFile = open(os.getcwd()+"\\ndas\\local_data\\db_asic_scheme.json")
+    databaseConfiguration = json.load(databaseConfigurationFile)
+    
+    stdin, stdout, stderr = ssh.exec_command('mysql -h{} -u{} -p{} SMITH_SepsisDB -e "select distinct patientid from SMITH_ASIC_SCHEME.{};"'.format(databaseConfiguration['host'], databaseConfiguration['username'], databaseConfiguration['password'], table))
+    errors = stderr.readlines()
+    if len(errors) > 0 and errors[0] == "ERROR 1045 (28000): Access denied for user '{}'@'interface.smith.embedded.rwth-aachen.de' (using password: YES)\n".format(databaseConfiguration['username']):
+        return -6
+    results = stdout.readlines()
+    return results[1:]
+    
+def openSSHConnection():
+    sshLoginDataFile = open(os.getcwd()+"\\ndas\\local_data\\sshSettings.json")
+    sshLoginData = json.load(sshLoginDataFile)
+
+    try:
+        # Establish ssh connection to the database server
+        host = "137.226.78.84"
+        port = 22
+        username = sshLoginData["username"]
+        password = sshLoginData["password"]
+        ssh = paramiko.SSHClient()
+        ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        ssh.connect(host, port, username, password)
+    
+    except paramiko.ssh_exception.NoValidConnectionsError:
+        return -3
+    except TimeoutError: 
+        return -4
+    except paramiko.ssh_exception.AuthenticationException:
+        return -5
+        
+    return ssh
