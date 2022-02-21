@@ -391,13 +391,16 @@ class GraphLayoutWidget(pg.GraphicsLayoutWidget):
         """
         self._remove_all_labels()
 
-        if self.showLabels == True:
-            for labeled_point in annotations.get_labeled_points(self.main_plot_name):
-                cti = CustomTextItem(index=labeled_point.index, text=labeled_point.label, point_x=labeled_point.x,
-                                     point_y=labeled_point.val, color='ff0000', border='k', anchor=(0.5, 1.1), angle=0,
-                                     fill='w')
-                self.main_plot.getViewBox().addItem(cti)
-                cti.setPos(int(labeled_point.x), labeled_point.val)
+        for labeled_point in annotations.get_labeled_points(self.main_plot_name):
+            if self.showLabels == True:
+                label_text = labeled_point.label
+            else:
+                label_text = "L"
+            cti = CustomTextItem(index=labeled_point.index, text=label_text, point_x=labeled_point.x,
+                                 point_y=labeled_point.val, color='ff0000', border='k', anchor=(0.5, 1.1), angle=0,
+                                 fill='w')
+            self.main_plot.getViewBox().addItem(cti)
+            cti.setPos(int(labeled_point.x), labeled_point.val)
 
         self.point_labeling_changed_signal.emit(annotations.get_number_labeled(self.main_plot_name))
 

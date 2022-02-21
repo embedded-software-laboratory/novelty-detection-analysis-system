@@ -259,7 +259,7 @@ class MainWindow(QMainWindow):
         self.showPointLabels = True
         self.toggle_tooltip_btn = QCheckBox("Show point tooltips")
         self.toggle_tooltip_btn.setChecked(True)
-        self.toggle_label_btn = QCheckBox("Show point labels")
+        self.toggle_label_btn = QCheckBox("Show full point labels")
         self.toggle_label_btn.setChecked(True)
         self.point_settings_layout = QHBoxLayout()
         self.point_settings_layout.addWidget(self.toggle_tooltip_btn)
