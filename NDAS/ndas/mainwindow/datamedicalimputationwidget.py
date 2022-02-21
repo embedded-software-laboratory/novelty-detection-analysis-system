@@ -38,8 +38,10 @@ class DataMedicalImputationWidget(QWidget):
         self.bar_plot_label = QLabel('Timeline of diagnoses:\n(hover for details)')
         self.layout_left.addWidget(self.bar_plot_label, 0, 0, alignment=Qt.AlignCenter)
         self.layout_right = QVBoxLayout()
+        self.layout_right_widget = QWidget()
+        self.layout_right_widget.setLayout(self.layout_right)
         self.layout.addWidget(self.scroll, stretch=6)
-        self.layout.addLayout(self.layout_right)
+        self.layout.addWidget(self.layout_right_widget)
 
         """
         Create Canvas for Bar Plot

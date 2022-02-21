@@ -555,7 +555,7 @@ class MultiSelectViewBox(pg.ViewBox):
     """
     multipoint_selection_changed_signal = QtCore.pyqtSignal(tuple)
 
-    def mouseDragEvent(self, ev):
+    def mouseDragEvent(self, ev, axis=None):
         """
         Overwrites the mouseDragEvent from pg.ViewBox with custom rectangle draw event
         for multipoint selection
@@ -563,14 +563,50 @@ class MultiSelectViewBox(pg.ViewBox):
         Parameters
         ----------
         ev
+        axis
         """
+        # if axis is specified, event will only affect that axis.
+        ev.accept()  # we accept all buttons
+
+        pos = ev.scenePos()
+        dif = pos - ev.lastScenePos()
+        dif = dif * -1
+
         modifiers = QApplication.keyboardModifiers()
 
-        if ev.button() == QtCore.Qt.RightButton and (modifiers == QtCore.Qt.ControlModifier):
-            ev.accept()
+        # Ignore axes if mouse is disabled
+        mouseEnabled = np.array(self.state['mouseEnabled'], dtype=np.float64)
+        mask = mouseEnabled.copy()
+        if axis is not None:
+            mask[1 - axis] = 0.0
+
+        # Scale or translate based on mouse button
+        if ev.button() in [QtCore.Qt.MouseButton.RightButton, QtCore.Qt.MouseButton.MiddleButton, QtCore.Qt.MouseButton.LeftButton] and (modifiers == QtCore.Qt.ControlModifier):
+            # print "vb.rightDrag"
+            if self.state['aspectLocked'] is not False:
+                mask[0] = 0
+
+            dif = ev.screenPos() - ev.lastScreenPos()
+            dif = np.array([dif.x(), dif.y()])
+            dif[0] *= -1
+            s = ((mask * 0.02) + 1) ** dif
+
+            tr = self.childGroup.transform()
+            tr = pg.functions.invertQTransform(tr)
+
+            x = s[0] if mouseEnabled[0] == 1 else None
+            y = s[1] if mouseEnabled[1] == 1 else None
+
+            center = pg.Point(tr.map(ev.buttonDownPos(QtCore.Qt.MouseButton.RightButton)))
+            self._resetTarget()
+            self.scaleBy(x=x, y=y, center=center)
+            self.sigRangeChangedManually.emit(self.state['mouseEnabled'])
+
+        elif ev.button() in [QtCore.Qt.MouseButton.LeftButton]:
             rect = self.parentItem().items[0]
             rect.hide()
-            updated_rect = QtCore.QRectF(self.mapToView(self.mapFromParent(ev.buttonDownPos())), self.mapToView(self.mapFromParent(ev.pos())))
+            updated_rect = QtCore.QRectF(self.mapToView(self.mapFromParent(ev.buttonDownPos())),
+                                         self.mapToView(self.mapFromParent(ev.pos())))
 
             if ev.isFinish():
                 rect_coordinates = updated_rect.getCoords()
@@ -595,8 +631,32 @@ class MultiSelectViewBox(pg.ViewBox):
                 rect.setPos(updated_rect.topLeft())
                 rect.setTransform(QTransform.fromScale(updated_rect.width(), updated_rect.height()))
                 rect.show()
-        else:
-            pg.ViewBox.mouseDragEvent(self, ev)
+
+        elif ev.button() in [QtCore.Qt.MouseButton.RightButton, QtCore.Qt.MouseButton.MiddleButton]:
+            if self.state['mouseMode'] == pg.ViewBox.RectMode and axis is None:
+                if ev.isFinish():  # This is the final move in the drag; change the view scale now
+                    # print "finish"
+                    self.rbScaleBox.hide()
+                    ax = QtCore.QRectF(pg.Point(ev.buttonDownScenePos(ev.button())), pg.Point(pos))
+                    ax = self.childGroup.mapRectFromScene(ax)
+                    self.showAxRect(ax)
+                    self.axHistoryPointer += 1
+                    self.axHistory = self.axHistory[:self.axHistoryPointer] + [ax]
+                else:
+                    # update shape of scale box
+                    self.updateScaleBox(ev.buttonDownScenePos(), ev.scenePos())
+            else:
+                tr = self.childGroup.transform()
+                tr = pg.functions.invertQTransform(tr)
+                tr = tr.map(dif * mask) - tr.map(pg.Point(0, 0))
+
+                x = tr.x() if mask[0] == 1 else None
+                y = tr.y() if mask[1] == 1 else None
+
+                self._resetTarget()
+                if x is not None or y is not None:
+                    self.translateBy(x=x, y=y)
+                self.sigRangeChangedManually.emit(self.state['mouseEnabled'])
 
     def signal_selection_change(self, selection_list):
         """

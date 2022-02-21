@@ -139,6 +139,16 @@ class MassCorrectionWidget(QWidget):
         self.DetAlgs_layout = QVBoxLayout()
         self.DetAlgs.setLayout(self.DetAlgs_layout)
 
+        self.DetAlgs_skip_layout = QHBoxLayout()
+        self.DetAlgs_layout.addLayout(self.DetAlgs_skip_layout)
+        self.DetAlgsSkipString = QLabel("Skip the detection step?")
+        self.DetAlgsSkipString.setSizePolicy(self.sizepolicy)
+        self.DetAlgs_skip_layout.addWidget(self.DetAlgsSkipString)
+        self.DetAlgsSkip = QCheckBox("")
+        self.DetAlgsSkip.setSizePolicy(self.sizepolicy)
+        self.DetAlgs_skip_layout.addWidget(self.DetAlgsSkip)
+        self.DetAlgsSkip.stateChanged.connect(lambda state: self._on_skip_detection(state))
+
         self.DetAlgs_choice_layout = QHBoxLayout()
         self.DetAlgs_layout.addLayout(self.DetAlgs_choice_layout)
         self.selectedDAlgString = QLabel("Select Detection Algorithm:")
@@ -259,7 +269,7 @@ class MassCorrectionWidget(QWidget):
             for filename in self.listSelectedFiles:
                 self.running_threads[filename] = 0
                 out_filename = self.SelectedFolder + "/" + (filename.split("/")[-1]).split(".")[0] + self.selectExtension.text().strip() + ".csv"
-                worker = ExecuteOneDatasetCorrection(filename, out_filename, self.selectMask.isChecked(), self.selectIAlgBox.currentText(), self.selectDAlgBox.currentText(), self._get_param_list())
+                worker = ExecuteOneDatasetCorrection(filename, out_filename, self.selectMask.isChecked(), self.selectIAlgBox.currentText(), self.selectDAlgBox.currentText(), self.DetAlgsSkip.isChecked(), self._get_param_list())
                 worker.signals.done.connect(self.done_fn)
                 worker.signals.error.connect(self.error_fn)
                 worker.signals.progress.connect(self.progress_fn)
@@ -290,6 +300,11 @@ class MassCorrectionWidget(QWidget):
             filename = self.listSelectedFiles[0].split("/")[-1]
         extended_filename = filename.split(".")[0] + extension.strip() + ".csv"
         self.selectedExtensionString.setText("Select a suffix (Example: " + extended_filename + ")")
+
+    def _on_skip_detection(self, state):
+        self.selectedDAlgString.setVisible(state == 0)
+        self.selectDAlgBox.setVisible(state == 0)
+        self.DetAlgs_settings.setVisible(state == 0)
 
     def _update_options(self, choice_string):
         for param in self.additional_parameters_layout_list:
@@ -442,7 +457,7 @@ class MassCorrectionWidget(QWidget):
 
 
 class ExecuteOneDatasetCorrection(QRunnable):
-    def __init__(self, filename, out_filename, export_mask, imp_algorithm_name, det_algorithm_name, additional_args, *args, **kwargs):
+    def __init__(self, filename, out_filename, export_mask, imp_algorithm_name, det_algorithm_name, skip_detection, additional_args, *args, **kwargs):
         super().__init__()
         self.signals = WorkerSignals()
         self.filename = filename
@@ -450,6 +465,7 @@ class ExecuteOneDatasetCorrection(QRunnable):
         self.export_mask = export_mask
         self.imp_algorithm_name = imp_algorithm_name
         self.det_algorithm_name = det_algorithm_name
+        self.skip_detection = skip_detection
         self.additional_args = additional_args
         self.det_result = None
         self.data = None
@@ -465,16 +481,17 @@ class ExecuteOneDatasetCorrection(QRunnable):
             data = pd.read_csv(StringIO(data), dtype=np.float32, delimiter=',', na_values=['.', ''], skip_blank_lines=True)
             self.data = data.sort_values(data.columns[0])
             self.signals.progress.emit((5, self.filename))
-            inc = algorithms.get_specific_algorithm_instance(self.det_algorithm_name, self.data, self.additional_args)
-            inc.signals.result_signal.connect(self.set_result)
-            inc.signals.error_signal.connect(self.det_error)
-            inc.signals.status_signal.connect(self.det_progress)
-            inc.run()
             self.corr_data = self.data
-            for column in self.det_result.keys():
-                novelties = self.det_result[column]
-                list_of_novelty_keys = [k for k, v in novelties.items() if v == 1]
-                self.corr_data.loc[:, column][self.corr_data[data.columns[0]].isin(list_of_novelty_keys)] = np.nan
+            if not self.skip_detection:
+                inc = algorithms.get_specific_algorithm_instance(self.det_algorithm_name, self.data, self.additional_args)
+                inc.signals.result_signal.connect(self.set_result)
+                inc.signals.error_signal.connect(self.det_error)
+                inc.signals.status_signal.connect(self.det_progress)
+                inc.run()
+                for column in self.det_result.keys():
+                    novelties = self.det_result[column]
+                    list_of_novelty_keys = [k for k, v in novelties.items() if v == 1]
+                    self.corr_data.loc[:, column][self.corr_data[data.columns[0]].isin(list_of_novelty_keys)] = np.nan
             self.signals.progress.emit((85, self.filename))
             self.corr_data = self.Baseimputator.base_imputation(self.corr_data, method_string=self.imp_algorithm_name)
             self.signals.progress.emit((95, self.filename))

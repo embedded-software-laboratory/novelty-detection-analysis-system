@@ -342,7 +342,9 @@ class MainWindow(QMainWindow):
         self.vertical_spacer = QSpacerItem(200, 0, QSizePolicy.Minimum, QSizePolicy.Expanding)
 
         self.central_layout = QHBoxLayout()
+        self.btn_layout_widget = QWidget()
         self.btn_layout = QVBoxLayout()
+        self.btn_layout_widget.setLayout(self.btn_layout)
         self.progress_bar_layout = QVBoxLayout()
 
         self._add_widgets()
@@ -427,6 +429,11 @@ class MainWindow(QMainWindow):
 
         settings_menu = self.main_menu.addMenu("Settings")
 
+        hide_sidebar_action = QAction("Hide right-side menu-bar", self)
+        hide_sidebar_action.setCheckable(True)
+        hide_sidebar_action.toggled.connect(lambda checked: self._visibility_of_sidebar_changed(checked))
+        settings_menu.addAction(hide_sidebar_action)
+
         ssh_settings_action = QAction("Configure SSH authentification data", self)
         ssh_settings_action.triggered.connect(lambda: self.change_ssh_settings())
         settings_menu.addAction(ssh_settings_action)
@@ -434,7 +441,6 @@ class MainWindow(QMainWindow):
         database_settings_action = QAction("Configure database authentification data", self)
         database_settings_action.triggered.connect(lambda: self.change_database_settings())
         settings_menu.addAction(database_settings_action)
-        
 
         help_menu = self.main_menu.addMenu('&?')
         about_action = QAction("About", self)
@@ -450,7 +456,7 @@ class MainWindow(QMainWindow):
         self.central_layout.addWidget(self.novelty_selection_groupbox, 1, 0)
         self.central_layout.addWidget(self.plot_layout_widget, 2, 0)
 
-        self.central_layout.addLayout(self.btn_layout, 0, 2, 3, 3)
+        self.central_layout.addWidget(self.btn_layout_widget, 0, 2, 3, 3)
 
         self.main_grid.addLayout(self.central_layout, 0, 0)
         self.main_grid.addLayout(self.progress_bar_layout, 1, 0)
@@ -811,6 +817,11 @@ class MainWindow(QMainWindow):
             mask = data.get_mask_dataframe()
             if isinstance(mask, pd.DataFrame):
                 mask.to_csv(path_or_buf=(file_name[:-4]+"_mask"+file_name[-4:]), index=False)
+
+    @pyqtSlot()
+    def _visibility_of_sidebar_changed(self, checked):
+        self.btn_layout_widget.setVisible(not checked)
+        self.tab_datamedimputation.layout_right_widget.setVisible(not checked)
 
     @pyqtSlot()
     def change_ssh_settings(self):
