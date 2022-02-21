@@ -8,7 +8,7 @@ import numpy as np
 import os
 
 from ndas.extensions import algorithms, annotations, data, plots, savestate
-from ndas.mainwindow import datamedicalimputationwidget, statgraphwidgets, datainspectionwidget, benchmarkwidget, masscorrectionwidget
+from ndas.mainwindow import datamedicalimputationwidget, statgraphwidgets, datainspectionwidget, benchmarkwidget, masscorrectionwidget, datageneratorwidget
 from ndas.mainwindow.sshsettingswidget import SSHSettingsWindow
 from ndas.mainwindow.databasesettingswidget import DatabaseSettingsWindow
 from ndas.mainwindow.importdatabasewidget import ImportDatabaseWindow
@@ -58,13 +58,14 @@ class MainWindow(QMainWindow):
         self.tab_masscorrection.setAutoFillBackground(True)
         self.tab_datainspector = datainspectionwidget.DataInspectionWidget()
         self.tab_datainspector.setAutoFillBackground(True)
-        # self.tab_datagenerator = datageneratorwidget.DataGeneratorWidget()
+        self.tab_datagenerator = datageneratorwidget.DataGeneratorWidget()
 
-        # self.tab_datagenerator.generated_data_signal.connect( lambda df, labels: self.data_import_result_slot(df, labels))
-        # self.tab_datagenerator.register_annotation_plot_signal.connect( lambda name: annotations.register_plot_annotation(name))
-        # self.tab_datagenerator.update_labels_signal.connect(lambda: self.plot_layout_widget.update_labels())
+        self.tab_datagenerator.generated_data_signal.connect( lambda df, labels: self.data_import_result_slot(df, labels))
+        self.tab_datagenerator.register_annotation_plot_signal.connect( lambda name: annotations.register_plot_annotation(name))
+        self.tab_datagenerator.update_labels_signal.connect(lambda: self.plot_layout_widget.update_labels())
 
-        # self.tab_datagenerator.setAutoFillBackground(True)
+        self.tab_datagenerator.setAutoFillBackground(True)
+
         self.tab_benchmark = benchmarkwidget.BenchmarkWidget(threadpool_obj)
         self.tab_benchmark.setAutoFillBackground(True)
         self.tab_statistics = statgraphwidgets.StatsGraphWidget()
@@ -75,7 +76,7 @@ class MainWindow(QMainWindow):
         self.main_widget.addTab(self.tab_masscorrection, 'Mass Error-Correction')
         self.main_widget.addTab(self.tab_statistics, "Statistics")
         self.main_widget.addTab(self.tab_datainspector, "Data Inspector")
-        # self.main_widget.addTab(self.tab_datagenerator, "Data Generator")
+        self.main_widget.addTab(self.tab_datagenerator, "Data Generator")
         self.main_widget.addTab(self.tab_benchmark, "Benchmark")
 
         self.main_grid = QGridLayout(self.main_widget)
@@ -1068,6 +1069,7 @@ class MainWindow(QMainWindow):
         Notify Imputation Tab about new data
         """
         datamedicalimputationwidget.DataMedicalImputationWidget.on_import_data(self.tab_datamedimputation)
+        self.tab_benchmark.update_dim()
 
     @pyqtSlot()
     def update_annotation_options(self, string):

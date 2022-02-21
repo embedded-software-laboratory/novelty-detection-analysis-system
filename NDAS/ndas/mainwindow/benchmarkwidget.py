@@ -7,6 +7,8 @@ from PyQt5.QtWidgets import *
 from ndas.extensions import algorithms, annotations, data, plots
 from ndas.mainwindow import benchmarkplotwidget
 from ndas.misc import datageneratorform, algorithmselectorform
+import csv
+import datetime
 
 
 class BenchmarkWidget(QStackedWidget):
@@ -30,12 +32,17 @@ class BenchmarkWidget(QStackedWidget):
         self.data_generator_settings_widget.next_page_signal.connect(lambda: self.to_next_page())
         self.addWidget(self.data_generator_settings_widget)
 
+        self.algorithm_selection_widget = AlgorithmSelectionStackedWidgetPage()
+        self.algorithm_selection_widget.next_page_signal.connect(lambda: self.to_next_page())
+        self.algorithm_selection_widget.previous_page_signal.connect(lambda: self.to_previous_page())
+        self.addWidget(self.algorithm_selection_widget)
+
         self.thread_pool = threadpool_obj
 
         self.layout = QGridLayout(self)
         self.setLayout(self.layout)
 
-        self.algorithm_selection_widget = None
+        # self.algorithm_selection_widget = None
         self.result_view_widget = None
 
     def to_next_page(self):
@@ -43,11 +50,11 @@ class BenchmarkWidget(QStackedWidget):
         Show the next page of the StackWidget
         """
 
-        if self.currentIndex() == 0:
-            self.algorithm_selection_widget = AlgorithmSelectionStackedWidgetPage()
-            self.algorithm_selection_widget.next_page_signal.connect(lambda: self.to_next_page())
-            self.algorithm_selection_widget.previous_page_signal.connect(lambda: self.to_previous_page())
-            self.addWidget(self.algorithm_selection_widget)
+        # if self.currentIndex() == 0:
+        #     self.algorithm_selection_widget = AlgorithmSelectionStackedWidgetPage()
+        #     self.algorithm_selection_widget.next_page_signal.connect(lambda: self.to_next_page())
+        #     self.algorithm_selection_widget.previous_page_signal.connect(lambda: self.to_previous_page())
+        #     self.addWidget(self.algorithm_selection_widget)
 
         if self.currentIndex() == 1:
             self.result_view_widget = ResultStackedWidgetPage(self.thread_pool, self.data_generator_settings_widget,
@@ -65,9 +72,9 @@ class BenchmarkWidget(QStackedWidget):
             self.setCurrentIndex(0)
 
             if self.currentIndex() == 0:
-                self.removeWidget(self.algorithm_selection_widget)
+                # self.removeWidget(self.algorithm_selection_widget)
                 self.removeWidget(self.result_view_widget)
-                self.algorithm_selection_widget.deleteLater()
+                # self.algorithm_selection_widget.deleteLater()
                 self.result_view_widget.deleteLater()
 
     def to_previous_page(self):
@@ -78,9 +85,12 @@ class BenchmarkWidget(QStackedWidget):
 
             self.setCurrentIndex(self.currentIndex() - 1)
 
-            if self.currentIndex() == 0:
-                self.removeWidget(self.algorithm_selection_widget)
-                self.algorithm_selection_widget.deleteLater()
+            # if self.currentIndex() == 0:
+            #     self.removeWidget(self.algorithm_selection_widget)
+            #     self.algorithm_selection_widget.deleteLater()
+
+    def update_dim(self):
+        self.data_generator_settings_widget.number_of_dimensions.setValue(len(plots.get_registered_plot_keys()))
 
 
 class MasterStackedWidgetPage(QWidget):
@@ -164,8 +174,8 @@ class DataSelectionStackedWidgetPage(MasterStackedWidgetPage):
         self.number_of_dimensions_label = QLabel("Number of Dimensions:")
         self.number_of_dimensions = QSpinBox()
         self.number_of_dimensions.setMinimumWidth(100)
-        self.number_of_dimensions.setMinimum(2)
-        self.number_of_dimensions.setMaximum(15)
+        self.number_of_dimensions.setMinimum(1)
+        self.number_of_dimensions.setMaximum(25)
         self.number_of_dimensions.setValue(5)
         self.number_of_dimensions_layout.addWidget(self.number_of_dimensions_label)
         self.number_of_dimensions_layout.addWidget(self.number_of_dimensions)
@@ -297,7 +307,7 @@ class AlgorithmSelectionStackedWidgetPage(MasterStackedWidgetPage):
         self.main_layout.addItem(self.algorithm_vertical_spacer)
         self.number_algorithms_changed(3)
 
-        self.back_button = QPushButton("Back (Discard)")
+        self.back_button = QPushButton("Back")
         self.next_button = QPushButton("Run (May take a while)")
         self.next_button.setIcon(self.style().standardIcon(getattr(QStyle, 'SP_CommandLink')))
         self.main_layout.addWidget(self.back_button, 3, 1, QtCore.Qt.AlignBottom)
@@ -345,7 +355,7 @@ class ResultStackedWidgetPage(MasterStackedWidgetPage):
         super().__init__()
 
         self.thread_pool = thread_pool
-        algorithm_count = len(algorithm_widget.elements)
+        self.algorithm_count = len(algorithm_widget.elements)
 
         cfg = []
         for algorithm in algorithm_widget.elements:
@@ -360,8 +370,8 @@ class ResultStackedWidgetPage(MasterStackedWidgetPage):
         self.quick_plot = None
 
         self.table_widget = QTableWidget()
-        self.table_widget.setRowCount(algorithm_count * passes * (dim_count + 1))
-        self.table_widget.setColumnCount(10 + 2*len(annotations.get_available_labels()))
+        self.table_widget.setRowCount(self.algorithm_count * passes * (dim_count + 1))
+        self.table_widget.setColumnCount(12 + 2*len(annotations.get_available_labels()))
         self.table_widget.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
         self.table_widget.setHorizontalHeaderItem(0, QTableWidgetItem("Name"))
         self.table_widget.setHorizontalHeaderItem(1, QTableWidgetItem("Algorithm"))
@@ -377,7 +387,9 @@ class ResultStackedWidgetPage(MasterStackedWidgetPage):
             self.table_widget.setHorizontalHeaderItem(next_index, QTableWidgetItem(label+" Positive"))
             self.table_widget.setHorizontalHeaderItem(next_index+1, QTableWidgetItem(label+" Negative"))
             next_index += 2
-        self.table_widget.setHorizontalHeaderItem(next_index, QTableWidgetItem("Plot"))
+        self.table_widget.setHorizontalHeaderItem(next_index, QTableWidgetItem("True Positive Rate"))
+        self.table_widget.setHorizontalHeaderItem(next_index+1, QTableWidgetItem("False Positive Rate"))
+        self.table_widget.setHorizontalHeaderItem(next_index+2, QTableWidgetItem("Plot"))
 
         self.single_run_progress_bar = []
         self.single_run_total_dimensions = []
@@ -389,6 +401,8 @@ class ResultStackedWidgetPage(MasterStackedWidgetPage):
         self.single_run_total_posneg = []
         for _ in self.used_labels:
             self.single_run_total_posneg.append(([], []))
+        self.single_run_total_tpr = []
+        self.single_run_total_fpr = []
         self.single_run_total_plot = []
 
         self.single_dimension_dim = {}
@@ -400,6 +414,8 @@ class ResultStackedWidgetPage(MasterStackedWidgetPage):
         self.single_dimension_posneg = []
         for _ in self.used_labels:
             self.single_dimension_posneg.append(({}, {}))
+        self.single_dimension_tpr = {}
+        self.single_dimension_fpr = {}
         self.single_dimension_view = {}
 
         run_index = 0
@@ -424,6 +440,8 @@ class ResultStackedWidgetPage(MasterStackedWidgetPage):
                 for pair in self.single_run_total_posneg:
                     pair[0].append(QTableWidgetItem(""))
                     pair[1].append(QTableWidgetItem(""))
+                self.single_run_total_tpr.append(QTableWidgetItem(""))
+                self.single_run_total_fpr.append(QTableWidgetItem(""))
                 self.single_run_total_plot.append(QTableWidgetItem(""))
 
                 self.table_widget.setItem(run_index * dim_count + run_index, 0,
@@ -447,7 +465,11 @@ class ResultStackedWidgetPage(MasterStackedWidgetPage):
                     self.table_widget.setItem((run_index * dim_count + run_index), next_index, pair[0][run_index])
                     self.table_widget.setItem((run_index * dim_count + run_index), next_index+1, pair[1][run_index])
                     next_index += 2
-                self.table_widget.setItem((run_index * dim_count + run_index), next_index, self.single_run_total_plot[run_index])
+                self.table_widget.setItem((run_index * dim_count + run_index), next_index,
+                                          self.single_run_total_tpr[run_index])
+                self.table_widget.setItem((run_index * dim_count + run_index), next_index+1,
+                                          self.single_run_total_fpr[run_index])
+                self.table_widget.setItem((run_index * dim_count + run_index), next_index+2, self.single_run_total_plot[run_index])
                 self.color_row(self.table_widget, (run_index * dim_count + run_index), QtGui.QColor(227, 227, 227))
 
                 self.single_dimension_dim[run_index] = {}
@@ -459,6 +481,8 @@ class ResultStackedWidgetPage(MasterStackedWidgetPage):
                 for pair in self.single_dimension_posneg:
                     pair[0][run_index] = {}
                     pair[1][run_index] = {}
+                self.single_dimension_tpr[run_index] = {}
+                self.single_dimension_fpr[run_index] = {}
                 self.single_dimension_view[run_index] = {}
 
                 for dim_ in range(dim_count):
@@ -471,6 +495,8 @@ class ResultStackedWidgetPage(MasterStackedWidgetPage):
                     for pair in self.single_dimension_posneg:
                         pair[0][run_index][dim_index] = QTableWidgetItem("")
                         pair[1][run_index][dim_index] = QTableWidgetItem("")
+                    self.single_dimension_tpr[run_index][dim_index] = QTableWidgetItem("")
+                    self.single_dimension_fpr[run_index][dim_index] = QTableWidgetItem("")
                     self.single_dimension_view[run_index][dim_index] = QPushButton("View")
                     self.single_dimension_view[run_index][dim_index].setEnabled(False)
 
@@ -495,7 +521,11 @@ class ResultStackedWidgetPage(MasterStackedWidgetPage):
                         self.table_widget.setItem(run_index * dim_count + dim_index + run_index + 1, next_index, pair[0][run_index][dim_index])
                         self.table_widget.setItem(run_index * dim_count + dim_index + run_index + 1, next_index+1, pair[1][run_index][dim_index])
                         next_index += 2
-                    self.table_widget.setCellWidget((run_index * dim_count + dim_index + run_index + 1), next_index, self.single_dimension_view[run_index][dim_index])
+                    self.table_widget.setItem(run_index * dim_count + dim_index + run_index + 1, next_index,
+                                              self.single_dimension_tpr[run_index][dim_index])
+                    self.table_widget.setItem(run_index * dim_count + dim_index + run_index + 1, next_index+1,
+                                              self.single_dimension_fpr[run_index][dim_index])
+                    self.table_widget.setCellWidget((run_index * dim_count + dim_index + run_index + 1), next_index+2, self.single_dimension_view[run_index][dim_index])
 
                     dim_index = (dim_index + 1) % dim_count
 
@@ -619,6 +649,10 @@ class ResultStackedWidgetPage(MasterStackedWidgetPage):
         total_bp = 0
         total_bn = 0
         total_posneg = []
+        total_fp = 0
+        total_tp = 0
+        total_fn = 0
+        total_tn = 0
         for _ in self.used_labels:
             total_posneg.append((0, 0))
         val = {k: v for k, v in val.items() if k in df.columns}
@@ -635,6 +669,10 @@ class ResultStackedWidgetPage(MasterStackedWidgetPage):
             bp = 0
             bn = 0
             posneg = []
+            fp = 0
+            tp = 0
+            fn = 0
+            tn = 0
             for _ in self.used_labels:
                 posneg.append((0, 0))
             for time_offset, value in v.items():
@@ -663,6 +701,18 @@ class ResultStackedWidgetPage(MasterStackedWidgetPage):
                 elif (value == 0 or value == 2) and time_offset not in concat_novelty_dict:
                     bn += 1
 
+            for index, label in enumerate(self.used_labels):
+                if "Unknown" in label:
+                    tp += 0
+                elif "Sensor" in label:
+                    tp += posneg[index][0]
+                    fn += posneg[index][1]
+                else:
+                    fp += posneg[index][0]
+                    tn += posneg[index][1]
+            fp += bp
+            tn += bn
+
             self.single_dimension_dim[run_index][dim_index].setText(str(k))
             self.single_dimension_points[run_index][dim_index].setText(str(len(v)))
             total_points = total_points + len(v)
@@ -675,6 +725,11 @@ class ResultStackedWidgetPage(MasterStackedWidgetPage):
             discovered_novelties = sum(value == 1 for value in v.values())
             self.single_dimension_discovered[run_index][dim_index].setText(str(discovered_novelties))
             total_discovered = total_discovered + discovered_novelties
+
+            if tp + fn > 0:
+                self.single_dimension_tpr[run_index][dim_index].setText("%.3f%%" % (100*tp/(tp+fn)))
+            if fp + tn > 0:
+                self.single_dimension_fpr[run_index][dim_index].setText("%.3f%%" % (100*fp/(fp+tn)))
 
             '''
             If (positives + negatives) = 0 then you want N/A or something similar as the ratio result, 
@@ -701,6 +756,10 @@ class ResultStackedWidgetPage(MasterStackedWidgetPage):
 
             total_bp = total_bp + bp
             total_bn = total_bn + bn
+            total_tp += tp
+            total_fp += fp
+            total_tn += tn
+            total_fn += fn
             for i, pair in enumerate(total_posneg):
                 total_posneg[i] = (pair[0]+posneg[i][0], pair[1]+posneg[i][1])
 
@@ -709,6 +768,10 @@ class ResultStackedWidgetPage(MasterStackedWidgetPage):
         self.single_run_total_points[run_index].setText(str(total_points))
         self.single_run_total_novelties[run_index].setText(str(total_novelties))
         self.single_run_total_discovered[run_index].setText(str(total_discovered))
+        if total_tp + total_fn > 0:
+            self.single_run_total_tpr[run_index].setText("%.3f%%" % (100*total_tp/(total_tp+total_fn)))
+        if total_fp + total_tn > 0:
+            self.single_run_total_fpr[run_index].setText("%.3f%%" % (100*total_fp/(total_fp+total_tn)))
 
         if total_bn+total_bp > 0:
             self.single_run_total_bp[run_index].setText(str(total_bp) + "(%.1f%%)" % (100*total_bp/(total_bp+total_bn)))
@@ -726,6 +789,21 @@ class ResultStackedWidgetPage(MasterStackedWidgetPage):
 
         if self.thread_pool.activeThreadCount() == 0:
             self.back_button.setEnabled(True)
+
+            list_csv_rows = []
+            for row_index in range(self.table_widget.rowCount()):
+                list_of_row_contents = []
+                if not self.table_widget.item(row_index, 3).text():
+                    for col_index in range(self.table_widget.columnCount()-1):
+                        if col_index in [0, 4, 5, self.table_widget.columnCount()-3, self.table_widget.columnCount()-2]:
+                            list_of_row_contents.append(self.table_widget.item(row_index, col_index).text())
+                    list_csv_rows.append(list_of_row_contents)
+
+            if len(list_csv_rows) == self.algorithm_count:
+                with open('ndas/Benchmark-Logs.csv', 'a', newline='') as f:
+                    writer = csv.writer(f)
+                    list_rows_to_write = [[""], ["Benchmark at time: "+datetime.datetime.now().strftime("%m/%d/%Y|%H:%M:%S")]] + list_csv_rows
+                    writer.writerows(list_rows_to_write)
 
     @staticmethod
     def color_row(table, row_index, color):

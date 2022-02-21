@@ -1,4 +1,5 @@
 import pandas as pd
+import random
 from PyQt5.QtCore import (pyqtSignal)
 from PyQt5.QtWidgets import *
 
@@ -82,6 +83,10 @@ class DataGeneratorWidget(QWidget):
         self.generate_button.setMinimumWidth(100)
         self.generate_button.clicked.connect(lambda: self.generate_test_data())
 
+        self.mixup_button = QPushButton("Randomize Settings")
+        self.mixup_button.setMinimumWidth(100)
+        self.mixup_button.clicked.connect(lambda: self.mixup_settings())
+
         self.prepare_groupbox_layout.addLayout(self.number_of_dimensions_layout)
         self.prepare_groupbox_layout.addLayout(self.dataset_length_layout)
         self.prepare_groupbox_layout.addLayout(self.dataset_length_observation_step_layout)
@@ -91,6 +96,7 @@ class DataGeneratorWidget(QWidget):
 
         self.prepare_groupbox_layout.addLayout(self.dataset_seed_layout)
         self.prepare_groupbox_layout.addWidget(self.generate_button)
+        self.prepare_groupbox_layout.addWidget(self.mixup_button)
 
         self.main_layout.addWidget(self.prepare_groupbox)
         self.main_layout.addWidget(self.data_modification_groupbox)
@@ -157,7 +163,7 @@ class DataGeneratorWidget(QWidget):
         for label_dict in label_list:
             for plot_name, novelty_dict in label_dict.items():
                 for k, v in novelty_dict.items():
-                    annotations.add_label_unselected(df["observation"][k], v, k, "O", plot_name)
+                    annotations.add_label_unselected(df["observation"][k], v, k, "Sensor", plot_name)
         self.update_labels_signal.emit()
 
     def number_dimensions_changed(self, val):
@@ -213,3 +219,9 @@ class DataGeneratorWidget(QWidget):
                     widget.setParent(None)
                 else:
                     self.delete_items_of_layout(item.layout())
+
+    def mixup_settings(self):
+        num_dim = self.number_of_dimensions.value()
+        self.number_dimensions_changed(0)
+        self.number_dimensions_changed(num_dim)
+        self.dataset_seed.setValue(datagenerator.get_random_int(10000, 99999))

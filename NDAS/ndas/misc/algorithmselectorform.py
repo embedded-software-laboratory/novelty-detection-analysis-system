@@ -31,13 +31,13 @@ class AlgorithmInputForm:
         active_analysis_algorithm_layout.addWidget(self.active_analysis_algorithm)
         self.active_analysis_algorithm.currentIndexChanged.connect(lambda index: self.on_algorithm_change(index))
 
+        algorithm_name_label = QLabel("Name:")
+        self.algorithm_name = QLineEdit("auto:algo-" + str(aid))
+        self.algorithm_name.setMaximumWidth(550)
+
         algorithm_list = algorithms.get_available_algorithms()
         for algorithm in algorithm_list:
             self.active_analysis_algorithm.addItem(algorithm)
-
-        algorithm_name_label = QLabel("Name:")
-        self.algorithm_name = QLineEdit("algo-" + str(aid))
-        self.algorithm_name.setMaximumWidth(200)
 
         first_row_layout.addLayout(active_analysis_algorithm_layout)
         first_row_layout.addWidget(algorithm_name_label)
@@ -61,6 +61,8 @@ class AlgorithmInputForm:
         """
         klass = algorithms.get_available_algorithms()[self.active_analysis_algorithm.currentIndex()]
         name = self.algorithm_name.text()
+        if name.startswith("auto:"):
+            name = name[5:]
         algorithm_parameter = self.get_param_list()
         return {'klass': klass, 'name': name, 'parameter': algorithm_parameter}
 
@@ -68,7 +70,10 @@ class AlgorithmInputForm:
         """
         Returns the name of the algorithm
         """
-        return str(self.algorithm_name.text())
+        name = self.algorithm_name.text()
+        if name.startswith("auto:"):
+            name = name[5:]
+        return str(name)
 
     def get_layout(self):
         """
@@ -125,6 +130,7 @@ class AlgorithmInputForm:
                 q_input.setMinimum(arg.minimum)
                 q_input.setMaximum(arg.maximum)
                 q_input.setValue(arg.default)
+                q_input.valueChanged.connect(self.update_name_string)
             elif arg.type == parameter.ArgumentType.FLOAT:
                 q_input = QDoubleSpinBox(parent=q_groupbox)
                 q_input.setDecimals(3)
@@ -132,11 +138,14 @@ class AlgorithmInputForm:
                 q_input.setSingleStep(0.1)
                 q_input.setMinimum(arg.minimum)
                 q_input.setMaximum(arg.maximum)
+                q_input.valueChanged.connect(self.update_name_string)
             elif arg.type == parameter.ArgumentType.BOOL:
                 q_input = QCheckBox(parent=q_groupbox)
                 q_input.setChecked(arg.default)
+                q_input.stateChanged.connect(self.update_name_string)
             else:
                 q_input = QLineEdit(arg.default, parent=q_groupbox)
+                q_input.textChanged.connect(self.update_name_string)
 
             if arg.tooltip is not None:
                 q_label.setToolTip(arg.tooltip)
@@ -149,6 +158,26 @@ class AlgorithmInputForm:
 
         self.algorithm_additional_parameters.append(q_layout)
         self.algorithm_additional_options_layout.addLayout(q_layout)
+        self.update_name_string()
+
+    def update_name_string(self):
+        cur_alg = self.active_analysis_algorithm.currentText()
+        if self.algorithm_name.text().startswith("auto:"):
+            if cur_alg:
+                alg_string = 'auto:' + ''.join(c for c in cur_alg if c.isupper())
+            var_string = "("
+            for k, v in self.get_param_list().items():
+                k_f = k[:min(3, len(k))]
+                k_b = k[min(3, len(k)):]
+                if isinstance(v, bool):
+                    v_str = str(v)[:1]
+                else:
+                    v_str = str(v)
+                var_string += (k_f+''.join(c for c in k_b if c.isupper())+":"+v_str+"|")
+            var_string = var_string[:-1]
+            if var_string[:-1]:
+                var_string += ")"
+            self.algorithm_name.setText(alg_string+" "+var_string)
 
     def get_param_list(self):
         """

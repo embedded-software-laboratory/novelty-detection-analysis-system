@@ -1,5 +1,5 @@
 from PyQt5.QtWidgets import *
-
+import random
 from ndas.utils import datagenerator
 
 
@@ -33,6 +33,7 @@ class DataInputForm:
         self.data_distribution.addItem("Gaussian", datagenerator.DataDistributionType.GAUSSIAN)
         self.data_distribution.addItem("Uniform", datagenerator.DataDistributionType.UNIFORM)
         self.data_distribution.addItem("Laplace", datagenerator.DataDistributionType.LAPLACE)
+        self.data_distribution.setCurrentIndex(random.randint(0, 2))
         first_row_layout.addWidget(data_distribution_label)
         first_row_layout.addWidget(self.data_distribution)
 
@@ -42,6 +43,7 @@ class DataInputForm:
         self.data_flow.addItem("None", datagenerator.DataFlowType.NONE)
         self.data_flow.addItem("Rising", datagenerator.DataFlowType.RISING)
         self.data_flow.addItem("Falling", datagenerator.DataFlowType.FALLING)
+        self.data_flow.setCurrentIndex(random.randint(0, 2))
         first_row_layout.addWidget(data_flow_label)
         first_row_layout.addWidget(self.data_flow)
 
@@ -136,7 +138,7 @@ class DataInputForm:
             quota
             labeling
             """
-            self.groupbox = QGroupBox(name, checkable=True, checked=False)
+            self.groupbox = QGroupBox(name, checkable=True, checked=bool(random.getrandbits(1)))
 
             layout = QVBoxLayout()
             self.groupbox.setLayout(layout)
@@ -184,6 +186,7 @@ class DataInputForm:
             if labeling:
                 auto_label_layout = QHBoxLayout()
                 self.auto_label_checkbox = QCheckBox("Auto-Label")
+                self.auto_label_checkbox.setChecked(True)
                 auto_label_layout.addWidget(self.auto_label_checkbox)
                 anomaly_option_layout.addLayout(auto_label_layout)
 
