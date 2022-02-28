@@ -68,7 +68,7 @@ def run():
     window = mainwindow.MainWindow(q_threadpool)
     logger.init.debug("MainWindow created")
     logger.init.debug("Multithreading with maximum %d threads" % q_threadpool.maxThreadCount())
-    window.show()
+    window.showMaximized()
 
     # Run
     ret = q_app.exec_()
