@@ -395,7 +395,7 @@ class GraphLayoutWidget(pg.GraphicsLayoutWidget):
             if self.showLabels == True:
                 label_text = labeled_point.label
             else:
-                label_text = "L"
+                label_text = labeled_point.label[0]
             cti = CustomTextItem(index=labeled_point.index, text=label_text, point_x=labeled_point.x,
                                  point_y=labeled_point.val, color='ff0000', border='k', anchor=(0.5, 1.1), angle=0,
                                  fill='w')
