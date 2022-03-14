@@ -403,6 +403,7 @@ class MainWindow(QMainWindow):
         import_patient_action = QAction("Import patient from database", self)
         import_patient_action.triggered.connect(lambda: self.fm_import_patient_action())
         self.file_menu.addAction(import_patient_action)
+        self.importwindowopened = False
 
         open_ndas_action = QAction("Load", self)
         open_ndas_action.triggered.connect(lambda: self.load_ndas_slot())
@@ -438,10 +439,12 @@ class MainWindow(QMainWindow):
         ssh_settings_action = QAction("Configure SSH authentification data", self)
         ssh_settings_action.triggered.connect(lambda: self.change_ssh_settings())
         settings_menu.addAction(ssh_settings_action)
+        self.sshsettingsopened = False
 
         database_settings_action = QAction("Configure database authentification data", self)
         database_settings_action.triggered.connect(lambda: self.change_database_settings())
         settings_menu.addAction(database_settings_action)
+        self.databasesettingsopened = False
 
         help_menu = self.main_menu.addMenu('&?')
         about_action = QAction("About", self)
@@ -826,13 +829,17 @@ class MainWindow(QMainWindow):
 
     @pyqtSlot()
     def change_ssh_settings(self):
-        self.sshwidget = SSHSettingsWindow(self)
-        self.sshwidget.show()
+        if not self.sshsettingsopened:
+            self.sshwidget = SSHSettingsWindow(self)
+            self.sshwidget.show()
+            self.sshsettingsopened = True
 
     @pyqtSlot()
     def change_database_settings(self):
-        self.databasewidget = DatabaseSettingsWindow(self)
-        self.databasewidget.show()
+        if not self.databasesettingsopened:
+            self.databasewidget = DatabaseSettingsWindow(self)
+            self.databasewidget.show()
+            self.databasesettingsopened = True
 
     @pyqtSlot()
     def toggleTooltipStatus(self, tooltip_checkbox, isChecked):
@@ -1235,9 +1242,11 @@ class MainWindow(QMainWindow):
             self._confirm_error("Error", "Please configure your ssh authentification data first.")
         elif not os.path.exists(os.getcwd() + "\\ndas\\local_data\\db_asic_scheme.json"):
             self._confirm_error("Error", "Please configure your database authentification data first.")
-        else:
+        elif not self.importwindowopened:
             self.importdatabase = ImportDatabaseWindow(self)
             self.importdatabase.show()
+            self.importwindowopened = True
+            
 
     def update_plot_selector(self):
         """

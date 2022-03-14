@@ -16,6 +16,10 @@ class ImportDatabaseWindow(QMainWindow):
 
     def getParent(self):
         return self.parent
+        
+    def closeEvent(self, event):
+        self.parent.importwindowopened = False
+        event.accept()
 
 
 class DatabaseSettingsWidget(QWidget):
