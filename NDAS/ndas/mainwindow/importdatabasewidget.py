@@ -1,5 +1,6 @@
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
+from PyQt5.QtGui import QRegExpValidator
 import os
 from ndas.extensions import data
 from ndas.database_interface import interface
@@ -22,6 +23,7 @@ class DatabaseSettingsWidget(QWidget):
         super().__init__(parent)
         self.parameters=""
         self.allPatientIDs = [1,10,100,1000,10000,100000,1000000]
+        reg_exp_number = QRegExp("[0-9]+")
 
         database = QComboBox()
         database.addItems({"asic_data_mimic", "asic_data_sepsis"})
@@ -29,6 +31,7 @@ class DatabaseSettingsWidget(QWidget):
         self.selectLabel = QLabel()
         self.selectLabel.setText("Select patient by patient id")
         self.patientId = QLineEdit()
+        self.patientId.setValidator(QRegExpValidator(reg_exp_number))
         self.patiendIDSlider = QSlider(Qt.Horizontal)
         self.patiendIDSlider.setMinimum(1)
         self.patiendIDSlider.setMaximum(1000000)
@@ -40,6 +43,7 @@ class DatabaseSettingsWidget(QWidget):
         self.patientEntriesLabel = QLabel()
         self.patientEntriesLabel.setText("Show the patients who has the most entries in total in the database:")
         self.numberOfPatients = QLineEdit()
+        self.numberOfPatients.setValidator(QRegExpValidator(reg_exp_number))
         self.patientIdsScrollbar = QScrollArea()
         self.patientIdsScrollbar.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
         self.patientIdsScrollbar.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
@@ -52,6 +56,7 @@ class DatabaseSettingsWidget(QWidget):
         self.parameterEntriesLabel = QLabel()
         self.parameterEntriesLabel.setText("Show the patients who has the most entries for a specific parameter:")
         self.numberOfPatients2 = QLineEdit()
+        self.numberOfPatients2.setValidator(QRegExpValidator(reg_exp_number))
         self.parameter = QPushButton("Choose parameters...")
         self.parameter.clicked.connect(lambda: self.chooseParameters())
         self.selectedParameters = QLabel()
@@ -86,11 +91,11 @@ class DatabaseSettingsWidget(QWidget):
         self.loadPatientIds(database.currentText())
 
 
-    def loadPatient(self, parent, patientid, database):
-        filename = os.getcwd()+"\\ndas\\local_data\\imported_patients\\{}_patient_{}.csv".format(database, str(patientid))
+    def loadPatient(self, parent, patientid, tableName):
+        filename = os.getcwd()+"\\ndas\\local_data\\imported_patients\\{}_patient_{}.csv".format(tableName, str(patientid))
         result = 0
         if not os.path.exists(filename):
-            result = interface.startInterface(["interface", "db_asic_scheme.json", "selectPatient", str(patientid), database])
+            result = interface.loadPatientData(tableName, str(patientid))
         if result == -1:
             QMessageBox.critical(self, "Error", "Patient not found.", QMessageBox.Ok)
         elif result == -3:
@@ -111,18 +116,16 @@ class DatabaseSettingsWidget(QWidget):
             parent.getParent().toggleTooltipStatus(parent.getParent().toggle_tooltip_btn, True)
             parent.close()
 
-    def showPatients(self, parent, numberOfPatients, database):
+    def showPatients(self, parent, numberOfPatients, tableName):
         db = ""
-        if database == "asic_data_mimic":
+        if tableName == "asic_data_mimic":
             db = "mimic"
-        elif database == "asic_data_sepsis":
+        elif tableName == "asic_data_sepsis":
             db = "sepsis"
-        result = interface.startInterface(["interface", "db_asic_scheme.json", "dataDensity", "bestPatients", "entriesTotal", numberOfPatients, db])
+        result = interface.selectBestPatients(db, numberOfPatients)
         patientids = ["Patient-ID | Number of entries\n", "----------------\n"]
-        if result == -1:
+        if result == []:
             patientids = ["No result found"]
-        elif result == -2:
-            patientids = ["An error occured, please enter a valid number."]
         elif result == -3:
             QMessageBox.critical(self, "Error", "Connection to the database failed, make sure that you are connected to the i11-VPN", QMessageBox.Ok)
         elif result == -4:
@@ -143,7 +146,7 @@ class DatabaseSettingsWidget(QWidget):
             db = "mimic"
         elif database == "asic_data_sepsis":
             db = "sepsis"
-        result = interface.startInterface(["interface", "db_asic_scheme.json", "dataDensity", "bestPatients", self.parameters, numberOfPatients, db])
+        result = interface.selectBestPatientsWithParameters(db, numberOfPatients, self.parameters)
         patientids = []
         if result == -1:
             patientids = ["No result found"]
