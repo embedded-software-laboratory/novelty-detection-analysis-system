@@ -1239,8 +1239,10 @@ class MainWindow(QMainWindow):
         """
 
         if not os.path.exists(os.getcwd() + "\\ndas\\local_data\\sshSettings.json"):
+            self.change_ssh_settings()
             self._confirm_error("Error", "Please configure your ssh authentification data first.")
         elif not os.path.exists(os.getcwd() + "\\ndas\\local_data\\db_asic_scheme.json"):
+            self.change_database_settings()
             self._confirm_error("Error", "Please configure your database authentification data first.")
         elif not self.importwindowopened:
             self.importdatabase = ImportDatabaseWindow(self)
