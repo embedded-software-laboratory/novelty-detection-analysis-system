@@ -533,6 +533,7 @@ class MainWindow(QMainWindow):
                 datamedicalimputationwidget.DataMedicalImputationWidget.on_import_data(self.tab_datamedimputation)
 
             self.progress_bar_update_slot(100)
+            self.tab_benchmark.update_dim()
 
     def _connect_signals(self):
         """

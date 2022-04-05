@@ -84,6 +84,60 @@ physiologicalinfo:
     nisd-pla-thr: 10
     unit: "mmHg"
     aliases: ["cvp", "CVP"]
+  haemoglobin:
+    low: 4.83 # 3
+    high: 27.38 # 17
+    nisd-pla-thr: 3 # 1.86
+    unit: "g/dL" # "mmol/L"
+    aliases: ["Haemoglobin", "Haemo", "haemo", "hemoglobin", "Hemoglobin", "Hemo", "hemo"]
+  haematocrit:
+    low: 18
+    high: 52
+    nisd-pla-thr: 6
+    unit: "%"
+    aliases: ["Haematocrit", "Haema", "haema", "hematocrit", "Hematocrit", "Hema", "hema"]
+  pH-arterial:
+    low: 6.98
+    high: 7.62
+    nisd-pla-thr: 0.2
+    unit: ""
+    aliases: ["PH-arterial", "ph", "PH", "pH"]
+  paCO2:
+    low: 17
+    high: 100
+    nisd-pla-thr: 10
+    unit: "mmHg"
+    aliases: ["paco2"]
+  thrombocytes:
+    low: 6
+    high: 941
+    nisd-pla-thr: 70
+    unit: "1000/uL"
+    aliases: ["Thrombocytes", "Thrombo","thrombo"]
+  leukocytes:
+    low: 0.2
+    high: 52.5
+    nisd-pla-thr: 7
+    unit: "1000/uL"
+    aliases: ["Leukocytes", "Leuko", "leuko"]
+  creatinine:
+    low: 0.191 # 16.808
+    high: 79.352 # 6982.976
+    nisd-pla-thr: 6 # 528
+    unit: "mg/dL" # "umol/L"
+    aliases: ["Creatinine"]
+  crp:
+    low: 0
+    high: 218
+    nisd-pla-thr: 28
+    unit: "mg/L"
+    aliases: ["C Reactive Protein", "CRP"]
+  bilirubin:
+    low: 0.006 # 0.102
+    high: 1.611 # 27.387
+    nisd-pla-thr: 0.2 # 3.4
+    unit: "mg/dL" # "umol/L"
+    aliases: ["Bilirubin", "Bili", "bili"]
   default:
     low: 0
     high: 100

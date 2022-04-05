@@ -143,9 +143,12 @@ def restore_from_save(label_data):
         register_plot_annotation(cl)
 
     for single_labeled_point in label_data:
+        plot_name = single_labeled_point["plot_name"]
         lp = LabeledPoint(single_labeled_point["value"], single_labeled_point["x"], single_labeled_point["index"],
-                          single_labeled_point["label"], single_labeled_point["plot_name"])
-        _current_point_labels[single_labeled_point["plot_name"]].append(lp)
+                          single_labeled_point["label"], plot_name)
+        if plot_name not in _current_point_labels:
+            _current_point_labels[plot_name] = []
+        _current_point_labels[plot_name].append(lp)
 
 
 def format_for_save():
