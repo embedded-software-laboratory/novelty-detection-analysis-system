@@ -35,8 +35,10 @@ def selectBestPatients(db_name, numberOfPatients):
     
     # search for the patient who has the most entries in the given table
     stdin, stdout, stderr = ssh.exec_command('mysql -h{} -u{} -p{} SMITH_SepsisDB -e "select patientid, entriesTotal from SMITH_ASIC_SCHEME.asic_lookup_{} order by entriesTotal desc limit {};"'.format(databaseConfiguration['host'], databaseConfiguration['username'], databaseConfiguration['password'], db_name, numberOfPatients))
-    errors = stderr.readlines()
+
     results = stdout.readlines()
+    errors = stderr.readlines()
+
     ssh.close()
     if len(errors) > 0 and errors[0] == "ERROR 1045 (28000): Access denied for user '{}'@'interface.smith.embedded.rwth-aachen.de' (using password: YES)\n".format(databaseConfiguration['username']): #wrong database authentication data used
         return -6
@@ -72,8 +74,10 @@ def selectBestPatientsWithParameters(db_name, numberOfPatients, parameters):
     databaseConfiguration = loadDatabaseConfiguration()
     # search for the patient who has the most entries in the given table for the specified parameters
     stdin, stdout, stderr = ssh.exec_command('mysql -h{} -u{} -p{} SMITH_SepsisDB -e "select patientid, {} from (select *, ({}) as numberOfEntries from SMITH_ASIC_SCHEME.asic_lookup_{} order by numberOfEntries desc limit {}) as sub;"'.format(databaseConfiguration['host'], databaseConfiguration['username'], databaseConfiguration['password'], parameters, parameters.replace(",","+"), db_name, numberOfPatients))
-    errors = stderr.readlines()
+
     results = stdout.readlines()
+    errors = stderr.readlines()
+
     ssh.close()
     if len(errors) > 0 and errors[0] == "ERROR 1045 (28000): Access denied for user '{}'@'interface.smith.embedded.rwth-aachen.de' (using password: YES)\n".format(databaseConfiguration['username']): #wrong database authentication data used
         return -6
@@ -81,7 +85,8 @@ def selectBestPatientsWithParameters(db_name, numberOfPatients, parameters):
         for error in errors:
             logging.error(error)
     return results    
-    
+
+
 def loadPatientData(tableName, patientId):
     ssh = openSSHConnection()
     if ssh in [-3,-4,-5]:
@@ -90,6 +95,7 @@ def loadPatientData(tableName, patientId):
     
     # selects the patient from the given table with the specified patient id 
     stdin, stdout, stderr = ssh.exec_command('mysql -h{} -u{} -p{} SMITH_SepsisDB -e "show columns from SMITH_ASIC_SCHEME.{}"'.format(databaseConfiguration['host'], databaseConfiguration['username'], databaseConfiguration['password'], tableName))
+
     columnNames = stdout.readlines()
     columnNames = columnNames[2:]
     firstLine = []
@@ -104,9 +110,11 @@ def loadPatientData(tableName, patientId):
             firstLine.append(name[0])
         index+=1
     stdin, stdout, stderr = ssh.exec_command('mysql -h{} -u{} -p{} SMITH_SepsisDB -e "select * from SMITH_ASIC_SCHEME.{} where patientid = {}"'.format(databaseConfiguration['host'], databaseConfiguration['username'], databaseConfiguration['password'], tableName, patientId))
-    errors = stderr.readlines()
+
     result = stdout.readlines()
-    #ssh.close()
+    errors = stderr.readlines()
+
+    ssh.close()
     if len(errors) > 0 and errors[0] == "ERROR 1045 (28000): Access denied for user '{}'@'interface.smith.embedded.rwth-aachen.de' (using password: YES)\n".format(databaseConfiguration['username']):
         return -6
     elif len(errors) > 0:
@@ -140,7 +148,8 @@ def loadPatientData(tableName, patientId):
     for line in convertedRows:
         newLine = list(line)
         writer.writerow(newLine)
-    
+
+
 def loadPatientIds(table):
     ssh = openSSHConnection()
     if ssh in [-3,-4,-5]:
@@ -148,17 +157,21 @@ def loadPatientIds(table):
     databaseConfiguration = loadDatabaseConfiguration()
     
     stdin, stdout, stderr = ssh.exec_command('mysql -h{} -u{} -p{} SMITH_SepsisDB -e "select distinct patientid from SMITH_ASIC_SCHEME.{};"'.format(databaseConfiguration['host'], databaseConfiguration['username'], databaseConfiguration['password'], table))
+
+    results = stdout.readlines()
     errors = stderr.readlines()
+
+    ssh.close()
     if len(errors) > 0 and errors[0] == "ERROR 1045 (28000): Access denied for user '{}'@'interface.smith.embedded.rwth-aachen.de' (using password: YES)\n".format(databaseConfiguration['username']):
         ssh.close()
         return -6
     elif len(errors) > 0:
         for error in errors:
             logging.error(error)
-    results = stdout.readlines()
-    ssh.close()
+
     return results[1:]
-    
+
+
 def openSSHConnection():
     sshLoginDataFile = open(os.getcwd()+"\\ndas\\local_data\\sshSettings.json")
     sshLoginData = json.load(sshLoginDataFile)
@@ -180,7 +193,8 @@ def openSSHConnection():
         return -5
         
     return ssh
-    
+
+
 def loadDatabaseConfiguration():
     databaseConfigurationFile = open(os.getcwd()+"\\ndas\\local_data\\db_asic_scheme.json")
     return json.load(databaseConfigurationFile)

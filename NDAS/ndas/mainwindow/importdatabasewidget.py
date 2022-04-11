@@ -98,7 +98,6 @@ class DatabaseSettingsWidget(QWidget):
         self.setLayout(layout)
         self.loadPatientIds(database.currentText())
 
-
     def loadPatient(self, parent, patientid, tableName):
         filename = os.getcwd()+"\\ndas\\local_data\\imported_patients\\{}_patient_{}.csv".format(tableName, str(patientid))
         result = 0

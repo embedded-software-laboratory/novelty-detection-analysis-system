@@ -350,7 +350,8 @@ class GraphLayoutWidget(pg.GraphicsLayoutWidget):
         val
         """
         bottom_left, top_right = val
-
+        if not self._x_data:
+            return
         indexes = []
         for i in range(len(self._x_data)):
             x = self._x_data[i]
@@ -608,8 +609,8 @@ class MultiSelectViewBox(pg.ViewBox):
         elif ev.button() in [QtCore.Qt.MouseButton.LeftButton]:
             rect = self.parentItem().items[0]
             rect.hide()
-            updated_rect = QtCore.QRectF(self.mapToView(self.mapFromParent(ev.buttonDownPos())),
-                                         self.mapToView(self.mapFromParent(ev.pos())))
+            updated_rect = QtCore.QRectF(self.mapToView(ev.buttonDownPos()),
+                                         self.mapToView(ev.pos()))
 
             if ev.isFinish():
                 rect_coordinates = updated_rect.getCoords()
