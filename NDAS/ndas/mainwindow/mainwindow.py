@@ -213,13 +213,17 @@ class MainWindow(QMainWindow):
         self.data_selection_btn = QPushButton("Slice")
         self.data_selection_reset_btn = QPushButton("Reset")
         self.data_selection_start_label = QLabel("X-Range:")
+        self.data_selection_start_value = QLabel("(Value: -)")
+        self.data_selection_end_value = QLabel("(Value: -)")
         self.data_selection_separation_label = QLabel("  -")
 
         self.data_selection_range_layout = QHBoxLayout()
         self.data_selection_range_layout.addWidget(self.data_selection_start_label)
         self.data_selection_range_layout.addWidget(self.data_selection_start)
+        self.data_selection_range_layout.addWidget(self.data_selection_start_value)
         self.data_selection_range_layout.addWidget(self.data_selection_separation_label)
         self.data_selection_range_layout.addWidget(self.data_selection_end)
+        self.data_selection_range_layout.addWidget(self.data_selection_end_value)
 
         self.data_selection_slider = rangeslider.RangeSlider()
         self.data_selection_slider.setDisabled(True)
@@ -1117,6 +1121,8 @@ class MainWindow(QMainWindow):
         """
         self.data_selection_start.setText(str(start_value))
         self.data_selection_end.setText(str(end_value))
+        self.data_selection_start_value.setText("(Value: "+str(data.get_index_value_at_row_number(start_value))+")")
+        self.data_selection_end_value.setText("(Value: "+str(data.get_index_value_at_row_number(end_value-1))+")")
 
     @pyqtSlot()
     def update_data_selection_slider(self):
@@ -1135,7 +1141,7 @@ class MainWindow(QMainWindow):
         input_start = int(input_start)
         input_end = int(input_end)
 
-        if input_start > input_end:
+        if input_start >= input_end:
             return False
 
         if input_start < 0:
@@ -1145,6 +1151,8 @@ class MainWindow(QMainWindow):
             return False
 
         self.data_selection_slider.setRange(input_start, input_end)
+        self.data_selection_start_value.setText("(Value: "+str(data.get_index_value_at_row_number(input_start))+")")
+        self.data_selection_end_value.setText("(Value: "+str(data.get_index_value_at_row_number(input_end-1))+")")
 
     def set_data_selection(self, start, end):
         """

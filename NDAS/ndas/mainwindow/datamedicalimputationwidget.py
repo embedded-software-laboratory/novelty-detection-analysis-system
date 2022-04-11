@@ -122,6 +122,8 @@ class DataMedicalImputationWidget(QWidget):
         self.data_selection_end.setDisabled(True)
         self.data_selection_btn = QPushButton('Set Range')
         self.data_selection_btn.clicked.connect(lambda: self.on_click_set_range())
+        self.data_selection_ann_btn = QPushButton('Set Annotation Range')
+        self.data_selection_ann_btn.clicked.connect(lambda: self.on_click_set_annotation_range())
         self.data_selection_reset_btn = QPushButton('Reset Range')
         self.data_selection_reset_btn.clicked.connect(lambda: self.on_click_reset_range())
         self.data_selection_start_label = QLabel('X-Range:')
@@ -135,6 +137,7 @@ class DataMedicalImputationWidget(QWidget):
         self.data_selection_slider.setDisabled(True)
         self.data_selection_btn_layout = QHBoxLayout()
         self.data_selection_btn_layout.addWidget(self.data_selection_btn)
+        self.data_selection_btn_layout.addWidget(self.data_selection_ann_btn)
         self.data_selection_btn_layout.addWidget(self.data_selection_reset_btn)
         self.Data_Visualization_Settings_Layout.addWidget(self.data_selection_slider, alignment=Qt.AlignTop)
         self.Data_Visualization_Settings_Layout.addLayout(self.data_selection_range_layout)
@@ -371,6 +374,17 @@ class DataMedicalImputationWidget(QWidget):
         for Plot in self.Graphs:
             Plot.autoRange()
             Plot.setXRange(lower_limit, upper_limit)
+
+    def on_click_set_annotation_range(self, redraw_graphs=False):
+        """
+        Sets the Range for Data to be Visualized using values set in Annotation Tab and calls Data Visualization
+        """
+        index_range = self.main_window.data_selection_slider.getRange()
+        start = data.get_index_value_at_row_number(index_range[0])
+        end = data.get_index_value_at_row_number(index_range[1]-1)
+        self.update_data_selection_text(start, end)
+        self.update_data_selection_slider()
+        self.on_click_set_range(redraw_graphs=redraw_graphs)
 
     def on_click_reset_range(self, redraw_graphs=False):
         """

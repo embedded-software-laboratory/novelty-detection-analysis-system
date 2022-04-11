@@ -180,14 +180,14 @@ class RangeSlider(QSlider):
         )
 
         if self._first_sc == QStyle.SC_SliderHandle:
-            if pos <= self.second_position:
+            if pos < self.second_position:
                 self.first_position = pos
                 self.update()
                 self.valueChanged.emit(self.first_position, self.second_position)
                 return
 
         if self._second_sc == QStyle.SC_SliderHandle:
-            if pos >= self.first_position:
+            if pos > self.first_position:
                 self.second_position = pos
                 self.update()
                 self.valueChanged.emit(self.first_position, self.second_position)
