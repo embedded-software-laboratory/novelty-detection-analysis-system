@@ -531,6 +531,7 @@ class MainWindow(QMainWindow):
                 self.update_plot_selector()
                 self.update_data_selection_slider()
                 datamedicalimputationwidget.DataMedicalImputationWidget.on_import_data(self.tab_datamedimputation)
+                self.tab_datainspector.set_data(data.get_dataframe())
 
             self.progress_bar_update_slot(100)
             self.tab_benchmark.update_dim()
@@ -1176,6 +1177,7 @@ class MainWindow(QMainWindow):
 
         data.set_slice(start, end)
         # plots.register_available_plots()
+        plots.update_available_plots()
         plots.update_plot_view()
         self.tab_datainspector.set_data(data.get_dataframe())
 
@@ -1190,7 +1192,7 @@ class MainWindow(QMainWindow):
         self.data_selection_start.setText(str(start))
         self.data_selection_end.setText(str(end))
         self.data_selection_slider.setRange(start, end)
-
+        plots.update_available_plots()
         # plots.register_available_plots()
         plots.update_plot_view()
 
