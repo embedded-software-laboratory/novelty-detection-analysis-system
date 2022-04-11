@@ -7,7 +7,8 @@ import json
 from datetime import datetime
 import os
 import paramiko
-    
+import logging
+
     
 def selectBestPatients(db_name, numberOfPatients):
     """
@@ -39,6 +40,9 @@ def selectBestPatients(db_name, numberOfPatients):
     ssh.close()
     if len(errors) > 0 and errors[0] == "ERROR 1045 (28000): Access denied for user '{}'@'interface.smith.embedded.rwth-aachen.de' (using password: YES)\n".format(databaseConfiguration['username']): #wrong database authentication data used
         return -6
+    elif len(errors) > 0:
+        for error in errors:
+            logging.error(error)
     results = results[1:] #remove the first entry which consists of the column titles
     return results
 
@@ -72,7 +76,10 @@ def selectBestPatientsWithParameters(db_name, numberOfPatients, parameters):
     results = stdout.readlines()
     ssh.close()
     if len(errors) > 0 and errors[0] == "ERROR 1045 (28000): Access denied for user '{}'@'interface.smith.embedded.rwth-aachen.de' (using password: YES)\n".format(databaseConfiguration['username']): #wrong database authentication data used
-        return -6 
+        return -6
+    elif len(errors) > 0:
+        for error in errors:
+            logging.error(error)
     return results    
     
 def loadPatientData(tableName, patientId):
@@ -89,7 +96,7 @@ def loadPatientData(tableName, patientId):
     units = ["", "mmHg", "mmHg", "%", "", "°C", "mmHg", "cmH2O", "/min", "/min", "mmol/L", "mmol/L", "µmol/L", "U/L", "mL/cmH2O", "mmHg", "%", "mmol/L", "", "µmol/L", "mmol/L", "10^3/µL", "ng/mL", "mmHg", "mmHg", "%", "mmHg", "", "s", "mmHg", "mL/kg", "U/L", "mmHg", "mmHg", "L/min/m2", "µmol/L", "L/min", "pmol/L", "dyn.s/cm-5/m2", "mmHg", "ng/mL", "dyn.s/cm-5/m2", "cmH2O", "mmHg", "%", "nmol/L", "L/min", "L/min/m2", "ml/m2", "/min", "L/min", "%", "µg/kg/min", "mg/h", "mL/h", "mg/h", "µg/kg/min", "IE/min", "µg/kg/min", "µg/kg/min", "mg/h", "µg/h", "mg", "mg", "mg/h", "mg/h", "mg/h", "µg/kg/min", "mg", "mg", "mg", "mg/h", "µg", "µg/kg/h", "mg", "%", "µg/L", "10^3/µL", "mL", "U/L", "mmol/L", "U/L", "U/L", "ppm", "cmH2O", "", "mL/m2", "mL/Tag", "/min", "%", "", "cmH2O", "mL/kg", "cmH2O", "cmH2O", "cmH2O"]
     index = 0
     for name in columnNames:
-        print(name)
+        # print(name)
         name = name.split()
         if index < len(units):
             firstLine.append(name[0] + "(" + units[index] + ")")
@@ -102,6 +109,9 @@ def loadPatientData(tableName, patientId):
     #ssh.close()
     if len(errors) > 0 and errors[0] == "ERROR 1045 (28000): Access denied for user '{}'@'interface.smith.embedded.rwth-aachen.de' (using password: YES)\n".format(databaseConfiguration['username']):
         return -6
+    elif len(errors) > 0:
+        for error in errors:
+            logging.error(error)
     result = result[1:]
     if result == []:
         return -1
@@ -142,6 +152,9 @@ def loadPatientIds(table):
     if len(errors) > 0 and errors[0] == "ERROR 1045 (28000): Access denied for user '{}'@'interface.smith.embedded.rwth-aachen.de' (using password: YES)\n".format(databaseConfiguration['username']):
         ssh.close()
         return -6
+    elif len(errors) > 0:
+        for error in errors:
+            logging.error(error)
     results = stdout.readlines()
     ssh.close()
     return results[1:]
