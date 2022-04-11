@@ -5,6 +5,7 @@ import os
 from ndas.extensions import data
 from ndas.database_interface import interface
 from ndas.mainwindow.selectparameterswidget import SelectParametersWindow
+import random
 
 
 class ImportDatabaseWindow(QMainWindow):
@@ -43,6 +44,8 @@ class DatabaseSettingsWidget(QWidget):
         self.patiendIDSlider.sliderReleased.connect(lambda: self.sliderChanged(self.patiendIDSlider.value()))
         confirm = QPushButton("Confirm")
         confirm.clicked.connect(lambda: self.loadPatient(parent, self.patientId.text(), database.currentText()))
+        select_random = QPushButton("Select Random Patient")
+        select_random.clicked.connect(lambda: self.load_randomPatient(parent, database.currentText()))
 
         self.patientEntriesLabel = QLabel()
         self.patientEntriesLabel.setText("Show the patients who has the most entries in total in the database:")
@@ -80,6 +83,7 @@ class DatabaseSettingsWidget(QWidget):
         layout.addRow(self.patientId)
         layout.addRow(self.patiendIDSlider)
         layout.addRow(confirm)
+        layout.addRow(select_random)
         layout.addRow(self.patientEntriesLabel)
         layout.addRow("Enter number of patients:", self.numberOfPatients)
         layout.addRow(self.patientIdsScrollbar)
@@ -119,6 +123,10 @@ class DatabaseSettingsWidget(QWidget):
             parent.getParent().thread_pool.start(data.get_instance())
             parent.getParent().toggleTooltipStatus(parent.getParent().toggle_tooltip_btn, True)
             parent.close()
+
+    def load_randomPatient(self, parent, tableName):
+        identifier = int(random.choice(self.allPatientIDs))
+        self.loadPatient(parent, identifier, tableName)
 
     def showPatients(self, parent, numberOfPatients, tableName):
         db = ""
@@ -180,7 +188,7 @@ class DatabaseSettingsWidget(QWidget):
     def setSelectedParameters(self, parameters, label):
         self.selectedParameters.setText(label)
         self.parameters = parameters
-        print(self.parameters)
+        # print(self.parameters)
             
     def sliderChanged(self, newValue): 
         threshold = float("inf")

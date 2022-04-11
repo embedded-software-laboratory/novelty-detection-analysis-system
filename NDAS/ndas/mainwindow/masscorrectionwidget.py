@@ -16,6 +16,8 @@ from ndas.dataimputationalgorithms import base_imputation
 from ndas.misc import parameter
 import humanfriendly
 from datetime import timedelta
+import os
+import logging
 
 
 class MassCorrectionWidget(QWidget):
@@ -266,6 +268,9 @@ class MassCorrectionWidget(QWidget):
             self.Errors_label.setText("Errors: ")
             self.Estimated_time_rem.setText("Time Remaining: calculating...")
             self.start_time = time.time()
+            if not self.SelectedFolder:
+                self.SelectedFolder = os.path.abspath(os.getcwd())
+                logging.warn("No Directory was specified. Using default directory: "+self.SelectedFolder)
             for filename in self.listSelectedFiles:
                 self.running_threads[filename] = 0
                 out_filename = self.SelectedFolder + "/" + (filename.split("/")[-1]).split(".")[0] + self.selectExtension.text().strip() + ".csv"
@@ -274,6 +279,11 @@ class MassCorrectionWidget(QWidget):
                 worker.signals.error.connect(self.error_fn)
                 worker.signals.progress.connect(self.progress_fn)
                 self.thread_pool.start(worker)
+            if self.number_to_be_executed == 0:
+                self.Progress_bar.setValue(100)
+                self.Estimated_time_rem.setText("Time Remaining: All Files have been processed")
+                self.n_button.setDisabled(False)
+                self.n_button.setText("Done")
         if idx == (self.stacked_widget.count() - 2):
             self.n_button.setText("Run (May take a while)")
 
