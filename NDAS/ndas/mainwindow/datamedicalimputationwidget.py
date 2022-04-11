@@ -164,7 +164,9 @@ class DataMedicalImputationWidget(QWidget):
         """
         Create Box "Patient Information"
         """
+        self.Patient_Information_Visibility = False
         self.Patient_Information = QGroupBox('Patient Information')
+        self.Patient_Information.setVisible(False)
         self.Patient_Information_Layout = QVBoxLayout()
         self.Patient_Information.setLayout(self.Patient_Information_Layout)
         self.Patient_Information_General = QGridLayout()
@@ -485,6 +487,7 @@ class DataMedicalImputationWidget(QWidget):
 
         Only Show non-empty graphs
         """
+        self.Patient_Information_Visibility = False
         time_column = update_dataframe.columns[0]
         used_columns = [col for col in update_dataframe.columns if col in plots.get_registered_plot_keys()]
 
@@ -541,12 +544,14 @@ class DataMedicalImputationWidget(QWidget):
         """
         if "ID" in update_dataframe.columns:
             self.Patient_ID.setText(str(int(float(update_dataframe['ID'].iloc[0]))))
+            self.Patient_Information_Visibility = True
         else:
             self.Patient_ID.setText("No Specified")
 
         self.Patient_Gender.setText('Not Specified')
         if "gender(n m f)" in update_dataframe.columns:
             gender = int(update_dataframe['gender(n m f)'].iloc[0])
+            self.Patient_Information_Visibility = True
             if gender == 1:
                 self.Patient_Gender.setText('Male')
             elif gender == 2:
@@ -555,6 +560,7 @@ class DataMedicalImputationWidget(QWidget):
         self.Patient_Age.setText('Not Specified')
         if "age(90= >89)" in update_dataframe.columns:
             age = update_dataframe['age(90= >89)'].iloc[0]
+            self.Patient_Information_Visibility = True
             if age == 90:
                 self.Patient_Age.setText('Above 89')
             elif age == -1:
@@ -565,6 +571,7 @@ class DataMedicalImputationWidget(QWidget):
         self.Patient_Ethnicity.setText('Not Specified / Other')
         if "ethnicity(n cauc asia hisp afram natam)" in update_dataframe.columns:
             eth = update_dataframe['ethnicity(n cauc asia hisp afram natam)'].iloc[0]
+            self.Patient_Information_Visibility = True
             if eth == 1:
                 self.Patient_Ethnicity.setText('Caucasian')
             elif eth == 2:
@@ -582,16 +589,19 @@ class DataMedicalImputationWidget(QWidget):
         height = None
         if "height(cm)" in update_dataframe.columns:
             height = float(update_dataframe['height(cm)'].iloc[0])
+            self.Patient_Information_Visibility = True
             self.Patient_Height.setText('%.1f' % height)
 
         if "weight(kg)" in update_dataframe.columns:
             weight = float(update_dataframe['weight(kg)'].iloc[0])
+            self.Patient_Information_Visibility = True
             self.Patient_Weight.setText('%.1f' % weight)
             if height:
                 self.Patient_BMI.setText('%.1f' % (weight * 10000 / height / height))
         """
         Add Data to Graphs and Graph Statistics
         """
+        self.Patient_Information.setVisible(self.Patient_Information_Visibility)
         for c_id, col in enumerate(used_columns):
             x_y_values = update_dataframe[[time_column, col]].dropna()
             self.Graph_Plots[c_id].setData(x_y_values[time_column].tolist(), x_y_values[col].tolist())

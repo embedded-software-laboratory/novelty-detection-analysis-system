@@ -1,6 +1,6 @@
 import pandas as pd
-from PyQt5.QtCore import (pyqtSlot, QTimer)
-from PyQt5.QtGui import QDoubleValidator, QIntValidator, QIcon
+from PyQt5.QtCore import pyqtSlot, QTimer, Qt, pyqtProperty, QPropertyAnimation
+from PyQt5.QtGui import QDoubleValidator, QIntValidator, QIcon, QPixmap, QPainter
 from PyQt5.QtWidgets import *
 
 import logging
@@ -352,6 +352,10 @@ class MainWindow(QMainWindow):
         self.btn_layout_widget.setLayout(self.btn_layout)
         self.progress_bar_layout = QVBoxLayout()
 
+        """Loading Window"""
+        # self.Spinner_icon = Spinner()
+        # self.Spinner_icon.setGeometry(100,200,100,100)
+
         self._add_widgets()
         self._add_algorithms()
         self._add_labels()
@@ -361,6 +365,7 @@ class MainWindow(QMainWindow):
 
         self._connect_signals()
         self.setCentralWidget(self.main_widget)
+        # self.Spinner_icon.show()
 
 
     def _add_algorithms(self):
@@ -1433,3 +1438,39 @@ class MainWindow(QMainWindow):
 
         plots.update_plot_view(retain_zoom=True)
         self.update_statistics()
+
+
+class Spinner(QWidget):
+    def __init__(self):
+        super().__init__()
+        self.setWindowFlags(Qt.WindowStaysOnTopHint | Qt.FramelessWindowHint)
+        self.setAttribute(Qt.WA_TranslucentBackground)
+        self.move(QApplication.instance().desktop().screen().rect().center() - self.rect().center())
+        # self.setAlignment(Qt.AlignCenter)
+        self.pixmap = QPixmap("icons/icons8-loading-48.png")
+
+        self.setFixedSize(48, 48)
+        self._angle = 0
+
+        self.animation = QPropertyAnimation(self, b"angle", self)
+        self.animation.setStartValue(0)
+        self.animation.setEndValue(360)
+        self.animation.setLoopCount(-1)
+        self.animation.setDuration(2000)
+        self.animation.start()
+
+    @pyqtProperty(int)
+    def angle(self):
+        return self._angle
+
+    @angle.setter
+    def angle(self, value):
+        self._angle = value
+        self.update()
+
+    def paintEvent(self, ev=None):
+        painter = QPainter(self)
+        painter.translate(24, 24)
+        painter.rotate(self._angle)
+        painter.translate(-24, -24)
+        painter.drawPixmap(0, 0, self.pixmap)
