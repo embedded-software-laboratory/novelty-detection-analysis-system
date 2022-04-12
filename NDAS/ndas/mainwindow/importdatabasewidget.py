@@ -101,17 +101,23 @@ class DatabaseSettingsWidget(QWidget):
     def loadPatient(self, parent, patientid, tableName):
         filename = os.getcwd()+"\\ndas\\local_data\\imported_patients\\{}_patient_{}.csv".format(tableName, str(patientid))
         result = 0
+        parent.getParent().overlay.show()
         if not os.path.exists(filename):
             result = interface.loadPatientData(tableName, str(patientid))
         if result == -1:
+            parent.getParent().overlay.hide()
             QMessageBox.critical(self, "Error", "Patient not found.", QMessageBox.Ok)
         elif result == -3:
+            parent.getParent().overlay.hide()
             QMessageBox.critical(self, "Error", "Connection to the database failed, make sure that you are connected to the i11-VPN", QMessageBox.Ok)
         elif result == -4:
+            parent.getParent().overlay.hide()
             QMessageBox.critical(self, "Error", "Could not establish a connection to the database (connection timed out)", QMessageBox.Ok)
         elif result == -5:
+            parent.getParent().overlay.hide()
             QMessageBox.critical(self, "Error", "SSH authentication failed, please make sure that you entered correct authentication data", QMessageBox.Ok)
         elif result == -6:
+            parent.getParent().overlay.hide()
             QMessageBox.critical(self, "Error", "Database authentication failed, please make sure that you entered correct authentication data", QMessageBox.Ok)
         else:
             data.set_instance("CSVImporter", filename)
