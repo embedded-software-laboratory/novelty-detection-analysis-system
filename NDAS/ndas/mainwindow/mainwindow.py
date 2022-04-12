@@ -1,11 +1,12 @@
 import pandas as pd
-from PyQt5.QtCore import pyqtSlot, QTimer, Qt, pyqtProperty, QPropertyAnimation
-from PyQt5.QtGui import QDoubleValidator, QIntValidator, QIcon, QPixmap, QPainter
+from PyQt5.QtCore import *
+from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
 
 import logging
 import numpy as np
 import os
+import math
 
 from ndas.extensions import algorithms, annotations, data, plots, savestate
 from ndas.mainwindow import datamedicalimputationwidget, statgraphwidgets, datainspectionwidget, benchmarkwidget, masscorrectionwidget, datageneratorwidget
@@ -352,10 +353,6 @@ class MainWindow(QMainWindow):
         self.btn_layout_widget.setLayout(self.btn_layout)
         self.progress_bar_layout = QVBoxLayout()
 
-        """Loading Window"""
-        # self.Spinner_icon = Spinner()
-        # self.Spinner_icon.setGeometry(100,200,100,100)
-
         self._add_widgets()
         self._add_algorithms()
         self._add_labels()
@@ -365,8 +362,9 @@ class MainWindow(QMainWindow):
 
         self._connect_signals()
         self.setCentralWidget(self.main_widget)
-        # self.Spinner_icon.show()
-
+        self.overlay = Overlay(self.centralWidget())
+        # self.resizeEvent(QResizeEvent(self.size(), QSize()))
+        self.overlay.hide()
 
     def _add_algorithms(self):
         """
@@ -527,6 +525,7 @@ class MainWindow(QMainWindow):
         file_name, _ = QFileDialog.getOpenFileName(self, "Choose NDAS file", "",
                                                    "NDAS Files (*.ndas)", options=options)
         if file_name:
+            self.overlay.show()
             self.progress_bar_update_slot(15)
 
             if savestate.restore_state(file_name):
@@ -544,6 +543,7 @@ class MainWindow(QMainWindow):
 
             self.progress_bar_update_slot(100)
             self.tab_benchmark.update_dim()
+            self.overlay.hide()
 
     def _connect_signals(self):
         """
@@ -1036,6 +1036,7 @@ class MainWindow(QMainWindow):
         file_name, _ = QFileDialog.getOpenFileName(self, "Choose CSV File", "",
                                                    "csv Files (*.csv)", options=options)
         if file_name:
+            self.overlay.show()
             data.set_instance("CSVImporter", file_name)
             data.get_instance().signals.result_signal.connect(
                 lambda result_data, labels: self.data_import_result_slot(result_data, labels))
@@ -1088,6 +1089,7 @@ class MainWindow(QMainWindow):
         """
         datamedicalimputationwidget.DataMedicalImputationWidget.on_import_data(self.tab_datamedimputation)
         self.tab_benchmark.update_dim()
+        self.overlay.hide()
 
     @pyqtSlot()
     def update_annotation_options(self, string):
@@ -1219,6 +1221,7 @@ class MainWindow(QMainWindow):
         file_names, _ = QFileDialog.getOpenFileNames(self, "Choose Waveform Files", "",
                                                      "wfm files (*.hea)", options=options)
         if file_names:
+            self.overlay.show()
             data.set_instance("WFMImporter", file_names)
             data.get_instance().signals.result_signal.connect(
                 lambda result_data, labels: self.data_import_result_slot(result_data, labels))
@@ -1238,6 +1241,7 @@ class MainWindow(QMainWindow):
         file_names, _ = QFileDialog.getOpenFileNames(self, "Choose Waveform Files", "",
                                                      "wfm files (*.hea)", options=options)
         if file_names:
+            self.overlay.show()
             data.set_instance("WFMNumericImporter", file_names)
             data.get_instance().signals.result_signal.connect(
                 lambda result_data, labels: self.data_import_result_slot(result_data, labels))
@@ -1439,38 +1443,50 @@ class MainWindow(QMainWindow):
         plots.update_plot_view(retain_zoom=True)
         self.update_statistics()
 
+    def resizeEvent(self, event):
+        self.overlay.resize(self.size())
+        super().resizeEvent(event)
+        event.accept()
 
-class Spinner(QWidget):
-    def __init__(self):
-        super().__init__()
-        self.setWindowFlags(Qt.WindowStaysOnTopHint | Qt.FramelessWindowHint)
-        self.setAttribute(Qt.WA_TranslucentBackground)
-        self.move(QApplication.instance().desktop().screen().rect().center() - self.rect().center())
-        # self.setAlignment(Qt.AlignCenter)
-        self.pixmap = QPixmap("icons/icons8-loading-48.png")
 
-        self.setFixedSize(48, 48)
-        self._angle = 0
+class Overlay(QWidget):
+    def __init__(self, parent=None):
+        QWidget.__init__(self, parent)
+        palette = QPalette(self.palette())
+        palette.setColor(palette.Background, Qt.transparent)
+        self.setPalette(palette)
+        self.timer = None
+        self.counter = 0
+        self.started_showing = False
+        self.number_ellipses = 10
 
-        self.animation = QPropertyAnimation(self, b"angle", self)
-        self.animation.setStartValue(0)
-        self.animation.setEndValue(360)
-        self.animation.setLoopCount(-1)
-        self.animation.setDuration(2000)
-        self.animation.start()
+    def paintEvent(self, event):
+        painter = QPainter()
+        painter.begin(self)
+        painter.setRenderHint(QPainter.Antialiasing)
+        painter.fillRect(event.rect(), QBrush(QColor(255, 255, 255, 127)))
+        painter.setPen(QPen(Qt.NoPen))
+        for i in range(self.number_ellipses):
+            painter.setBrush(QBrush(QColor(127, 127, 127)))
+            painter .drawEllipse(self.width() / 2 + 22, self.height() / 2 - 4.5, 18, 9)
+            painter.translate(self.width()/2, self.height()/2)
+            painter.rotate(360.0 / self.number_ellipses)
+            painter.translate(-self.width()/2, -self.height()/2)
+        painter.end()
+        self.started_showing = True
 
-    @pyqtProperty(int)
-    def angle(self):
-        return self._angle
-
-    @angle.setter
-    def angle(self, value):
-        self._angle = value
+    def showEvent(self, event):
         self.update()
+        self.timer = self.startTimer(50)
+        self.counter = 0
 
-    def paintEvent(self, ev=None):
-        painter = QPainter(self)
-        painter.translate(24, 24)
-        painter.rotate(self._angle)
-        painter.translate(-24, -24)
-        painter.drawPixmap(0, 0, self.pixmap)
+    def hideEvent(self, event):
+        self.killTimer(self.timer)
+        self.started_showing = False
+
+    def timerEvent(self, event):
+        self.counter += 1
+        self.update()
+        if self.counter == 600:
+            self.killTimer(self.timer)
+            self.hide()
