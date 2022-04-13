@@ -363,7 +363,6 @@ class MainWindow(QMainWindow):
         self._connect_signals()
         self.setCentralWidget(self.main_widget)
         self.overlay = Overlay(self.centralWidget())
-        # self.resizeEvent(QResizeEvent(self.size(), QSize()))
         self.overlay.hide()
 
     def _add_algorithms(self):
@@ -1447,6 +1446,30 @@ class MainWindow(QMainWindow):
         self.overlay.resize(self.size())
         super().resizeEvent(event)
         event.accept()
+
+    def keyPressEvent(self, event):
+        modifiers = QApplication.keyboardModifiers()
+        key = event.key()
+        if modifiers == Qt.ControlModifier:
+            if key == Qt.Key_Z:
+                print("Historie Zurück")
+                event.accept()
+            elif key == Qt.Key_Y:
+                print("Historie Vor")
+                event.accept()
+            elif key == Qt.Key_A:
+                print("Links")
+                event.accept()
+            elif key == Qt.Key_D:
+                print("Rechts")
+                event.accept()
+            elif key == Qt.Key_W:
+                print("Hoch")
+                event.accept()
+            elif key == Qt.Key_S:
+                print("Runter")
+                event.accept()
+        super().keyPressEvent(event)
 
 
 class Overlay(QWidget):
