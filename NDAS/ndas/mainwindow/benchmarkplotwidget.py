@@ -1,7 +1,7 @@
 import pyqtgraph as pg
 from PyQt5.QtWidgets import *
 
-from ndas.misc.colors import Color
+from ndas.misc import colors
 
 
 class BenchmarkPlotWindow(QWidget):
@@ -36,8 +36,8 @@ class BenchmarkPlotWindow(QWidget):
             else:
                 novelty_data.append(0)
 
-        color_map = {-2: Color.GREY.value, -1: Color.GREEN.value, 0: Color.BLUE.value, 1: Color.RED.value,
-                     2: Color.YELLOW.value}
+        color_map = {-2: colors.IGNORED, -1: colors.TRAINING, 0: colors.REGULAR, 1: colors.TIER1NOV,
+                     2: colors.TIER2NOV}
         brush_map = [pg.mkBrush(color_map[novelty_point]) for novelty_point in novelty_data]
 
         self.graph = pg.PlotWidget()

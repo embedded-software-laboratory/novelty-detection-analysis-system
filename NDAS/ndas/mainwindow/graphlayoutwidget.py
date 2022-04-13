@@ -6,7 +6,7 @@ from pyqtgraph.Qt import QtCore
 from PyQt5.QtGui import *
 
 from ndas.extensions import algorithms, annotations
-from ndas.misc.colors import Color
+from ndas.misc import colors
 
 
 class GraphLayoutWidget(pg.GraphicsLayoutWidget):
@@ -231,7 +231,7 @@ class GraphLayoutWidget(pg.GraphicsLayoutWidget):
         self.main_plot.setLabel(axis='bottom', text=registered_plot_item.x_label)
 
         self.nav_plot.clear()
-        self.nav_plot.plot(y=self._y_data, x=self._x_data, pen=Color.BLUE.value)
+        self.nav_plot.plot(y=self._y_data, x=self._x_data, pen=colors.REGULAR)
 
         self.nav_plot.setLabel(axis='left', text=registered_plot_item.y_label)
         self.nav_plot.setLabel(axis='bottom', text=registered_plot_item.x_label)
@@ -350,7 +350,7 @@ class GraphLayoutWidget(pg.GraphicsLayoutWidget):
         val
         """
         bottom_left, top_right = val
-        if not self._x_data:
+        if not isinstance(self._x_data, list):
             return
         indexes = []
         for i in range(len(self._x_data)):
@@ -536,13 +536,13 @@ class GraphLayoutWidget(pg.GraphicsLayoutWidget):
             exporter.export(path)
 
         elif type == "mpl":
-            from ndas.misc.colors import Color
+            from ndas.misc import colors
             p_item = self.main_plot
 
             p_curve_list = []
             for i in p_item.curves:
-                i.opts['symbolPen'] = Color.BLUE.value
-                i.opts['symbolBrush'] = Color.BLUE.value
+                i.opts['symbolPen'] = colors.REGULAR
+                i.opts['symbolBrush'] = colors.REGULAR
                 i.opts['symbolSize'] = 1
                 i.opts['fillLevel'] = None
                 i.opts['fillBrush'] = None

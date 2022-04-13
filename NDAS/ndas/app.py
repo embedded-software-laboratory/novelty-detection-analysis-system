@@ -19,6 +19,7 @@ import yaml
 from ndas.mainwindow import mainwindow
 from ndas.extensions import data, algorithms, annotations, savestate, plots, physiologicallimits
 from ndas.utils import logger
+from ndas.misc import colors
 
 q_app = cast(QApplication, None)
 q_threadpool = QThreadPool()
@@ -146,6 +147,10 @@ def _init_modules(config):
     # Init plots
     logger.init.debug("Initializing plots...")
     plots.init_graphs(config["plots"])
+
+    # Init colors
+    logger.init.debug("Initializing colors...")
+    colors.init_colors(config["colors"])
 
 
 class Application(QApplication):

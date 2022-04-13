@@ -170,13 +170,13 @@ class MassCorrectionWidget(QWidget):
 
         self.DetAlgs_layout.addWidget(self.DetAlgs_settings)
 
-        self.ImpAlgs = QGroupBox("Imputation-Algorithms Settings")
+        self.ImpAlgs = QGroupBox("Imputation-/Transformation-Algorithms Settings")
         self.ImpAlgs_layout = QVBoxLayout()
         self.ImpAlgs.setLayout(self.ImpAlgs_layout)
 
         self.ImpAlgs_choice_layout = QHBoxLayout()
         self.ImpAlgs_layout.addLayout(self.ImpAlgs_choice_layout)
-        self.selectedIAlgString = QLabel("Select Imputation Algorithm:")
+        self.selectedIAlgString = QLabel("Select Imputation/Transformation Algorithm:")
         self.selectedIAlgString.setSizePolicy(self.sizepolicy)
         self.ImpAlgs_choice_layout.addWidget(self.selectedIAlgString)
         self.selectIAlgBox = QComboBox()
