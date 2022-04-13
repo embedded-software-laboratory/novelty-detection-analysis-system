@@ -1458,7 +1458,7 @@ class Overlay(QWidget):
         self.timer = None
         self.counter = 0
         self.started_showing = False
-        self.number_ellipses = 10
+        self.number_ellipses = 12
 
     def paintEvent(self, event):
         painter = QPainter()
@@ -1466,12 +1466,17 @@ class Overlay(QWidget):
         painter.setRenderHint(QPainter.Antialiasing)
         painter.fillRect(event.rect(), QBrush(QColor(255, 255, 255, 127)))
         painter.setPen(QPen(Qt.NoPen))
+        font = painter.font()
+        font.setPixelSize(22)
+        painter.setFont(font)
         for i in range(self.number_ellipses):
             painter.setBrush(QBrush(QColor(127, 127, 127)))
-            painter .drawEllipse(self.width() / 2 + 22, self.height() / 2 - 4.5, 18, 9)
+            painter.drawRect(self.width() / 2 + 22, self.height() / 2 - 2, 18, 4)
             painter.translate(self.width()/2, self.height()/2)
             painter.rotate(360.0 / self.number_ellipses)
             painter.translate(-self.width()/2, -self.height()/2)
+        painter.setPen(QPen(QColor(127, 127, 127)))
+        painter.drawText(self.width()/2 - 80, self.height()/2 + 40, 160, 50, Qt.AlignCenter, "   Loading...")
         painter.end()
         self.started_showing = True
 
