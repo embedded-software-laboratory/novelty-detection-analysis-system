@@ -137,7 +137,7 @@ class NeuralInterSamplingDetectorWithPhysicalLimitsWithApprox(BaseDetector):
             self.s_value += 0.05
             self.s_value = min(1, self.s_value)
             step_length = (100 - current_status) / 2
-            if step_length < 0.1:
+            if step_length < 1:
                 break
             for c in used_columns:
                 clipped_dataset[c][clipped_dataset[time_column].isin([k for k, v in result[c].items() if v == 1])] = np.nan
