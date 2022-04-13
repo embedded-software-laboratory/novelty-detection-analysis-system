@@ -151,4 +151,13 @@ plots:
   outlier_series_threshold: 5
   use_dark_mode: False
   exclusion_substrings: ["ID", "gender", "age", "ethnicity", "height", "weight", "ICD"]
+colors:
+  regular: '4e81bd'
+  training: '00afbb'
+  tier-2-novelty: 'e7b800'
+  tier-1-novelty: 'fc4e08'
+  line-color: 'fc4e08'
+  ignored: 'A9A9A9'
+  replaced: 'BD4EB8'
+  added: 'ebb4ff'
 

@@ -100,10 +100,13 @@ class NeuralInterSamplingDetectorWithPhysicalLimitsWithApprox(BaseDetector):
                 data_diff = (data - imputed_data).abs()
                 sorted_data_diff = np.sort(data_diff.values, axis=None)
                 sorted_data_diff = sorted_data_diff[~np.isnan(sorted_data_diff)]
-                knee_result = KneeLocator(range(len(sorted_data_diff)), sorted_data_diff, S=self.s_value, curve='convex', direction='increasing')
-                threshold_value = knee_result.knee_y
+                knee_result = None
+                if len(sorted_data_diff) > 2:
+                    knee_result = KneeLocator(range(len(sorted_data_diff)), sorted_data_diff, S=self.s_value, curve='convex', direction='increasing')
+                if knee_result:
+                    threshold_value = knee_result.knee_y
                 if not threshold_value:
-                    threshold_value = np.inf
+                    threshold_value = sorted_data_diff[-1]
                 if threshold_value > thresholds[c]:
                     logging.debug(c + " requires another iteration (%.2f > %.2f)" % (threshold_value, thresholds[c]))
                 current_diffs[c] = threshold_value
@@ -180,8 +183,13 @@ class NeuralInterSamplingDetectorWithPhysicalLimitsWithApprox(BaseDetector):
                     data_diff = (data - imputed_data).abs()
                     sorted_data_diff = np.sort(data_diff.values, axis=None)
                     sorted_data_diff = sorted_data_diff[~np.isnan(sorted_data_diff)]
-                    knee_result = KneeLocator(range(len(sorted_data_diff)), sorted_data_diff, S=self.s_value, curve='convex', direction='increasing')
-                    threshold_value = knee_result.knee_y
+                    knee_result = None
+                    if len(sorted_data_diff) > 2:
+                        knee_result = KneeLocator(range(len(sorted_data_diff)), sorted_data_diff, S=self.s_value, curve='convex', direction='increasing')
+                    if knee_result:
+                        threshold_value = knee_result.knee_y
+                    if not threshold_value:
+                        threshold_value = sorted_data_diff[-1]
                     if threshold_value > thresholds[c]:
                         logging.debug(c + " requires another iteration (%.2f > %.2f)" % (threshold_value, thresholds[c]))
                     current_diffs[c] = threshold_value

@@ -1,7 +1,7 @@
 import pyqtgraph as pg
 from PyQt5 import QtCore, QtGui
 
-from ndas.misc.colors import Color
+from ndas.misc import colors
 
 
 class GraphBoxItem(pg.GraphicsObject):
@@ -9,7 +9,7 @@ class GraphBoxItem(pg.GraphicsObject):
      Item to highlight multiple novelties
     """
 
-    def __init__(self, x1, y1, x2, y2, color=Color.RED.value, fill=None, parent=None):
+    def __init__(self, x1, y1, x2, y2, color=colors.TIER1NOV, fill=None, parent=None):
         """
         Creates the box at the specified coordinates
 
