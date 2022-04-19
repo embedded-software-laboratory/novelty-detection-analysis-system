@@ -426,6 +426,20 @@ class GraphLayoutWidget(pg.GraphicsLayoutWidget):
         annotations.delabel_selected(self.main_plot_name)
         self.update_labels()
 
+    def label_history_backwards(self):
+        """
+        Goes step back in label history
+        """
+        annotations.history_go_step_back()
+        self.update_labels()
+
+    def label_history_forwards(self):
+        """
+        Goes step forward in label history
+        """
+        annotations.history_go_step_forward()
+        self.update_labels()
+
     def _clicked_point_slot(self, plot: pg.PlotItem, points: list):
         """
         Slots that registers clicked plot points
