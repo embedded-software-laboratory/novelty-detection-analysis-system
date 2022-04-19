@@ -1450,7 +1450,8 @@ class MainWindow(QMainWindow):
     def keyPressEvent(self, event):
         modifiers = QApplication.keyboardModifiers()
         key = event.key()
-        if modifiers == Qt.ControlModifier:
+        if modifiers == Qt.ControlModifier and self.main_widget.currentIndex() == 0:
+            vb_range = self.plot_widget.vb.getState()["viewRange"]
             if key == Qt.Key_Z:
                 print("Historie Zurück")
                 event.accept()
@@ -1458,15 +1459,19 @@ class MainWindow(QMainWindow):
                 print("Historie Vor")
                 event.accept()
             elif key == Qt.Key_A:
+                self.plot_widget.vb.setXRange(*[x + 0.2*(vb_range[0][1]-vb_range[0][0]) for x in vb_range[0]], padding=0)
                 print("Links")
                 event.accept()
             elif key == Qt.Key_D:
+                self.plot_widget.vb.setXRange(*[x - 0.2*(vb_range[0][1]-vb_range[0][0]) for x in vb_range[0]], padding=0)
                 print("Rechts")
                 event.accept()
             elif key == Qt.Key_W:
+                self.plot_widget.vb.setYRange(*[x - 0.2*(vb_range[1][1]-vb_range[1][0]) for x in vb_range[1]], padding=0)
                 print("Hoch")
                 event.accept()
             elif key == Qt.Key_S:
+                self.plot_widget.vb.setYRange(*[x + 0.2*(vb_range[1][1]-vb_range[1][0]) for x in vb_range[1]], padding=0)
                 print("Runter")
                 event.accept()
         super().keyPressEvent(event)
