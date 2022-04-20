@@ -350,7 +350,8 @@ class GraphLayoutWidget(pg.GraphicsLayoutWidget):
         val
         """
         bottom_left, top_right = val
-        if not isinstance(self._x_data, list):
+        print(bottom_left, top_right)
+        if not isinstance(self._x_data, (list, np.ndarray)):
             return
         indexes = []
         for i in range(len(self._x_data)):
