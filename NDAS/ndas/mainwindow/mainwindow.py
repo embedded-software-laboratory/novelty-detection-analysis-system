@@ -59,6 +59,9 @@ class MainWindow(QMainWindow):
         self.tab_masscorrection.setAutoFillBackground(True)
         self.tab_datainspector = datainspectionwidget.DataInspectionWidget()
         self.tab_datainspector.setAutoFillBackground(True)
+
+        self.tab_datainspector.data_edit_signal.connect(lambda df: self.update_values_in_current_dataset(df))
+
         self.tab_datagenerator = datageneratorwidget.DataGeneratorWidget()
 
         self.tab_datagenerator.generated_data_signal.connect( lambda df, labels: self.data_import_result_slot(df, labels))
