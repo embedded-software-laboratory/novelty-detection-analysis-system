@@ -1,6 +1,6 @@
 from ndas.extensions import data, savestate
 from ndas.utils import logger
-import copy
+from copy import deepcopy
 
 _current_point_selection = []
 _current_point_labels = {}
@@ -324,7 +324,8 @@ def update_history():
     """
     global _current_point_labels, _current_point_labels_history, _current_point_history_index
     del _current_point_labels_history[_current_point_history_index+1:]
-    _current_point_labels_history.append(copy.deepcopy(_current_point_labels))
+    copied_dict = {k: list(v) for k, v in _current_point_labels.items()}
+    _current_point_labels_history.append(copied_dict)
     _current_point_history_index += 1
     logger.annotations.debug("Updated History, now length "+str(len(_current_point_labels_history)))
 
@@ -334,7 +335,8 @@ def apply_selected_history():
     Sets Annotation_State to State stored at selected index
     """
     global _current_point_labels, _current_point_labels_history, _current_point_history_index
-    _current_point_labels = _current_point_labels_history[_current_point_history_index]
+    copied_history_at_point = {k: list(v) for k, v in _current_point_labels_history[_current_point_history_index].items()}
+    _current_point_labels = copied_history_at_point
     format_for_save()
     logger.annotations.debug("Changed History index to "+str(_current_point_history_index))
 
