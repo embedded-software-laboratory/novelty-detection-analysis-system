@@ -1,11 +1,17 @@
-from PyQt5.QtCore import QAbstractTableModel, Qt, QSortFilterProxyModel
+from PyQt5.QtCore import QAbstractTableModel, Qt, QSortFilterProxyModel, pyqtSignal
+from PyQt5.QtGui import QColor
 from PyQt5.QtWidgets import *
+import pandas as pd
+import numpy as np
+from ndas.extensions import physiologicallimits
 
 
 class DataInspectionWidget(QWidget):
     """
     Widget to visualize the imported or generated data in table view
     """
+
+    data_edit_signal = pyqtSignal(pd.DataFrame)
 
     def __init__(self):
         """
@@ -17,7 +23,10 @@ class DataInspectionWidget(QWidget):
         self.tableView = QTableView(self)
         self.tableView.setSortingEnabled(True)
         self.tableView.horizontalHeader().setSectionResizeMode(QHeaderView.Interactive)
-        self.layout.addWidget(self.tableView, 0, 0)
+        self.apply_edits_button = QPushButton("Apply Changes (may take a few seconds)")
+        self.apply_edits_button.clicked.connect(lambda: self.apply_edits())
+        self.layout.addWidget(self.apply_edits_button, 0, 0)
+        self.layout.addWidget(self.tableView, 1, 0)
 
         self.model = None
         self.proxy_model = None
@@ -38,6 +47,10 @@ class DataInspectionWidget(QWidget):
 
         self.tableView.setModel(self.proxy_model)
 
+    def apply_edits(self):
+        if self.model:
+            self.data_edit_signal.emit(self.model.get_internal_data())
+
 
 class DataframeModel(QAbstractTableModel):
     """
@@ -53,7 +66,39 @@ class DataframeModel(QAbstractTableModel):
         data
         """
         QAbstractTableModel.__init__(self)
-        self._data = data
+        self._data = data.copy(deep=True)
+        self._ref_data = data
+        self._changes = pd.DataFrame(0, index=data.index, columns=data.columns)
+
+    def flags(self, index):
+        return Qt.ItemIsSelectable | Qt.ItemIsEnabled | Qt.ItemIsEditable
+
+    def setData(self, index, value, role):
+        """
+        Sets data-point at index to value.
+        Column ID uses int values
+        All other values use float
+        Nan can be set by putting a number above 2^32 (~4.3e9)
+
+        Parameters
+        ----------
+        index, value, role
+        """
+        if role == Qt.EditRole:
+            if value >= 4294967296:
+                value = np.nan
+            if "ID" in self._data.columns[index.column()]:
+                self._data.iloc[index.row(), index.column()] = int(value)
+            else:
+                self._data.iloc[index.row(), index.column()] = float(value)
+            if self._ref_data.iloc[index.row(), index.column()] == self._data.iloc[index.row(), index.column()] or (np.isnan(self._ref_data.iloc[index.row(), index.column()]) and np.isnan(self._data.iloc[index.row(), index.column()])):
+                self._changes.iloc[index.row(), index.column()] = 0
+            else:
+                self._changes.iloc[index.row(), index.column()] = 1
+            return True
+
+    def get_internal_data(self):
+        return self._data
 
     def rowCount(self, parent=None):
         """
@@ -84,17 +129,30 @@ class DataframeModel(QAbstractTableModel):
 
         Use int for ID to avoid scientific notation
 
+        Edited values are shown in light yellow
+        Values outside the physiological limits are shown in light red
+        NAN are shown with light grey text
+
         Parameters
         ----------
         index
         role
         """
         if index.isValid():
-            if role == Qt.DisplayRole:
+            if role == Qt.DisplayRole or role == Qt.EditRole:
                 if "ID" in self._data.columns[index.column()]:
                     return int(self._data.iloc[index.row(), index.column()])
                 else:
                     return float(self._data.iloc[index.row(), index.column()])
+            if role == Qt.BackgroundRole:
+                phys_limits = physiologicallimits.get_physical_dt(self._data.columns[index.column()])
+                if phys_limits and not np.isnan(self._data.iloc[index.row(), index.column()]) and not phys_limits.low <= self._data.iloc[index.row(), index.column()] <= phys_limits.high:
+                    return QColor(255, 204, 204)
+                if self._changes.iloc[index.row(), index.column()]:
+                    return QColor(255, 255, 204)
+            if role == Qt.ForegroundRole:
+                if np.isnan(self._data.iloc[index.row(), index.column()]):
+                    return QColor(192, 192, 192)
         return None
 
     def headerData(self, section, orientation, role):

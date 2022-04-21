@@ -201,7 +201,7 @@ def get_physical_dt(name: str):
             if name in v.aliases:
                 return physiological_data_types[k]
 
-        logger.physicalinfo.error("Physiological data type not found: %s" % name)
+        # logger.physicalinfo.error("Physiological data type not found: %s" % name)
         return False
     else:
         return physiological_data_types[name]

@@ -4,8 +4,7 @@ import pyqtgraph as pg
 
 from ndas.extensions import data, algorithms
 from ndas.mainwindow import graphlayoutwidget
-from ndas.misc import graphbox
-from ndas.misc.colors import Color
+from ndas.misc import graphbox, colors
 from ndas.utils import logger, regression_analysis
 
 registered_plots = {}
@@ -76,10 +75,10 @@ def register_plot(name: str, x_data: any, y_data: any, x_label: str, y_label: st
         logger.plots.error("Unsupported data format (%s). Failed to add plot %s" % (str(type(x_data)), name))
         return False
 
-    plot_scatter = pg.ScatterPlotItem(x=x_data_numpy, y=y_data_numpy, brush=pg.mkBrush(Color.BLUE.value),
+    plot_scatter = pg.ScatterPlotItem(x=x_data_numpy, y=y_data_numpy, brush=pg.mkBrush(colors.REGULAR),
                                       pen=pg.mkPen(color='w', width=0.4),
                                       size=10, tip=None)
-    plot_line = pg.PlotDataItem(x=x_data_numpy, y=y_data_numpy, pen=Color.BLUE.value)
+    plot_line = pg.PlotDataItem(x=x_data_numpy, y=y_data_numpy, pen=colors.REGULAR)
 
     main_dot_plot_item = SinglePointPlotItem(plot_item_name=name, x_data=x_data, y_data=y_data,
                                              plot_item=plot_scatter)
@@ -153,10 +152,10 @@ def add_line(plot_name, line_name, x_data, y_data, color=None, p_width=3):
     if registered_plots[plot_name]:
 
         if color is None:
-            color = Color.RED
+            color = colors.LINECOLOR
 
         plot_line = pg.PlotCurveItem(x=x_data.to_numpy(), y=y_data.to_numpy(),
-                                     pen=pg.mkPen(color=color.value, width=p_width))
+                                     pen=pg.mkPen(color=color, width=p_width))
         plot_item = SingleLinePlotItem(plot_item_name=line_name, x_data=x_data, y_data=y_data, plot_item=plot_line)
         registered_plots[plot_name].supplementary_plots.append(plot_item)
         logger.plots.debug("Added line %s to plot %s" % (line_name, plot_name))
@@ -181,10 +180,10 @@ def add_infinite_line(plot_name, line_name, y, color=None, alpha=0.5):
     if plot_name in registered_plots:
 
         if color is None:
-            color = Color.RED
+            color = colors.LINECOLOR
 
         inf_line = pg.InfiniteLine(angle=0, movable=False, name=line_name, label=line_name,
-                                   pen={'color': color.value, 'alpha': alpha}, pos=y)
+                                   pen={'color': color, 'alpha': alpha}, pos=y)
         plot_item = SingleLinePlotItem(plot_item_name=line_name, y_data=y, plot_item=inf_line)
 
         registered_plots[plot_name].supplementary_plots.append(plot_item)
@@ -380,8 +379,8 @@ def _get_brush_map(novelty_data: list):
     ----------
     novelty_data
     """
-    color_map = {-9: Color.PURPLE.value, -8: Color.PINK.value, -2: Color.GREY.value, -1: Color.GREEN.value, 0: Color.BLUE.value, 1: Color.RED.value,
-                 2: Color.YELLOW.value}
+    color_map = {-9: colors.REPLACED, -8: colors.ADDED, -2: colors.IGNORED, -1: colors.TRAINING, 0: colors.REGULAR, 1: colors.TIER1NOV,
+                 2: colors.TIER2NOV}
     return [pg.mkBrush(color_map[novelty_point]) for novelty_point in novelty_data]
 
 
@@ -506,7 +505,7 @@ def add_plot_novelties(plot_name: str, novelties: dict):
     plot_scatter = pg.ScatterPlotItem(x=x_data_numpy, y=y_data_numpy, brush=_get_brush_map(novelty_data),
                                       pen=_get_pen_map(novelty_data),
                                       size=10, hoverable=True)
-    plot_line = pg.PlotDataItem(x=x_data_numpy, y=y_data_numpy, pen=Color.BLUE.value)
+    plot_line = pg.PlotDataItem(x=x_data_numpy, y=y_data_numpy, pen=colors.REGULAR)
 
     primary_point_plot_item = SinglePointPlotItem(plot_item_name=reg_plot.main_dot_plot.plot_item_name, x_data=x_data,
                                                   y_data=y_data, plot_item=plot_scatter, novelties=novelty_data)
@@ -569,7 +568,7 @@ class SinglePlotItem:
                  y_data: any = None,
                  plot_item: any = None,
                  novelties: list = None,
-                 color: 'Color' = None):
+                 color: any = None):
         super(SinglePlotItem).__init__()
         self.plot_item_name = plot_item_name
         self.x_data = x_data

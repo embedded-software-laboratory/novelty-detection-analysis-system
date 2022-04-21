@@ -1,11 +1,12 @@
 import pandas as pd
-from PyQt5.QtCore import (pyqtSlot, QTimer)
-from PyQt5.QtGui import QDoubleValidator, QIntValidator, QIcon
+from PyQt5.QtCore import *
+from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
 
 import logging
 import numpy as np
 import os
+import math
 
 from ndas.extensions import algorithms, annotations, data, plots, savestate
 from ndas.mainwindow import datamedicalimputationwidget, statgraphwidgets, datainspectionwidget, benchmarkwidget, masscorrectionwidget, datageneratorwidget
@@ -58,6 +59,9 @@ class MainWindow(QMainWindow):
         self.tab_masscorrection.setAutoFillBackground(True)
         self.tab_datainspector = datainspectionwidget.DataInspectionWidget()
         self.tab_datainspector.setAutoFillBackground(True)
+
+        self.tab_datainspector.data_edit_signal.connect(lambda df: self.update_values_in_current_dataset(df))
+
         self.tab_datagenerator = datageneratorwidget.DataGeneratorWidget()
 
         self.tab_datagenerator.generated_data_signal.connect( lambda df, labels: self.data_import_result_slot(df, labels))
@@ -213,13 +217,17 @@ class MainWindow(QMainWindow):
         self.data_selection_btn = QPushButton("Slice")
         self.data_selection_reset_btn = QPushButton("Reset")
         self.data_selection_start_label = QLabel("X-Range:")
+        self.data_selection_start_value = QLabel("(Value: -)")
+        self.data_selection_end_value = QLabel("(Value: -)")
         self.data_selection_separation_label = QLabel("  -")
 
         self.data_selection_range_layout = QHBoxLayout()
         self.data_selection_range_layout.addWidget(self.data_selection_start_label)
         self.data_selection_range_layout.addWidget(self.data_selection_start)
+        self.data_selection_range_layout.addWidget(self.data_selection_start_value)
         self.data_selection_range_layout.addWidget(self.data_selection_separation_label)
         self.data_selection_range_layout.addWidget(self.data_selection_end)
+        self.data_selection_range_layout.addWidget(self.data_selection_end_value)
 
         self.data_selection_slider = rangeslider.RangeSlider()
         self.data_selection_slider.setDisabled(True)
@@ -357,7 +365,8 @@ class MainWindow(QMainWindow):
 
         self._connect_signals()
         self.setCentralWidget(self.main_widget)
-
+        self.overlay = Overlay(self.centralWidget())
+        self.overlay.hide()
 
     def _add_algorithms(self):
         """
@@ -518,6 +527,7 @@ class MainWindow(QMainWindow):
         file_name, _ = QFileDialog.getOpenFileName(self, "Choose NDAS file", "",
                                                    "NDAS Files (*.ndas)", options=options)
         if file_name:
+            self.overlay.show()
             self.progress_bar_update_slot(15)
 
             if savestate.restore_state(file_name):
@@ -531,8 +541,11 @@ class MainWindow(QMainWindow):
                 self.update_plot_selector()
                 self.update_data_selection_slider()
                 datamedicalimputationwidget.DataMedicalImputationWidget.on_import_data(self.tab_datamedimputation)
+                self.tab_datainspector.set_data(data.get_dataframe())
 
             self.progress_bar_update_slot(100)
+            self.tab_benchmark.update_dim()
+            self.overlay.hide()
 
     def _connect_signals(self):
         """
@@ -1025,6 +1038,7 @@ class MainWindow(QMainWindow):
         file_name, _ = QFileDialog.getOpenFileName(self, "Choose CSV File", "",
                                                    "csv Files (*.csv)", options=options)
         if file_name:
+            self.overlay.show()
             data.set_instance("CSVImporter", file_name)
             data.get_instance().signals.result_signal.connect(
                 lambda result_data, labels: self.data_import_result_slot(result_data, labels))
@@ -1077,6 +1091,7 @@ class MainWindow(QMainWindow):
         """
         datamedicalimputationwidget.DataMedicalImputationWidget.on_import_data(self.tab_datamedimputation)
         self.tab_benchmark.update_dim()
+        self.overlay.hide()
 
     @pyqtSlot()
     def update_annotation_options(self, string):
@@ -1115,6 +1130,8 @@ class MainWindow(QMainWindow):
         """
         self.data_selection_start.setText(str(start_value))
         self.data_selection_end.setText(str(end_value))
+        self.data_selection_start_value.setText("(Value: "+str(data.get_index_value_at_row_number(start_value))+")")
+        self.data_selection_end_value.setText("(Value: "+str(data.get_index_value_at_row_number(end_value-1))+")")
 
     @pyqtSlot()
     def update_data_selection_slider(self):
@@ -1133,7 +1150,7 @@ class MainWindow(QMainWindow):
         input_start = int(input_start)
         input_end = int(input_end)
 
-        if input_start > input_end:
+        if input_start >= input_end:
             return False
 
         if input_start < 0:
@@ -1143,6 +1160,8 @@ class MainWindow(QMainWindow):
             return False
 
         self.data_selection_slider.setRange(input_start, input_end)
+        self.data_selection_start_value.setText("(Value: "+str(data.get_index_value_at_row_number(input_start))+")")
+        self.data_selection_end_value.setText("(Value: "+str(data.get_index_value_at_row_number(input_end-1))+")")
 
     def set_data_selection(self, start, end):
         """
@@ -1175,6 +1194,7 @@ class MainWindow(QMainWindow):
 
         data.set_slice(start, end)
         # plots.register_available_plots()
+        plots.update_available_plots()
         plots.update_plot_view()
         self.tab_datainspector.set_data(data.get_dataframe())
 
@@ -1189,7 +1209,7 @@ class MainWindow(QMainWindow):
         self.data_selection_start.setText(str(start))
         self.data_selection_end.setText(str(end))
         self.data_selection_slider.setRange(start, end)
-
+        plots.update_available_plots()
         # plots.register_available_plots()
         plots.update_plot_view()
 
@@ -1203,6 +1223,7 @@ class MainWindow(QMainWindow):
         file_names, _ = QFileDialog.getOpenFileNames(self, "Choose Waveform Files", "",
                                                      "wfm files (*.hea)", options=options)
         if file_names:
+            self.overlay.show()
             data.set_instance("WFMImporter", file_names)
             data.get_instance().signals.result_signal.connect(
                 lambda result_data, labels: self.data_import_result_slot(result_data, labels))
@@ -1222,6 +1243,7 @@ class MainWindow(QMainWindow):
         file_names, _ = QFileDialog.getOpenFileNames(self, "Choose Waveform Files", "",
                                                      "wfm files (*.hea)", options=options)
         if file_names:
+            self.overlay.show()
             data.set_instance("WFMNumericImporter", file_names)
             data.get_instance().signals.result_signal.connect(
                 lambda result_data, labels: self.data_import_result_slot(result_data, labels))
@@ -1422,3 +1444,81 @@ class MainWindow(QMainWindow):
 
         plots.update_plot_view(retain_zoom=True)
         self.update_statistics()
+
+    def resizeEvent(self, event):
+        self.overlay.resize(self.size())
+        super().resizeEvent(event)
+        event.accept()
+
+    def keyPressEvent(self, event):
+        modifiers = QApplication.keyboardModifiers()
+        key = event.key()
+        if modifiers == Qt.ControlModifier and self.main_widget.currentIndex() == 0:
+            vb_range = self.plot_widget.vb.getState()["viewRange"]
+            if key == Qt.Key_Z:
+                self.plot_layout_widget.label_history_backwards()
+                event.accept()
+            elif key == Qt.Key_Y:
+                self.plot_layout_widget.label_history_forwards()
+                event.accept()
+            elif key == Qt.Key_A:
+                self.plot_widget.vb.setXRange(*[x + 0.2*(vb_range[0][1]-vb_range[0][0]) for x in vb_range[0]], padding=0)
+                event.accept()
+            elif key == Qt.Key_D:
+                self.plot_widget.vb.setXRange(*[x - 0.2*(vb_range[0][1]-vb_range[0][0]) for x in vb_range[0]], padding=0)
+                event.accept()
+            elif key == Qt.Key_W:
+                self.plot_widget.vb.setYRange(*[x - 0.2*(vb_range[1][1]-vb_range[1][0]) for x in vb_range[1]], padding=0)
+                event.accept()
+            elif key == Qt.Key_S:
+                self.plot_widget.vb.setYRange(*[x + 0.2*(vb_range[1][1]-vb_range[1][0]) for x in vb_range[1]], padding=0)
+                event.accept()
+        super().keyPressEvent(event)
+
+
+class Overlay(QWidget):
+    def __init__(self, parent=None):
+        QWidget.__init__(self, parent)
+        palette = QPalette(self.palette())
+        palette.setColor(palette.Background, Qt.transparent)
+        self.setPalette(palette)
+        self.timer = None
+        self.counter = 0
+        self.started_showing = False
+        self.number_ellipses = 12
+
+    def paintEvent(self, event):
+        painter = QPainter()
+        painter.begin(self)
+        painter.setRenderHint(QPainter.Antialiasing)
+        painter.fillRect(event.rect(), QBrush(QColor(255, 255, 255, 127)))
+        painter.setPen(QPen(Qt.NoPen))
+        font = painter.font()
+        font.setPixelSize(22)
+        painter.setFont(font)
+        for i in range(self.number_ellipses):
+            painter.setBrush(QBrush(QColor(127, 127, 127)))
+            painter.drawRect(self.width() / 2 + 22, self.height() / 2 - 2, 18, 4)
+            painter.translate(self.width()/2, self.height()/2)
+            painter.rotate(360.0 / self.number_ellipses)
+            painter.translate(-self.width()/2, -self.height()/2)
+        painter.setPen(QPen(QColor(127, 127, 127)))
+        painter.drawText(self.width()/2 - 80, self.height()/2 + 40, 160, 50, Qt.AlignCenter, "   Loading...")
+        painter.end()
+        self.started_showing = True
+
+    def showEvent(self, event):
+        self.update()
+        self.timer = self.startTimer(50)
+        self.counter = 0
+
+    def hideEvent(self, event):
+        self.killTimer(self.timer)
+        self.started_showing = False
+
+    def timerEvent(self, event):
+        self.counter += 1
+        self.update()
+        if self.counter == 600:
+            self.killTimer(self.timer)
+            self.hide()

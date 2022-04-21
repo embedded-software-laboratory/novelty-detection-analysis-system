@@ -25,7 +25,7 @@ class SW_ABSAD_MOD(BaseDetector):
         self.register_parameter("replaceZeroes", ArgumentType.BOOL, False)
         self.register_parameter("replacePhysOutlier", ArgumentType.BOOL, True)
         self.register_parameter("useCLmod", ArgumentType.BOOL, False)
-        self.register_parameter("retrainAfterGap", ArgumentType.BOOL, False)
+        self.register_parameter("retrainAfterGap", ArgumentType.BOOL, True)
         self.register_parameter("varianceCheck", ArgumentType.BOOL, True)
         self.register_parameter("cleanTrainingWindow", ArgumentType.BOOL, True)
         self.register_parameter("windowLength", ArgumentType.INTEGER, 400, 1)
@@ -258,6 +258,12 @@ class SW_ABSAD_MOD(BaseDetector):
         sorted_interval = sorted(((interval.count(e), e) for e in set(interval)), reverse=True)
         count, default_time_interval = sorted_interval[0]
         self.log("Setting default interval to %s (Count: %s)" % (str(default_time_interval), str(count)))
+
+        if 2*self.windowlength >= len(df_without_offset):
+            self.windowlength = int(len(df_without_offset)*0.5)
+            self.k = int(self.windowlength/4)
+            self.s = int(self.windowlength/4)
+            self.variance_windowlength = min(50, len(df_without_offset))
 
         # Check window length
         if self.windowlength >= len(df):
