@@ -65,17 +65,32 @@ class NeuralInterSamplingDetectorWithPhysicalLimitsWithApprox(BaseDetector):
         self.signal_percentage(int(current_status) % 100)
         for i in range(50):
             temp_imputation = pd.DataFrame(np.nan, columns=datasets.columns, index=datasets.index)
-            mask = np.random.random(datasets.values.shape)
-            temp_imputation = temp_imputation.where(mask>=(1/3), other= BaseImputation().base_imputation(dataframe=clipped_dataset.where(mask>=(1/3), other=np.nan), method_string='neural inter mask'))
-            temp_imputation = temp_imputation.where((mask<(1/3)) | (mask>=(2/3)), other= BaseImputation().base_imputation(dataframe=clipped_dataset.where((mask<(1/3)) | (mask>=(2/3)), other=np.nan), method_string='neural inter mask'))
-            temp_imputation = temp_imputation.where(mask<(2/3), other= BaseImputation().base_imputation(dataframe=clipped_dataset.where(mask<(2/3), other=np.nan), method_string='neural inter mask'))
+            mask = np.random.random((datasets.values.shape[0], datasets.values.shape[1]-1))
+
+            imputation_res = BaseImputation().base_imputation(dataframe=clipped_dataset.where(np.concatenate((np.full((datasets.values.shape[0], 1),True), mask>=(1/3)), axis=1), other=np.nan), method_string='neural inter mask')
+            loc_mask=np.concatenate((np.full((datasets.values.shape[0], 1),False), mask>=(1/3)), axis=1)
+            loc_other = imputation_res[imputation_res[time_column].isin(datasets[time_column].values)]
+            loc_other.reset_index(drop=True, inplace=True)
+            temp_imputation = temp_imputation.where(loc_mask, other=loc_other)
+
+            loc_mask = np.concatenate((np.full((datasets.values.shape[0], 1),True), ((mask<(1/3)) | (mask>=(2/3)))), axis=1)
+            imputation_res = BaseImputation().base_imputation(dataframe=clipped_dataset.where(loc_mask, other=np.nan), method_string='neural inter mask')
+            loc_other = imputation_res[imputation_res[time_column].isin(datasets[time_column].values)]
+            loc_other.reset_index(drop=True, inplace=True)
+            temp_imputation = temp_imputation.where(loc_mask, other=loc_other)
+
+            loc_mask = np.concatenate((np.full((datasets.values.shape[0], 1),True), mask<(2/3)), axis=1)
+            imputation_res = BaseImputation().base_imputation(dataframe=clipped_dataset.where(loc_mask, other=np.nan), method_string='neural inter mask')
+            loc_other = imputation_res[imputation_res[time_column].isin(datasets[time_column].values)]
+            loc_other.reset_index(drop=True, inplace=True)
+            temp_imputation = temp_imputation.where(loc_mask, other=loc_other)
+
             imputation_accumulated = imputation_accumulated + temp_imputation
             current_status += 0.5
             self.signal_percentage(int(current_status) % 100)
 
         # Calculate the Neural Inter Imputation
         imputed_dataset = imputation_accumulated / 50
-
         result = {}
         for c in used_columns:
             novelty_data = {}
@@ -85,8 +100,13 @@ class NeuralInterSamplingDetectorWithPhysicalLimitsWithApprox(BaseDetector):
                 data_diff = (data - imputed_data).abs()
                 sorted_data_diff = np.sort(data_diff.values, axis=None)
                 sorted_data_diff = sorted_data_diff[~np.isnan(sorted_data_diff)]
-                knee_result = KneeLocator(range(len(sorted_data_diff)), sorted_data_diff, S=self.s_value, curve='convex', direction='increasing')
-                threshold_value = knee_result.knee_y
+                knee_result = None
+                if len(sorted_data_diff) > 2:
+                    knee_result = KneeLocator(range(len(sorted_data_diff)), sorted_data_diff, S=self.s_value, curve='convex', direction='increasing')
+                if knee_result:
+                    threshold_value = knee_result.knee_y
+                if not threshold_value:
+                    threshold_value = sorted_data_diff[-1]
                 if threshold_value > thresholds[c]:
                     logging.debug(c + " requires another iteration (%.2f > %.2f)" % (threshold_value, thresholds[c]))
                 current_diffs[c] = threshold_value
@@ -117,7 +137,7 @@ class NeuralInterSamplingDetectorWithPhysicalLimitsWithApprox(BaseDetector):
             self.s_value += 0.05
             self.s_value = min(1, self.s_value)
             step_length = (100 - current_status) / 2
-            if step_length < 0.1:
+            if step_length < 1:
                 break
             for c in used_columns:
                 clipped_dataset[c][clipped_dataset[time_column].isin([k for k, v in result[c].items() if v == 1])] = np.nan
@@ -125,10 +145,31 @@ class NeuralInterSamplingDetectorWithPhysicalLimitsWithApprox(BaseDetector):
             imputation_accumulated = pd.DataFrame(0, columns=datasets.columns, index=datasets.index)
             for i in range(50):
                 temp_imputation = pd.DataFrame(np.nan, columns=datasets.columns, index=datasets.index)
-                mask = np.random.random(datasets.values.shape)
-                temp_imputation = temp_imputation.where(mask >= (1 / 3), other=BaseImputation().base_imputation(dataframe=clipped_dataset.where(mask >= (1 / 3), other=np.nan), method_string='neural inter mask'))
-                temp_imputation = temp_imputation.where((mask < (1 / 3)) | (mask >= (2 / 3)), other=BaseImputation().base_imputation(dataframe=clipped_dataset.where((mask < (1 / 3)) | (mask >= (2 / 3)), other=np.nan), method_string='neural inter mask'))
-                temp_imputation = temp_imputation.where(mask < (2 / 3), other=BaseImputation().base_imputation(dataframe=clipped_dataset.where(mask < (2 / 3), other=np.nan), method_string='neural inter mask'))
+                mask = np.random.random((datasets.values.shape[0], datasets.values.shape[1] - 1))
+
+                imputation_res = BaseImputation().base_imputation(dataframe=clipped_dataset.where(
+                    np.concatenate((np.full((datasets.values.shape[0], 1), True), mask >= (1 / 3)), axis=1),
+                    other=np.nan), method_string='neural inter mask')
+                loc_mask = np.concatenate((np.full((datasets.values.shape[0], 1), False), mask >= (1 / 3)), axis=1)
+                loc_other = imputation_res[imputation_res[time_column].isin(datasets[time_column].values)]
+                loc_other.reset_index(drop=True, inplace=True)
+                temp_imputation = temp_imputation.where(loc_mask, other=loc_other)
+
+                loc_mask = np.concatenate(
+                    (np.full((datasets.values.shape[0], 1), True), ((mask < (1 / 3)) | (mask >= (2 / 3)))), axis=1)
+                imputation_res = BaseImputation().base_imputation(
+                    dataframe=clipped_dataset.where(loc_mask, other=np.nan), method_string='neural inter mask')
+                loc_other = imputation_res[imputation_res[time_column].isin(datasets[time_column].values)]
+                loc_other.reset_index(drop=True, inplace=True)
+                temp_imputation = temp_imputation.where(loc_mask, other=loc_other)
+
+                loc_mask = np.concatenate((np.full((datasets.values.shape[0], 1), True), mask < (2 / 3)), axis=1)
+                imputation_res = BaseImputation().base_imputation(
+                    dataframe=clipped_dataset.where(loc_mask, other=np.nan), method_string='neural inter mask')
+                loc_other = imputation_res[imputation_res[time_column].isin(datasets[time_column].values)]
+                loc_other.reset_index(drop=True, inplace=True)
+                temp_imputation = temp_imputation.where(loc_mask, other=loc_other)
+
                 imputation_accumulated = imputation_accumulated + temp_imputation
                 current_status += step_length/60
                 self.signal_percentage(int(current_status) % 100)
@@ -142,8 +183,13 @@ class NeuralInterSamplingDetectorWithPhysicalLimitsWithApprox(BaseDetector):
                     data_diff = (data - imputed_data).abs()
                     sorted_data_diff = np.sort(data_diff.values, axis=None)
                     sorted_data_diff = sorted_data_diff[~np.isnan(sorted_data_diff)]
-                    knee_result = KneeLocator(range(len(sorted_data_diff)), sorted_data_diff, S=self.s_value, curve='convex', direction='increasing')
-                    threshold_value = knee_result.knee_y
+                    knee_result = None
+                    if len(sorted_data_diff) > 2:
+                        knee_result = KneeLocator(range(len(sorted_data_diff)), sorted_data_diff, S=self.s_value, curve='convex', direction='increasing')
+                    if knee_result:
+                        threshold_value = knee_result.knee_y
+                    if not threshold_value:
+                        threshold_value = sorted_data_diff[-1]
                     if threshold_value > thresholds[c]:
                         logging.debug(c + " requires another iteration (%.2f > %.2f)" % (threshold_value, thresholds[c]))
                     current_diffs[c] = threshold_value

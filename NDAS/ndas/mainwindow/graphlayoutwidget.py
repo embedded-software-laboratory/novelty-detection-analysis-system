@@ -6,7 +6,7 @@ from pyqtgraph.Qt import QtCore
 from PyQt5.QtGui import *
 
 from ndas.extensions import algorithms, annotations
-from ndas.misc.colors import Color
+from ndas.misc import colors
 
 
 class GraphLayoutWidget(pg.GraphicsLayoutWidget):
@@ -231,7 +231,7 @@ class GraphLayoutWidget(pg.GraphicsLayoutWidget):
         self.main_plot.setLabel(axis='bottom', text=registered_plot_item.x_label)
 
         self.nav_plot.clear()
-        self.nav_plot.plot(y=self._y_data, x=self._x_data, pen=Color.BLUE.value)
+        self.nav_plot.plot(y=self._y_data, x=self._x_data, pen=colors.REGULAR)
 
         self.nav_plot.setLabel(axis='left', text=registered_plot_item.y_label)
         self.nav_plot.setLabel(axis='bottom', text=registered_plot_item.x_label)
@@ -350,7 +350,8 @@ class GraphLayoutWidget(pg.GraphicsLayoutWidget):
         val
         """
         bottom_left, top_right = val
-
+        if not isinstance(self._x_data, (list, np.ndarray)):
+            return
         indexes = []
         for i in range(len(self._x_data)):
             x = self._x_data[i]
@@ -423,6 +424,20 @@ class GraphLayoutWidget(pg.GraphicsLayoutWidget):
         Removes the label from the selected points
         """
         annotations.delabel_selected(self.main_plot_name)
+        self.update_labels()
+
+    def label_history_backwards(self):
+        """
+        Goes step back in label history
+        """
+        annotations.history_go_step_back()
+        self.update_labels()
+
+    def label_history_forwards(self):
+        """
+        Goes step forward in label history
+        """
+        annotations.history_go_step_forward()
         self.update_labels()
 
     def _clicked_point_slot(self, plot: pg.PlotItem, points: list):
@@ -535,13 +550,13 @@ class GraphLayoutWidget(pg.GraphicsLayoutWidget):
             exporter.export(path)
 
         elif type == "mpl":
-            from ndas.misc.colors import Color
+            from ndas.misc import colors
             p_item = self.main_plot
 
             p_curve_list = []
             for i in p_item.curves:
-                i.opts['symbolPen'] = Color.BLUE.value
-                i.opts['symbolBrush'] = Color.BLUE.value
+                i.opts['symbolPen'] = colors.REGULAR
+                i.opts['symbolBrush'] = colors.REGULAR
                 i.opts['symbolSize'] = 1
                 i.opts['fillLevel'] = None
                 i.opts['fillBrush'] = None
@@ -608,8 +623,8 @@ class MultiSelectViewBox(pg.ViewBox):
         elif ev.button() in [QtCore.Qt.MouseButton.LeftButton]:
             rect = self.parentItem().items[0]
             rect.hide()
-            updated_rect = QtCore.QRectF(self.mapToView(self.mapFromParent(ev.buttonDownPos())),
-                                         self.mapToView(self.mapFromParent(ev.pos())))
+            updated_rect = QtCore.QRectF(self.mapToView(ev.buttonDownPos()),
+                                         self.mapToView(ev.pos()))
 
             if ev.isFinish():
                 rect_coordinates = updated_rect.getCoords()

@@ -1,8 +1,11 @@
 from ndas.extensions import data, savestate
 from ndas.utils import logger
+from copy import deepcopy
 
 _current_point_selection = []
 _current_point_labels = {}
+_current_point_labels_history = []
+_current_point_history_index = -1
 _available_labels = []
 
 
@@ -16,6 +19,7 @@ def init_annotations(config):
     """
     global _current_point_selection, _current_point_labels, _available_labels
     clear_selections()
+    clear_history()
 
     _available_labels = config["labels"]
     for label in _available_labels:
@@ -33,10 +37,13 @@ def register_plot_annotation(plot_name: str = None):
     global _current_point_labels
     if plot_name is not None and plot_name not in _current_point_labels.keys():
         _current_point_labels[plot_name] = []
+        update_history()
     else:
         df = data.get_dataframe()
         for column in df.columns[1:]:
             _current_point_labels[column] = []
+        clear_history()
+        update_history()
 
 
 def add_selection_point(selected_point: 'SelectedPoint') -> bool:
@@ -97,6 +104,7 @@ def add_labels_current_selection(plot_name: str, label: str):
     """
     for selected_point in _current_point_selection:
         add_label(plot_name, selected_point, label)
+    update_history()
 
 
 def delabel_selected(plot_name: str):
@@ -111,6 +119,7 @@ def delabel_selected(plot_name: str):
         for labeled_point in get_labeled_points(plot_name):
             if selected_point == labeled_point:
                 remove_labeled_point(plot_name, labeled_point)
+    update_history()
 
 
 def add_label_unselected(x, y, index, label, plot_name):
@@ -127,6 +136,7 @@ def add_label_unselected(x, y, index, label, plot_name):
     """
     lp = LabeledPoint(y, x, index, label, plot_name)
     _current_point_labels[plot_name].append(lp)
+    update_history()
 
 
 def restore_from_save(label_data):
@@ -138,14 +148,19 @@ def restore_from_save(label_data):
     label_data
     """
     clear_selections()
+    clear_history()
 
     for cl in data.get_dataframe_columns():
         register_plot_annotation(cl)
 
     for single_labeled_point in label_data:
+        plot_name = single_labeled_point["plot_name"]
         lp = LabeledPoint(single_labeled_point["value"], single_labeled_point["x"], single_labeled_point["index"],
-                          single_labeled_point["label"], single_labeled_point["plot_name"])
-        _current_point_labels[single_labeled_point["plot_name"]].append(lp)
+                          single_labeled_point["label"], plot_name)
+        if plot_name not in _current_point_labels:
+            _current_point_labels[plot_name] = []
+        _current_point_labels[plot_name].append(lp)
+    update_history()
 
 
 def format_for_save():
@@ -241,7 +256,9 @@ def get_number_labeled(active_plot):
     ----------
     active_plot
     """
-    return len(_current_point_labels[active_plot])
+    if active_plot:
+        return len(_current_point_labels[active_plot])
+    return 0
 
 
 def remove_selected_point(selected_point: 'SelectedPoint') -> bool:
@@ -289,6 +306,59 @@ def clear_selections():
     """
     global _current_point_selection, _current_point_labels
     _current_point_selection = []
+
+
+def clear_history():
+    """
+    Deletes history of Annotation-States
+    """
+    global _current_point_labels_history, _current_point_history_index
+    _current_point_labels_history = []
+    _current_point_history_index = -1
+    logger.annotations.debug("Cleared History, now length 0")
+
+
+def update_history():
+    """
+    Appends current Annotation-State to the history, removes history ahead of current index
+    """
+    global _current_point_labels, _current_point_labels_history, _current_point_history_index
+    del _current_point_labels_history[_current_point_history_index+1:]
+    copied_dict = {k: list(v) for k, v in _current_point_labels.items()}
+    _current_point_labels_history.append(copied_dict)
+    _current_point_history_index += 1
+    logger.annotations.debug("Updated History, now length "+str(len(_current_point_labels_history)))
+
+
+def apply_selected_history():
+    """
+    Sets Annotation_State to State stored at selected index
+    """
+    global _current_point_labels, _current_point_labels_history, _current_point_history_index
+    copied_history_at_point = {k: list(v) for k, v in _current_point_labels_history[_current_point_history_index].items()}
+    _current_point_labels = copied_history_at_point
+    format_for_save()
+    logger.annotations.debug("Changed History index to "+str(_current_point_history_index))
+
+
+def history_go_step_back():
+    """
+    Goes back to previous state of history
+    """
+    global _current_point_history_index
+    if _current_point_history_index > 0:
+        _current_point_history_index -= 1
+        apply_selected_history()
+
+
+def history_go_step_forward():
+    """
+    Goes forward to next state of history
+    """
+    global _current_point_history_index, _current_point_labels_history
+    if _current_point_history_index < len(_current_point_labels_history)-1:
+        _current_point_history_index += 1
+        apply_selected_history()
 
 
 class Point(object):

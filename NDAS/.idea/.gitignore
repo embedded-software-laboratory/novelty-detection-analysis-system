@@ -2,3 +2,5 @@
 /shelf/
 /workspace.xml
 *.pyc
+/NDAS.iml
+/misc.xml

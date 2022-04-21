@@ -5,8 +5,7 @@ from pyqtgraph.Qt import QtCore
 from scipy import stats
 
 from ndas.extensions import data, plots
-from ndas.misc import graphbox
-from ndas.misc.colors import Color
+from ndas.misc import graphbox, colors
 
 
 class StatsGraph(pg.GraphicsLayoutWidget):
@@ -163,10 +162,10 @@ class DensityGraphWidget(StatsGraph):
 
         _y = list(range(len(plot_labels)))
 
-        sc = pg.PlotCurveItem(y=_y, x=_x, pen=pg.mkPen(color=Color.BLUE.value, width=2))
+        sc = pg.PlotCurveItem(y=_y, x=_x, pen=pg.mkPen(color=colors.REGULAR, width=2))
         self.custom_plot.addItem(sc)
 
-        color_map = [pg.mkBrush(Color.BLUE.value) if y != _active_plot_number else pg.mkBrush(Color.RED.value) for y in
+        color_map = [pg.mkBrush(colors.REGULAR) if y != _active_plot_number else pg.mkBrush(colors.TIER1NOV) for y in
                      _y]
         sc = pg.ScatterPlotItem(y=_y, x=_x, brush=color_map, name="# Samples (non-nan)")
         self.custom_plot.addItem(sc)
@@ -236,10 +235,10 @@ class BoxplotGraphWidget(StatsGraph):
         uq_y = [3, 7]
         uq_x = [uq, uq]
 
-        lower_quartil_box = graphbox.GraphBoxItem(lq_x[0], lq_y[0], median_x[1], median_y[1], color=Color.BLUE.value,
-                                                  fill=Color.BLUE.value)
-        upper_quartil_box = graphbox.GraphBoxItem(median_x[0], median_y[0], uq_x[1], uq_y[1], color=Color.BLUE.value,
-                                                  fill=Color.BLUE.value)
+        lower_quartil_box = graphbox.GraphBoxItem(lq_x[0], lq_y[0], median_x[1], median_y[1], color=colors.REGULAR,
+                                                  fill=colors.REGULAR)
+        upper_quartil_box = graphbox.GraphBoxItem(median_x[0], median_y[0], uq_x[1], uq_y[1], color=colors.REGULAR,
+                                                  fill=colors.REGULAR)
 
         connect_x = [min_x[0], max_x[0]]
         connect_y = [5, 5]
@@ -248,27 +247,27 @@ class BoxplotGraphWidget(StatsGraph):
         iqr_y = [8, 8]
 
         median_line = pg.PlotCurveItem(x=median_x, y=median_y,
-                                       pen=pg.mkPen(color=Color.RED.value, style=QtCore.Qt.DotLine, width=3),
+                                       pen=pg.mkPen(color=colors.LINECOLOR, style=QtCore.Qt.DotLine, width=3),
                                        name="Median")
-        min_line = pg.PlotCurveItem(x=min_x, y=min_y, pen=pg.mkPen(color=Color.BLUE.value, width=3))
-        max_line = pg.PlotCurveItem(x=max_x, y=max_y, pen=pg.mkPen(color=Color.BLUE.value, width=3))
+        min_line = pg.PlotCurveItem(x=min_x, y=min_y, pen=pg.mkPen(color=colors.REGULAR, width=3))
+        max_line = pg.PlotCurveItem(x=max_x, y=max_y, pen=pg.mkPen(color=colors.REGULAR, width=3))
 
-        iqr_line = pg.PlotCurveItem(x=iqr_x, y=iqr_y, pen=pg.mkPen(color=Color.GREEN.value, width=1),
+        iqr_line = pg.PlotCurveItem(x=iqr_x, y=iqr_y, pen=pg.mkPen(color=colors.TRAINING, width=1),
                                     name="IQR")
 
         iqr_limit_left_x = [iqr_x[0], iqr_x[0]]
         iqr_limit_left_y = [7.75, 8.25]
         iqr_limit_left = pg.PlotCurveItem(x=iqr_limit_left_x, y=iqr_limit_left_y,
-                                          pen=pg.mkPen(color=Color.GREEN.value, width=1))
+                                          pen=pg.mkPen(color=colors.TRAINING, width=1))
         self.custom_plot.addItem(iqr_limit_left)
 
         iqr_limit_right_x = [iqr_x[1], iqr_x[1]]
         iqr_limit_right_y = [7.75, 8.25]
         iqr_limit_right = pg.PlotCurveItem(x=iqr_limit_right_x, y=iqr_limit_right_y,
-                                           pen=pg.mkPen(color=Color.GREEN.value, width=1))
+                                           pen=pg.mkPen(color=colors.TRAINING, width=1))
         self.custom_plot.addItem(iqr_limit_right)
 
-        connector_line = pg.PlotCurveItem(x=connect_x, y=connect_y, pen=pg.mkPen(color=Color.BLUE.value, width=3))
+        connector_line = pg.PlotCurveItem(x=connect_x, y=connect_y, pen=pg.mkPen(color=colors.REGULAR, width=3))
 
         self.custom_plot.addItem(min_line)
         self.custom_plot.addItem(max_line)
@@ -347,16 +346,16 @@ class HistogramGraphWidget(StatsGraph):
         stdn2_x = [mean - 2 * std, mean - 2 * std]
         stdn2_y = [0, np.max(gaussian_kde(xs))]
 
-        bargraphitem = pg.BarGraphItem(x0=_x[1:], x1=_x[:-1], height=_y, brush=Color.BLUE.value)
+        bargraphitem = pg.BarGraphItem(x0=_x[1:], x1=_x[:-1], height=_y, brush=colors.REGULAR)
 
-        mean_line = pg.PlotCurveItem(x=mean_x, y=mean_y, pen=pg.mkPen(color=Color.RED.value, width=3), name="μ")
+        mean_line = pg.PlotCurveItem(x=mean_x, y=mean_y, pen=pg.mkPen(color=colors.LINECOLOR, width=3), name="μ")
         kde_line = pg.PlotDataItem(x=xs, y=ys,
-                                   pen=pg.mkPen(color=Color.RED.value, style=QtCore.Qt.DotLine, width=2),
+                                   pen=pg.mkPen(color=colors.LINECOLOR, style=QtCore.Qt.DotLine, width=2),
                                    name="KDE")
 
-        stdp2 = pg.PlotCurveItem(x=stdp2_x, y=stdp2_y, pen=pg.mkPen(color=Color.GREEN.value, width=2),
+        stdp2 = pg.PlotCurveItem(x=stdp2_x, y=stdp2_y, pen=pg.mkPen(color=colors.TRAINING, width=2),
                                  name="μ ± 2σ")
-        stdn2 = pg.PlotCurveItem(x=stdn2_x, y=stdn2_y, pen=pg.mkPen(color=Color.GREEN.value, width=2))
+        stdn2 = pg.PlotCurveItem(x=stdn2_x, y=stdn2_y, pen=pg.mkPen(color=colors.TRAINING, width=2))
 
         self.y_ranges[active_plot] = (0, np.amax([*_y, *ys]))
 
@@ -440,10 +439,10 @@ class CorrelationGraphWidget(StatsGraph):
         column_data = corr[active_plot].to_numpy()
         columns = list(range(len(plot_labels)))
 
-        _h_line = pg.InfiniteLine(pos=(0, 0), angle=90, movable=False, pen={'color': Color.BLUE.value, 'width': 2})
+        _h_line = pg.InfiniteLine(pos=(0, 0), angle=90, movable=False, pen={'color': colors.REGULAR, 'width': 2})
         self.custom_plot.addItem(_h_line, ignoreBounds=True)
 
-        sc = pg.ScatterPlotItem(x=column_data, y=columns, brush=Color.BLUE.value,
+        sc = pg.ScatterPlotItem(x=column_data, y=columns, brush=colors.REGULAR,
                                 name="Pearson correlation coefficient")
         self.custom_plot.addItem(sc)
 
@@ -455,5 +454,5 @@ class CorrelationGraphWidget(StatsGraph):
 
             _y = [columns[i], columns[i]]
 
-            line_item = pg.PlotDataItem(x=_x, y=_y, pen=pg.mkPen(color=Color.BLUE.value, width=2))
+            line_item = pg.PlotDataItem(x=_x, y=_y, pen=pg.mkPen(color=colors.REGULAR, width=2))
             self.custom_plot.addItem(line_item)

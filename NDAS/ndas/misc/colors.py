@@ -1,15 +1,32 @@
 from enum import Enum
 
 
-class Color(Enum):
+REGULAR = '4e81bd'
+TRAINING = '00afbb'
+TIER2NOV = 'e7b800'
+TIER1NOV = 'fc4e08'
+LINECOLOR = 'fc4e08'
+BLACK = '000000'
+IGNORED = 'A9A9A9'
+REPLACED = 'BD4EB8'
+ADDED = 'ebb4ff'
+
+
+def init_colors(config):
     """
-    Colors for plots and points
+    Initializes plot-colors
+
+    Parameters
+    ----------
+    config
     """
-    BLUE = '4e81bd'
-    GREEN = '00afbb'
-    YELLOW = 'e7b800'
-    RED = 'fc4e08'
-    BLACK = '000000'
-    GREY = 'A9A9A9'
-    PURPLE = 'BD4EB8'
-    PINK = 'ebb4ff'
+    global REGULAR, TRAINING, TIER2NOV, TIER1NOV, LINECOLOR, IGNORED, REPLACED, ADDED
+
+    REGULAR = config["regular"]
+    TRAINING = config["training"]
+    TIER2NOV = config["tier-2-novelty"]
+    TIER1NOV = config["tier-1-novelty"]
+    LINECOLOR = config["line-color"]
+    IGNORED = config["ignored"]
+    REPLACED = config["replaced"]
+    ADDED = config["added"]

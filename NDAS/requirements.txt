@@ -1,5 +1,5 @@
 pyqtgraph==0.11.1
-numpy==1.18.4
+numpy>=1.18.4
 hickle==4.0.4
 wfdb==3.2.0
 scipy==1.5.3
@@ -7,9 +7,12 @@ pandas==1.0.3
 PyQt5==5.15.4
 PyYAML==5.4.1
 qtwidgets==0.18
-bs4==0.01
+bs4==0.0.1
 lxml==4.6.3
 seaborn==0.11.1
 scikit-learn==0.24.2
-keras==2.6.0
-tensorflow==2.6.0
+kneed == 0.7.0
+humanfriendly == 10.0
+mysql == 0.0.3
+mysql-connector-python == 8.0.28
+paramiko == 2.10.3

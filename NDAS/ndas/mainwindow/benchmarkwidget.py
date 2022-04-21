@@ -285,7 +285,7 @@ class AlgorithmSelectionStackedWidgetPage(MasterStackedWidgetPage):
         self.number_of_algorithms = QSpinBox()
         self.number_of_algorithms.setMinimumWidth(100)
         self.number_of_algorithms.setMinimum(1)
-        self.number_of_algorithms.setMaximum(15)
+        self.number_of_algorithms.setMaximum(25)
         self.number_of_algorithms.setValue(3)
         self.number_of_algorithms_layout.addWidget(self.number_of_algorithms_label)
         self.number_of_algorithms_layout.addWidget(self.number_of_algorithms)
@@ -687,6 +687,12 @@ class ResultStackedWidgetPage(MasterStackedWidgetPage):
                             posneg[i] = (posneg[i][0]+1, posneg[i][1])
                             break
 
+                        # Backwards compatibility
+                        elif "Unknown" in label and "Unknown" in concat_novelty_dict[time_offset]:
+                            bp -= 1
+                            posneg[i] = (posneg[i][0]+1, posneg[i][1])
+                            break
+
                 elif value == 1 and time_offset not in concat_novelty_dict:
                     bp += 1
 
@@ -696,6 +702,12 @@ class ResultStackedWidgetPage(MasterStackedWidgetPage):
                         if label in concat_novelty_dict[time_offset]:
                             bn -= 1
                             posneg[i] = (posneg[i][0], posneg[i][1]+1)
+                            break
+
+                        # Backwards compatibility
+                        elif "Unknown" in label and "Unknown" in concat_novelty_dict[time_offset]:
+                            bn -= 1
+                            posneg[i] = (posneg[i][0], posneg[i][1] + 1)
                             break
 
                 elif (value == 0 or value == 2) and time_offset not in concat_novelty_dict:
@@ -795,7 +807,7 @@ class ResultStackedWidgetPage(MasterStackedWidgetPage):
                 list_of_row_contents = []
                 if not self.table_widget.item(row_index, 3).text():
                     for col_index in range(self.table_widget.columnCount()-1):
-                        if col_index in [0, 4, 5, self.table_widget.columnCount()-3, self.table_widget.columnCount()-2]:
+                        if col_index in [0, 4, 5, 6]+list(range(7, self.table_widget.columnCount()-3))+[self.table_widget.columnCount()-3, self.table_widget.columnCount()-2]:
                             list_of_row_contents.append(self.table_widget.item(row_index, col_index).text())
                     list_csv_rows.append(list_of_row_contents)
 
@@ -804,6 +816,7 @@ class ResultStackedWidgetPage(MasterStackedWidgetPage):
                     writer = csv.writer(f)
                     list_rows_to_write = [[""], ["Benchmark at time: "+datetime.datetime.now().strftime("%m/%d/%Y|%H:%M:%S")]] + list_csv_rows
                     writer.writerows(list_rows_to_write)
+                    print("Successfully logged benchmark results")
 
     @staticmethod
     def color_row(table, row_index, color):

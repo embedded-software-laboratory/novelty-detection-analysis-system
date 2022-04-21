@@ -20,7 +20,6 @@ class BaseImputation:
         """
         time_column = dataframe.columns[0]
         differences = dataframe[time_column].diff()
-
         if any(x < 0 for x in differences.values):
             logging.warning("Time Column is not monotonically increasing, aborting imputation and returning input.")
             return dataframe
@@ -41,5 +40,4 @@ class BaseImputation:
             imputation_dataframe = pd.DataFrame((data[:-(spacing_multiplier - 1)]), columns=dataframe.columns)
         else:
             imputation_dataframe = pd.DataFrame(data, columns=dataframe.columns)
-
         return self.Methods[method_string](imputation_dataframe, lim_dir=lim_dir, lim_are=lim_are)
