@@ -30,7 +30,7 @@ class DatabaseSettingsWidget(QWidget):
         reg_exp_number = QRegExp("[0-9]+")
 
         database = QComboBox()
-        database.addItems({"asic_data_mimic", "asic_data_sepsis"})
+        database.addItems({"asic_data_mimic", "asic_data_sepsis", "uka_data"})
         database.currentIndexChanged.connect(lambda: self.loadPatientIds(database.currentText()))
         self.selectLabel = QLabel()
         self.selectLabel.setText("Select patient by patient id")
@@ -200,15 +200,15 @@ class DatabaseSettingsWidget(QWidget):
             if result == -6:
                 QMessageBox.critical(self, "Error", "Database authentication failed, please make sure that you entered correct authentication data", QMessageBox.Ok)
                 return
-            elif result == -3:
-                QMessageBox.critical(self, "Error", "Connection to the database failed, make sure that you are connected to the i11-VPN", QMessageBox.Ok)
-                return
-            elif result == -4:
-                QMessageBox.critical(self, "Error", "Could not establish a connection to the database (connection timed out)", QMessageBox.Ok)
-                return
-            elif result == -5:
-                QMessageBox.critical(self, "Error", "SSH authentication failed, please make sure that you entered correct authentication data", QMessageBox.Ok)
-                return
+            #elif result == -3:
+            #    QMessageBox.critical(self, "Error", "Connection to the database failed, make sure that you are connected to the i11-VPN", QMessageBox.Ok)
+            #    return
+            #elif result == -4:
+            #    QMessageBox.critical(self, "Error", "Could not establish a connection to the database (connection timed out)", QMessageBox.Ok)
+            #    return
+            #elif result == -5:
+            #    QMessageBox.critical(self, "Error", "SSH authentication failed, please make sure that you entered correct authentication data", QMessageBox.Ok)
+            #    return
             file = open(os.getcwd()+"\\ndas\\local_data\\{}_patient_ids.txt".format(table), "w")
             for id in result:
                 file.write(id)
