@@ -3,7 +3,7 @@ from PyQt5.QtGui import QColor
 from PyQt5.QtWidgets import *
 import pandas as pd
 import numpy as np
-from ndas.extensions import physiologicallimits
+from ndas.extensions import physiologicallimits, data
 
 
 class DataInspectionWidget(QWidget):
@@ -49,6 +49,12 @@ class DataInspectionWidget(QWidget):
 
     def apply_edits(self):
         if self.model:
+            current_data_mask = data.get_mask_dataframe()
+            if isinstance(current_data_mask, pd.DataFrame):
+                updated_mask = current_data_mask.mask(self.model.get_internal_mask().applymap(bool), 1)
+            else:
+                updated_mask = self.model.get_internal_mask().copy(deep=True)
+            data.set_mask_dataframe(updated_mask)
             self.data_edit_signal.emit(self.model.get_internal_data())
 
 
@@ -99,6 +105,9 @@ class DataframeModel(QAbstractTableModel):
 
     def get_internal_data(self):
         return self._data
+
+    def get_internal_mask(self):
+        return self._changes
 
     def rowCount(self, parent=None):
         """
