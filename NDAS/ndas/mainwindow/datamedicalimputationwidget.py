@@ -410,9 +410,9 @@ class DataMedicalImputationWidget(QWidget):
         time_col_name = data.get_dataframe_index_column()
         imputed_data = data.get_imputed_dataframe()
         expanded_data = data.get_full_dataframe().set_index(time_col_name).reindex(index=imputed_data[time_col_name], columns=[v for v in imputed_data.columns if v != time_col_name]).reset_index()
-        mask = ((imputed_data == expanded_data) | ((imputed_data != imputed_data) & (expanded_data != expanded_data)))*-1+1
+        mask = ((imputed_data == expanded_data) | ((imputed_data != imputed_data) & (expanded_data != expanded_data)))*-2+2
         if isinstance(data.get_mask_dataframe(), pd.DataFrame):
-            mask = (mask+data.get_mask_dataframe()).clip(upper=1)
+            mask = (mask+data.get_mask_dataframe()).clip(upper=2)
         data.set_mask_dataframe(mask)
         expanded_data_isnan = (expanded_data != expanded_data)
         expanded_data_isnan[time_col_name] = imputed_data[time_col_name]
