@@ -1,3 +1,5 @@
+import operator
+
 import pandas as pd
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
@@ -60,7 +62,7 @@ class MainWindow(QMainWindow):
         self.tab_datainspector = datainspectionwidget.DataInspectionWidget()
         self.tab_datainspector.setAutoFillBackground(True)
 
-        self.tab_datainspector.data_edit_signal.connect(lambda df: self.update_values_in_current_dataset(df))
+        self.tab_datainspector.data_edit_signal.connect(lambda df, mask: self.update_human_edits(df, mask))
 
         self.tab_datagenerator = datageneratorwidget.DataGeneratorWidget()
 
@@ -968,20 +970,39 @@ class MainWindow(QMainWindow):
         # self.set_updated_novelties(algorithms.get_detected_novelties(plots.get_active_plot()[0]), plots.get_active_plot()[0])
         datamedicalimputationwidget.DataMedicalImputationWidget.on_import_data(self.tab_datamedimputation)
 
-    def update_added_values_novelty_color(self, mask_df):
+    def update_human_edits(self, df, mask_df):
+        self.update_values_in_current_dataset(df)
         columns = plots.get_registered_plot_keys()
         time_column = data.get_dataframe_index_column()
         for col in columns:
-            list_nan_timestamps = mask_df[time_column][mask_df[col].values]
+            list_timestamps = df[time_column][mask_df[col].values == 1]
             col_novelties = algorithms.get_detected_novelties(col)
-            for time in list_nan_timestamps:
-                if time not in col_novelties:
-                    col_novelties[time] = -8
+            for time in list_timestamps:
+                col_novelties[time] = -10
             algorithms.set_detected_novelties(col, col_novelties)
             plots.add_plot_novelties(col, algorithms.get_detected_novelties(col))
         plots.update_plot_view(retain_zoom=True)
         self.update_statistics()
 
+    def update_added_values_novelty_color(self, mask_df):
+        columns = plots.get_registered_plot_keys()
+        time_column = data.get_dataframe_index_column()
+        for col in columns:
+            try:
+                first_non_nan = mask_df[time_column][mask_df[col] == False].iloc[0]
+                last_non_nan = mask_df[time_column][mask_df[col] == False].iloc[-1]
+            except (ValueError, IndexError):
+                first_non_nan = np.inf
+                last_non_nan = -np.inf
+            list_nan_timestamps = mask_df[time_column][mask_df[col].values]
+            col_novelties = algorithms.get_detected_novelties(col)
+            for time in list_nan_timestamps:
+                if time not in col_novelties or first_non_nan <= time <= last_non_nan:
+                    col_novelties[time] = -8
+            algorithms.set_detected_novelties(col, col_novelties)
+            plots.add_plot_novelties(col, algorithms.get_detected_novelties(col))
+        plots.update_plot_view(retain_zoom=True)
+        self.update_statistics()
 
     @pyqtSlot()
     def set_algorithm_result(self, val):
@@ -1472,6 +1493,13 @@ class MainWindow(QMainWindow):
                 event.accept()
             elif key == Qt.Key_S:
                 self.plot_widget.vb.setYRange(*[x + 0.2*(vb_range[1][1]-vb_range[1][0]) for x in vb_range[1]], padding=0)
+                event.accept()
+        elif modifiers == Qt.ControlModifier and self.main_widget.currentIndex() == 4:
+            if key == Qt.Key_Z:
+                self.tab_datainspector.history_backward()
+                event.accept()
+            elif key == Qt.Key_Y:
+                self.tab_datainspector.history_forward()
                 event.accept()
         super().keyPressEvent(event)
 

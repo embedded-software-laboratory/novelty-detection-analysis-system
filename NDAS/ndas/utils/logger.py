@@ -10,7 +10,7 @@ LOG_LEVELS = {
 
 LOG_NAMES = [
     'init', 'annotations', 'misc', 'signals', 'savestate', 'plots',
-    'config', 'algorithms', 'mainwindow', 'importer', 'data', 'physicalinfo'
+    'config', 'algorithms', 'mainwindow', 'importer', 'data', 'physicalinfo', 'inspector'
 ]
 
 misc = logging.getLogger('misc')
@@ -25,6 +25,7 @@ signals = logging.getLogger('signals')
 config = logging.getLogger('config')
 data = logging.getLogger('data')
 physicalinfo = logging.getLogger('physicalinfo')
+inspector = logging.getLogger('inspector')
 
 
 def init_log() -> None:

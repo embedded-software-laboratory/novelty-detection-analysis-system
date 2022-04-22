@@ -4,6 +4,7 @@ from PyQt5.QtWidgets import *
 import pandas as pd
 import numpy as np
 from ndas.extensions import physiologicallimits, data
+from ndas.utils import logger
 
 
 class DataInspectionWidget(QWidget):
@@ -11,7 +12,7 @@ class DataInspectionWidget(QWidget):
     Widget to visualize the imported or generated data in table view
     """
 
-    data_edit_signal = pyqtSignal(pd.DataFrame)
+    data_edit_signal = pyqtSignal(pd.DataFrame, pd.DataFrame)
 
     def __init__(self):
         """
@@ -40,6 +41,7 @@ class DataInspectionWidget(QWidget):
         dataframe
         """
         self.model = DataframeModel(dataframe)
+        self.model.table_change_signal.connect(lambda: self.tableView.viewport().update())
 
         ''' Enable sorting by using a proxy model'''
         self.proxy_model = QSortFilterProxyModel()
@@ -55,13 +57,22 @@ class DataInspectionWidget(QWidget):
             else:
                 updated_mask = self.model.get_internal_mask().copy(deep=True)
             data.set_mask_dataframe(updated_mask)
-            self.data_edit_signal.emit(self.model.get_internal_data())
+            self.data_edit_signal.emit(self.model.get_internal_data(), self.model.get_internal_mask())
+
+    def history_forward(self):
+        if self.model:
+            self.model.history_forward()
+
+    def history_backward(self):
+        if self.model:
+            self.model.history_backward()
 
 
 class DataframeModel(QAbstractTableModel):
     """
     Model for visualizing dataframes
     """
+    table_change_signal = pyqtSignal()
 
     def __init__(self, data):
         """
@@ -75,6 +86,8 @@ class DataframeModel(QAbstractTableModel):
         self._data = data.copy(deep=True)
         self._ref_data = data
         self._changes = pd.DataFrame(0, index=data.index, columns=data.columns)
+        self.history = [(self._data.copy(deep=True), self._changes.copy(deep=True))]
+        self.history_index = 0
 
     def flags(self, index):
         return Qt.ItemIsSelectable | Qt.ItemIsEnabled | Qt.ItemIsEditable
@@ -101,7 +114,35 @@ class DataframeModel(QAbstractTableModel):
                 self._changes.iloc[index.row(), index.column()] = 0
             else:
                 self._changes.iloc[index.row(), index.column()] = 1
+            del self.history[self.history_index + 1:]
+            history_data = self._data.copy(deep=True)
+            history_changes = self._changes.copy(deep=True)
+            self.history.append((history_data, history_changes))
+            self.history_index += 1
+            logger.inspector.debug("Updated History, now length " + str(len(self.history)))
             return True
+
+    def apply_history(self):
+        self._data = self.history[self.history_index][0].copy(deep=True)
+        self._changes = self.history[self.history_index][1].copy(deep=True)
+        self.table_change_signal.emit()
+        logger.inspector.debug("Changed History index to "+str(self.history_index))
+
+    def history_backward(self):
+        """
+        Goes back to previous state of history
+        """
+        if self.history_index > 0:
+            self.history_index -= 1
+            self.apply_history()
+
+    def history_forward(self):
+        """
+        Goes forward to next state of history
+        """
+        if self.history_index < len(self.history) - 1:
+            self.history_index += 1
+            self.apply_history()
 
     def get_internal_data(self):
         return self._data

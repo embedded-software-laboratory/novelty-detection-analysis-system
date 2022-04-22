@@ -10,6 +10,7 @@ BLACK = '000000'
 IGNORED = 'A9A9A9'
 REPLACED = 'BD4EB8'
 ADDED = 'ebb4ff'
+USEREDIT = '72821f'
 
 
 def init_colors(config):
@@ -20,7 +21,7 @@ def init_colors(config):
     ----------
     config
     """
-    global REGULAR, TRAINING, TIER2NOV, TIER1NOV, LINECOLOR, IGNORED, REPLACED, ADDED
+    global REGULAR, TRAINING, TIER2NOV, TIER1NOV, LINECOLOR, IGNORED, REPLACED, ADDED, USEREDIT
 
     REGULAR = config["regular"]
     TRAINING = config["training"]
@@ -30,3 +31,4 @@ def init_colors(config):
     IGNORED = config["ignored"]
     REPLACED = config["replaced"]
     ADDED = config["added"]
+    USEREDIT = config["user-edit"]
