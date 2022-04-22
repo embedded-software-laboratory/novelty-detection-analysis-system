@@ -379,7 +379,7 @@ def _get_brush_map(novelty_data: list):
     ----------
     novelty_data
     """
-    color_map = {-9: colors.REPLACED, -8: colors.ADDED, -2: colors.IGNORED, -1: colors.TRAINING, 0: colors.REGULAR, 1: colors.TIER1NOV,
+    color_map = {-10: colors.USEREDIT, -9: colors.REPLACED, -8: colors.ADDED, -2: colors.IGNORED, -1: colors.TRAINING, 0: colors.REGULAR, 1: colors.TIER1NOV,
                  2: colors.TIER2NOV}
     return [pg.mkBrush(color_map[novelty_point]) for novelty_point in novelty_data]
 
