@@ -1,6 +1,5 @@
 import numpy as np
 from ndas.algorithms.basedetector import BaseDetector  # Import the basedetector class
-from ndas.dataimputationalgorithms.base_imputation import BaseImputation
 from ndas.extensions import plots
 from kneed import KneeLocator
 

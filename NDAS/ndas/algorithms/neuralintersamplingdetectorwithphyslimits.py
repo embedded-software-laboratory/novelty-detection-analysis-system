@@ -2,7 +2,6 @@ import numpy as np
 import pandas as pd
 from ndas.algorithms.basedetector import BaseDetector  # Import the basedetector class
 from ndas.misc.parameter import ArgumentType
-from ndas.dataimputationalgorithms.base_imputation import BaseImputation
 from ndas.extensions import plots
 from kneed import KneeLocator
 
