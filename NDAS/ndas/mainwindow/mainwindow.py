@@ -11,7 +11,7 @@ import os
 import math
 
 from ndas.extensions import algorithms, annotations, data, plots, savestate
-from ndas.mainwindow import datamedicalimputationwidget, statgraphwidgets, datainspectionwidget, benchmarkwidget, masscorrectionwidget, datageneratorwidget
+from ndas.mainwindow import statgraphwidgets, datainspectionwidget
 from ndas.mainwindow.sshsettingswidget import SSHSettingsWindow
 from ndas.mainwindow.databasesettingswidget import DatabaseSettingsWindow
 from ndas.mainwindow.importdatabasewidget import ImportDatabaseWindow
@@ -55,35 +55,18 @@ class MainWindow(QMainWindow):
         self.main_widget = QTabWidget()
         self.tab_annotation = QWidget()
         self.tab_annotation.setAutoFillBackground(True)
-        self.tab_datamedimputation = datamedicalimputationwidget.DataMedicalImputationWidget(main_window=self)
-        self.tab_datamedimputation.setAutoFillBackground(True)
-        self.tab_masscorrection = masscorrectionwidget.MassCorrectionWidget(threadpool_obj)
-        self.tab_masscorrection.setAutoFillBackground(True)
         self.tab_datainspector = datainspectionwidget.DataInspectionWidget()
         self.tab_datainspector.setAutoFillBackground(True)
 
         self.tab_datainspector.data_edit_signal.connect(lambda df, mask: self.update_human_edits(df, mask))
 
-        self.tab_datagenerator = datageneratorwidget.DataGeneratorWidget()
 
-        self.tab_datagenerator.generated_data_signal.connect( lambda df, labels: self.data_import_result_slot(df, labels))
-        self.tab_datagenerator.register_annotation_plot_signal.connect( lambda name: annotations.register_plot_annotation(name))
-        self.tab_datagenerator.update_labels_signal.connect(lambda: self.plot_layout_widget.update_labels())
-
-        self.tab_datagenerator.setAutoFillBackground(True)
-
-        self.tab_benchmark = benchmarkwidget.BenchmarkWidget(threadpool_obj)
-        self.tab_benchmark.setAutoFillBackground(True)
         self.tab_statistics = statgraphwidgets.StatsGraphWidget()
         self.tab_statistics.setAutoFillBackground(True)
 
-        self.main_widget.addTab(self.tab_annotation, "Annotation")
-        self.main_widget.addTab(self.tab_datamedimputation, 'Data Imputation')
-        self.main_widget.addTab(self.tab_masscorrection, 'Mass Error-Correction')
+        self.main_widget.addTab(self.tab_annotation, "Plot")
         self.main_widget.addTab(self.tab_statistics, "Statistics")
         self.main_widget.addTab(self.tab_datainspector, "Data Inspector")
-        self.main_widget.addTab(self.tab_datagenerator, "Data Generator")
-        self.main_widget.addTab(self.tab_benchmark, "Benchmark")
 
         self.main_grid = QGridLayout(self.main_widget)
         self.tab_annotation.setLayout(self.main_grid)
@@ -542,11 +525,9 @@ class MainWindow(QMainWindow):
                 self.data_selection_end.textChanged.connect(lambda: self.update_data_selection_slider())
                 self.update_plot_selector()
                 self.update_data_selection_slider()
-                datamedicalimputationwidget.DataMedicalImputationWidget.on_import_data(self.tab_datamedimputation)
                 self.tab_datainspector.set_data(data.get_dataframe())
 
             self.progress_bar_update_slot(100)
-            self.tab_benchmark.update_dim()
             self.overlay.hide()
 
     def _connect_signals(self):
@@ -840,7 +821,6 @@ class MainWindow(QMainWindow):
     @pyqtSlot()
     def _visibility_of_sidebar_changed(self, checked):
         self.btn_layout_widget.setVisible(not checked)
-        self.tab_datamedimputation.layout_right_widget.setVisible(not checked)
 
     @pyqtSlot()
     def change_ssh_settings(self):
@@ -968,7 +948,6 @@ class MainWindow(QMainWindow):
         plots.update_available_plots()
         self.tab_datainspector.set_data(data.get_dataframe())
         # self.set_updated_novelties(algorithms.get_detected_novelties(plots.get_active_plot()[0]), plots.get_active_plot()[0])
-        datamedicalimputationwidget.DataMedicalImputationWidget.on_import_data(self.tab_datamedimputation)
 
     def update_human_edits(self, df, mask_df):
         self.update_values_in_current_dataset(df)
@@ -1079,7 +1058,6 @@ class MainWindow(QMainWindow):
         labels
         """
         data.set_dataframe(df, labels)
-        data.reset_imputed_dataframe()
         data.reset_mask_dataframe()
         algorithms.reset_detected_novelties()
         plots.register_available_plots()
@@ -1100,19 +1078,14 @@ class MainWindow(QMainWindow):
         self.data_selection_end.textChanged.connect(lambda: self.update_data_selection_slider())
         self.update_plot_selector()
         self.update_data_selection_slider()
-
+        
         """
         Switch to the annotation tab if not in imputation tab
         """
         if self.main_widget.currentIndex() != 1:
             self.main_widget.setCurrentIndex(0)
-        """
-        Notify Imputation Tab about new data
-        Notify Imputation Tab about new data
-        """
-        datamedicalimputationwidget.DataMedicalImputationWidget.on_import_data(self.tab_datamedimputation)
-        self.tab_benchmark.update_dim()
         self.overlay.hide()
+       
 
     @pyqtSlot()
     def update_annotation_options(self, string):
@@ -1309,7 +1282,6 @@ class MainWindow(QMainWindow):
             for k, v in plots.registered_plots.items():
                 self.plot_selector.addItem(plots.registered_plots[k].plot_name  + " (" +str(len(v.main_dot_plot.x_data)) + ")")
                 self.tab_statistics.plot_selector.addItem(plots.registered_plots[k].plot_name)
-        self.tab_benchmark.data_generator_settings_widget.update_plot_selection()
 
     def _confirm_error(self, title, text):
         """
@@ -1541,6 +1513,7 @@ class Overlay(QWidget):
         self.counter = 0
 
     def hideEvent(self, event):
+        print("------------------------------------------")
         self.killTimer(self.timer)
         self.started_showing = False
 

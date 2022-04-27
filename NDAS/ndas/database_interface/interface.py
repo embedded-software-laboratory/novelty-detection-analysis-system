@@ -87,13 +87,29 @@ def selectBestPatientsWithParameters(db_name, numberOfPatients, parameters):
     return results    
 
 
+
 def loadPatientData(tableName, patientId):
+    """
+    Loads the data for a specified patient from the specified table and stores them into a csv table.
+
+    Parameters:
+        tableName - the name of the source table (should be in the asic scheme format)
+        patientId - the id of the patient to be loaded 
+        
+    Returns:
+        If there occurs some type of an error, an error code is returned which indicates the type of the error:
+            -3 - paramiko.ssh_exception.NoValidConnectionsError (means most likely that there is no connection to the i11-VPN)
+            -4 - TimeoutError (the ssh connection attempt failed due to a timeout)
+            -5 - paramiko.ssh_exception.AuthenticationException (means that there the ssh authentication data are invalid)
+            -6 - the database authentication data are invalid
+            
+        If everything went well, it returns nothing. Instead, it creates a csv-file in the local_data directory, which contains all available rows which belongs to the specified patients. It can be used by the ndas further. 
+    """
     ssh = openSSHConnection()
     if ssh in [-3,-4,-5]:
         return ssh
     databaseConfiguration = loadDatabaseConfiguration()
-    
-    # selects the patient from the given table with the specified patient id 
+        # selects the patient from the given table with the specified patient id 
     stdin, stdout, stderr = ssh.exec_command('mysql -h{} -u{} -p{} SMITH_SepsisDB -e "show columns from SMITH_ASIC_SCHEME.{}"'.format(databaseConfiguration['host'], databaseConfiguration['username'], databaseConfiguration['password'], tableName))
 
     columnNames = stdout.readlines()
