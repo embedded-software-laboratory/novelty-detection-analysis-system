@@ -15,6 +15,7 @@ from ndas.mainwindow import datamedicalimputationwidget, statgraphwidgets, datai
 from ndas.mainwindow.sshsettingswidget import SSHSettingsWindow
 from ndas.mainwindow.databasesettingswidget import DatabaseSettingsWindow
 from ndas.mainwindow.importdatabasewidget import ImportDatabaseWindow
+from ndas.mainwindow.optionswidget import OptionsWindow
 from ndas.misc import loggerwidget, parameter, rangeslider
 from ndas.utils import stats
 
@@ -457,6 +458,11 @@ class MainWindow(QMainWindow):
         settings_menu.addAction(database_settings_action)
         self.databasesettingsopened = False
 
+        options_action = QAction("Configure options", self)
+        options_action.triggered.connect(lambda: self.change_options())
+        settings_menu.addAction(options_action)
+        self.optionsopened = False
+
         help_menu = self.main_menu.addMenu('&?')
         about_action = QAction("About", self)
         about_action.triggered.connect(lambda: self.open_about_window())
@@ -701,6 +707,7 @@ class MainWindow(QMainWindow):
                 q_input.setMinimum(arg.minimum)
                 q_input.setMaximum(arg.maximum)
                 q_input.setValue(arg.default)
+                q_input.setSingleStep(10**int(math.log10(arg.default)))
             elif arg.type == parameter.ArgumentType.FLOAT:
                 q_input = QDoubleSpinBox()
                 q_input.setDecimals(3)
@@ -855,6 +862,13 @@ class MainWindow(QMainWindow):
             self.databasewidget = DatabaseSettingsWindow(self)
             self.databasewidget.show()
             self.databasesettingsopened = True
+
+    @pyqtSlot()
+    def change_options(self):
+        if not self.optionsopened:
+            self.optionswidget = OptionsWindow(self)
+            self.optionswidget.show()
+            self.optionsopened = True
 
     @pyqtSlot()
     def toggleTooltipStatus(self, tooltip_checkbox, isChecked):

@@ -6,6 +6,7 @@ from PyQt5.QtWidgets import *
 from ndas.extensions import annotations
 from ndas.misc import datageneratorform
 from ndas.utils import datagenerator
+import math
 
 
 class DataGeneratorWidget(QWidget):
@@ -51,6 +52,7 @@ class DataGeneratorWidget(QWidget):
         self.dataset_length.setMinimum(100)
         self.dataset_length.setMaximum(10000)
         self.dataset_length.setValue(1000)
+        self.dataset_length.setSingleStep(10**int(math.log10(self.dataset_length.value())))
         self.dataset_length_layout.addWidget(self.dataset_length_label)
         self.dataset_length_layout.addWidget(self.dataset_length)
 
@@ -70,6 +72,7 @@ class DataGeneratorWidget(QWidget):
         self.dataset_seed.setMinimum(1)
         self.dataset_seed.setMaximum(99999)
         self.dataset_seed.setValue(datagenerator.get_random_int(10000, 99999))
+        self.dataset_seed.setSingleStep(10**int(math.log10(self.dataset_seed.value())))
         self.dataset_seed.setSingleStep(1)
         self.dataset_seed_layout.addWidget(self.dataset_seed_label)
         self.dataset_seed_layout.addWidget(self.dataset_seed)
