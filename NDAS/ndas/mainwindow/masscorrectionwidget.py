@@ -18,6 +18,7 @@ import humanfriendly
 from datetime import timedelta
 import os
 import logging
+import math
 
 
 class MassCorrectionWidget(QWidget):
@@ -338,6 +339,7 @@ class MassCorrectionWidget(QWidget):
                 q_input.setMinimum(arg.minimum)
                 q_input.setMaximum(arg.maximum)
                 q_input.setValue(arg.default)
+                q_input.setSingleStep(10**int(math.log10(arg.default)))
             elif arg.type == parameter.ArgumentType.FLOAT:
                 q_label.setText("Value for " + q_label.text())
                 q_input = QDoubleSpinBox()

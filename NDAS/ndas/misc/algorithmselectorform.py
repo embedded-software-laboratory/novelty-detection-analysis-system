@@ -2,6 +2,7 @@ from PyQt5.QtWidgets import *
 
 from ndas.extensions import algorithms
 from ndas.misc import parameter
+import math
 
 
 class AlgorithmInputForm:
@@ -130,6 +131,7 @@ class AlgorithmInputForm:
                 q_input.setMinimum(arg.minimum)
                 q_input.setMaximum(arg.maximum)
                 q_input.setValue(arg.default)
+                q_input.setSingleStep(10**int(math.log10(arg.default)))
                 q_input.valueChanged.connect(self.update_name_string)
             elif arg.type == parameter.ArgumentType.FLOAT:
                 q_input = QDoubleSpinBox(parent=q_groupbox)

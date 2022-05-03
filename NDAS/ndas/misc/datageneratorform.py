@@ -1,6 +1,7 @@
 from PyQt5.QtWidgets import *
 import random
 from ndas.utils import datagenerator
+import math
 
 
 class DataInputForm:
@@ -150,6 +151,7 @@ class DataInputForm:
                 self.start_range = QSpinBox()
                 self.start_range.setMaximumWidth(68)
                 self.start_range.setValue(15)
+                self.start_range.setSingleStep(10**int(math.log10(self.start_range.value())))
                 self.start_range.setSingleStep(1)
                 self.start_range.setMinimum(0)
                 self.start_range.setMaximum(100)
@@ -159,6 +161,7 @@ class DataInputForm:
                 self.end_range = QSpinBox()
                 self.end_range.setMaximumWidth(68)
                 self.end_range.setValue(80)
+                self.end_range.setSingleStep(10**int(math.log10(self.end_range.value())))
                 self.end_range.setSingleStep(1)
                 self.end_range.setMinimum(0)
                 self.end_range.setMaximum(100)
