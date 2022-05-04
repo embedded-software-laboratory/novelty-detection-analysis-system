@@ -11,7 +11,7 @@ import os
 import math
 
 from ndas.extensions import algorithms, annotations, data, plots, savestate
-from ndas.mainwindow import statgraphwidgets, datainspectionwidget
+from ndas.mainwindow import datamedicalimputationwidget, statgraphwidgets, datainspectionwidget
 from ndas.mainwindow.sshsettingswidget import SSHSettingsWindow
 from ndas.mainwindow.databasesettingswidget import DatabaseSettingsWindow
 from ndas.mainwindow.importdatabasewidget import ImportDatabaseWindow
@@ -55,16 +55,18 @@ class MainWindow(QMainWindow):
         self.main_widget = QTabWidget()
         self.tab_annotation = QWidget()
         self.tab_annotation.setAutoFillBackground(True)
+        self.tab_datamedimputation = datamedicalimputationwidget.DataMedicalImputationWidget(main_window=self)
+        self.tab_datamedimputation.setAutoFillBackground(True)
         self.tab_datainspector = datainspectionwidget.DataInspectionWidget()
         self.tab_datainspector.setAutoFillBackground(True)
 
         self.tab_datainspector.data_edit_signal.connect(lambda df, mask: self.update_human_edits(df, mask))
 
-
         self.tab_statistics = statgraphwidgets.StatsGraphWidget()
         self.tab_statistics.setAutoFillBackground(True)
 
         self.main_widget.addTab(self.tab_annotation, "Plot")
+        self.main_widget.addTab(self.tab_datamedimputation, 'Plot overview')
         self.main_widget.addTab(self.tab_statistics, "Statistics")
         self.main_widget.addTab(self.tab_datainspector, "Data Inspector")
 
@@ -77,10 +79,6 @@ class MainWindow(QMainWindow):
 
         self.thread_pool = threadpool_obj
         self.additional_parameters_layout_list = []
-
-        self.annotation_groupbox = QGroupBox("Annotation")
-        self.annotation_groupbox_layout = QHBoxLayout()
-        self.annotation_groupbox.setLayout(self.annotation_groupbox_layout)
 
         self.annotation_number_active_label = QLabel("Labeled: ")
         self.annotation_number_active = QLabel("0")
@@ -115,28 +113,8 @@ class MainWindow(QMainWindow):
         self.annotation_label_layout.addWidget(self.annotation_number_active)
         self.annotation_label_layout.addWidget(self.annotation_number_selected_label)
         self.annotation_label_layout.addWidget(self.annotation_number_selected)
-        self.annotation_groupbox_layout.addLayout(self.annotation_label_layout)
 
         self.annotation_spacer = QSpacerItem(20, 0, QSizePolicy.Expanding, QSizePolicy.Minimum)
-        self.annotation_groupbox_layout.addItem(self.annotation_spacer)
-
-        self.annotation_groupbox_layout.addWidget(self.annotation_active_label_label)
-        self.annotation_groupbox_layout.addWidget(self.annotation_active_label)
-        self.annotation_groupbox_layout.addWidget(self.annotation_active_label_sensor_label)
-        self.annotation_groupbox_layout.addWidget(self.annotation_active_label_sensor)
-        self.annotation_groupbox_layout.addWidget(self.annotation_corrected_value_label)
-        self.annotation_groupbox_layout.addWidget(self.annotation_corrected_value)
-        self.annotation_groupbox_layout.addWidget(self.annotation_detailed_comment_label)
-        self.annotation_groupbox_layout.addWidget(self.annotation_detailed_comment)
-
-        self.annotation_groupbox_layout.addWidget(self.annotation_add_label_btn)
-        self.annotation_groupbox_layout.addWidget(self.annotation_remove_label_btn)
-        self.annotation_groupbox_layout.addWidget(self.annotation_invert_btn)
-        self.annotation_groupbox_layout.addWidget(self.annotate_deselect_btn)
-
-        self.novelty_selection_groupbox = QGroupBox("Novelty Selection")
-        self.novelty_selection_groupbox_layout = QHBoxLayout()
-        self.novelty_selection_groupbox.setLayout(self.novelty_selection_groupbox_layout)
 
         self.novelty_selection_number_active_label = QLabel("Marked: ")
         self.novelty_selection_number_active = QLabel("0")
@@ -155,18 +133,8 @@ class MainWindow(QMainWindow):
         self.novelty_selection_label_layout.addWidget(self.novelty_selection_number_active)
         self.novelty_selection_label_layout.addWidget(self.novelty_selection_number_selected_label)
         self.novelty_selection_label_layout.addWidget(self.novelty_selection_number_selected)
-        self.novelty_selection_groupbox_layout.addLayout(self.novelty_selection_label_layout)
 
         self.novelty_selection_spacer = QSpacerItem(20, 0, QSizePolicy.Expanding, QSizePolicy.Minimum)
-        self.novelty_selection_groupbox_layout.addItem(self.novelty_selection_spacer)
-
-        self.novelty_selection_groupbox_layout.addWidget(self.novelty_selection_add_btn)
-        self.novelty_selection_groupbox_layout.addWidget(self.novelty_selection_remove_btn)
-        self.novelty_selection_groupbox_layout.addWidget(self.novelty_selection_invert_btn)
-
-        self.analysis_options_groupbox = QGroupBox("Analysis Settings")
-        self.analysis_options_groupbox_layout = QVBoxLayout()
-        self.analysis_options_groupbox.setLayout(self.analysis_options_groupbox_layout)
 
         self.active_analysis_algorithm_layout = QHBoxLayout()
         self.active_analysis_algorithm_label = QLabel("Active ND Algorithm:")
@@ -178,11 +146,6 @@ class MainWindow(QMainWindow):
         self.analysis_run_btn = QPushButton("Run")
         self.analysis_run_btn.setIcon(self.style().standardIcon(getattr(QStyle, 'SP_CommandLink')))
         self.analysis_remove_detected_btn = QPushButton("Remove Selected Outliers")
-
-        self.analysis_options_groupbox_layout.addLayout(self.active_analysis_algorithm_layout)
-        self.analysis_options_groupbox_layout.addLayout(self.analysis_additional_options)
-        self.analysis_options_groupbox_layout.addWidget(self.analysis_run_btn)
-        self.analysis_options_groupbox_layout.addWidget(self.analysis_remove_detected_btn)
 
         self.data_selection_groupbox = QGroupBox("Data Slicing")
         self.data_selection_groupbox_layout = QVBoxLayout()
@@ -253,11 +216,8 @@ class MainWindow(QMainWindow):
         self.showPointLabels = True
         self.toggle_tooltip_btn = QCheckBox("Show point tooltips")
         self.toggle_tooltip_btn.setChecked(True)
-        self.toggle_label_btn = QCheckBox("Show full point labels")
-        self.toggle_label_btn.setChecked(True)
         self.point_settings_layout = QHBoxLayout()
         self.point_settings_layout.addWidget(self.toggle_tooltip_btn)
-        self.point_settings_layout.addWidget(self.toggle_label_btn)
 
         self.plot_selector_layout = QHBoxLayout()
         self.plot_selector_label = QLabel("Active Plot:")
@@ -281,18 +241,6 @@ class MainWindow(QMainWindow):
         self.stats_number_of_data_points = QLabel("-")
         self.stats_number_of_data_points_layout.addWidget(self.stats_number_of_data_points_label)
         self.stats_number_of_data_points_layout.addWidget(self.stats_number_of_data_points)
-
-        self.stats_number_of_discovered_novelties_layout = QHBoxLayout()
-        self.stats_number_of_discovered_secondary_novelties_layout = QHBoxLayout()
-        self.stats_number_of_discovered_novelties_label = QLabel("Tier-I Novelties:")
-        self.stats_number_of_discovered_secondary_novelties_label = QLabel("Tier-II Novelties:")
-        self.stats_num_primary_novelties = QLabel("-")
-        self.stats_num_secondary_novelties = QLabel("-")
-        self.stats_number_of_discovered_secondary_novelties_layout.addWidget(
-            self.stats_number_of_discovered_secondary_novelties_label)
-        self.stats_number_of_discovered_secondary_novelties_layout.addWidget(self.stats_num_secondary_novelties)
-        self.stats_number_of_discovered_novelties_layout.addWidget(self.stats_number_of_discovered_novelties_label)
-        self.stats_number_of_discovered_novelties_layout.addWidget(self.stats_num_primary_novelties)
 
         self.stats_data_range_layout = QHBoxLayout()
         self.stats_data_range_label = QLabel("Range:")
@@ -319,8 +267,6 @@ class MainWindow(QMainWindow):
         self.stats_mad_layout.addWidget(self.stats_mad)
 
         self.statistic_groupbox_layout.addLayout(self.stats_number_of_data_points_layout)
-        self.statistic_groupbox_layout.addLayout(self.stats_number_of_discovered_novelties_layout)
-        self.statistic_groupbox_layout.addLayout(self.stats_number_of_discovered_secondary_novelties_layout)
         self.statistic_groupbox_layout.addLayout(self.stats_data_range_layout)
         self.statistic_groupbox_layout.addLayout(self.stats_mean_layout)
         self.statistic_groupbox_layout.addLayout(self.stats_std_layout)
@@ -450,8 +396,6 @@ class MainWindow(QMainWindow):
         Adds the main widgets to the GUI
         """
         self.central_layout = QGridLayout()
-        self.central_layout.addWidget(self.annotation_groupbox, 0, 0)
-        self.central_layout.addWidget(self.novelty_selection_groupbox, 1, 0)
         self.central_layout.addWidget(self.plot_layout_widget, 2, 0)
 
         self.central_layout.addWidget(self.btn_layout_widget, 0, 2, 3, 3)
@@ -460,7 +404,6 @@ class MainWindow(QMainWindow):
         self.main_grid.addLayout(self.progress_bar_layout, 1, 0)
 
         self.btn_layout.addWidget(self.fps_label)
-        self.btn_layout.addWidget(self.analysis_options_groupbox)
         self.btn_layout.addWidget(self.data_selection_groupbox)
         self.btn_layout.addWidget(self.visual_options_groupbox)
         self.btn_layout.addWidget(self.statistic_groupbox)
@@ -549,7 +492,6 @@ class MainWindow(QMainWindow):
         self.toggle_plot_lines.clicked.connect(lambda: self.toggle_plot_lines_slot())
         self.toggle_plot_points.clicked.connect(lambda: self.toggle_plot_points_slot())
         self.toggle_tooltip_btn.clicked.connect(lambda: self.toggleTooltipStatus(self.toggle_tooltip_btn, self.toggle_tooltip_btn.isChecked()))
-        self.toggle_label_btn.clicked.connect(lambda: self.toggleLabelStatus(self.toggle_label_btn.isChecked()))
 
         self.annotation_add_label_btn.clicked.connect(
             lambda: self.plot_layout_widget.label_selection(self.annotation_active_label.currentText() + '|' + self.annotation_active_label_sensor.currentText() + '|' + self.annotation_corrected_value.text() + '|' + self.annotation_detailed_comment.text()))
@@ -1008,8 +950,6 @@ class MainWindow(QMainWindow):
         _, active_plot = plots.get_active_plot()
         if active_plot:
             self.stats_number_of_data_points.setText(stats.get_number_data_points(active_plot))
-            self.stats_num_primary_novelties.setText(stats.get_number_novelties(active_plot, 1))
-            self.stats_num_secondary_novelties.setText(stats.get_number_novelties(active_plot, 2))
             self.novelty_selection_number_active.setText(stats.get_number_novelties(active_plot, 'all'))
             self.stats_data_range.setText(stats.get_range_dp(active_plot))
             self.stats_mean.setText(stats.get_mean(active_plot))
@@ -1084,6 +1024,11 @@ class MainWindow(QMainWindow):
         """
         if self.main_widget.currentIndex() != 1:
             self.main_widget.setCurrentIndex(0)
+        """
+        Notify Imputation Tab about new data
+        Notify Imputation Tab about new data
+        """
+        datamedicalimputationwidget.DataMedicalImputationWidget.on_import_data(self.tab_datamedimputation)
         self.overlay.hide()
        
 
