@@ -8,7 +8,6 @@ from ndas.misc import rangeslider, loggerwidget
 from ndas.extensions import data, plots, physiologicallimits
 import pyqtgraph as pg
 import qtwidgets
-from ndas.dataimputationalgorithms import base_imputation
 
 
 class DataMedicalImputationWidget(QWidget):
@@ -18,7 +17,6 @@ class DataMedicalImputationWidget(QWidget):
 
     def __init__(self, main_window):
         super().__init__()
-        self.Baseimputator = base_imputation.BaseImputation()
         self.main_window = main_window
         self.Dataframe = pd.DataFrame()
 
