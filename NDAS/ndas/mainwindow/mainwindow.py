@@ -1458,7 +1458,6 @@ class Overlay(QWidget):
         self.counter = 0
 
     def hideEvent(self, event):
-        print("------------------------------------------")
         self.killTimer(self.timer)
         self.started_showing = False
 
