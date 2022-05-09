@@ -29,13 +29,22 @@ class OptionsWidget(QWidget):
         self.config = yaml.safe_load(open("ndas/config/config.yml"))
         self.groupbox_dict = {}
         self.setLayout(self.layout)
+        element_number = 0
         for k, v in self.config.items():
             if v:
                 groupbox = QGroupBox(k)
-                groupbox_layout = QFormLayout()
-                groupbox_layout.setFieldGrowthPolicy(1)
-                groupbox_layout.setFormAlignment(Qt.AlignLeft | Qt.AlignVCenter)
-                groupbox_layout.setLabelAlignment(Qt.AlignLeft)
+                if k == "physiologicalinfo":
+                    print(k)
+                    groupbox_layout = QVBoxLayout()
+                elif k == "colors":
+                    print(k)
+                    groupbox_layout = QGridLayout()
+                    element_number = 0
+                else:
+                    groupbox_layout = QFormLayout()
+                    groupbox_layout.setFieldGrowthPolicy(1)
+                    groupbox_layout.setFormAlignment(Qt.AlignLeft | Qt.AlignVCenter)
+                    groupbox_layout.setLabelAlignment(Qt.AlignLeft)
                 groupbox.setLayout(groupbox_layout)
                 self.groupbox_dict[k] = groupbox_layout
                 self.layout.addWidget(groupbox)
@@ -43,7 +52,13 @@ class OptionsWidget(QWidget):
                     if k == "physiologicalinfo":
                         print(k2)
                     elif k == "colors":
-                        print(k2)
+                        label = QLabel(k2)
+                        groupbox_layout.addWidget(label, element_number // 3, 2*(element_number % 3))
+                        color_button = QPushButton()
+                        self.set_style_sheet(color_button, "#"+v2)
+                        color_button.clicked.connect(lambda ignore, button_local=color_button: self.change_color(button_local))
+                        groupbox_layout.addWidget(color_button, element_number // 3, 1 + 2*(element_number % 3))
+                        element_number += 1
                     else:
                         if isinstance(v2, list):
                             label = QLabel(k2)
@@ -58,8 +73,9 @@ class OptionsWidget(QWidget):
                             buttons_layout = QHBoxLayout()
                             new_item = QLineEdit()
                             a_button = QPushButton("Add as new item")
+                            a_button.clicked.connect(lambda ignore, list_local=list_w, text_field_local=new_item: self.add_at_selected(list_local, text_field_local))
                             r_button = QPushButton("Remove Selection")
-                            r_button.clicked.connect(lambda: self.remove_selected(list_w))
+                            r_button.clicked.connect(lambda ignore, list_local=list_w: self.remove_selected(list_local))
                             buttons_layout.addWidget(new_item)
                             buttons_layout.addWidget(a_button)
                             buttons_layout.addWidget(r_button)
@@ -103,8 +119,29 @@ class OptionsWidget(QWidget):
 
     def remove_selected(self, list_in):
         selection = list_in.selectedItems()
-        print(selection)
         if not selection:
             return
         for item in selection:
             list_in.takeItem(list_in.row(item))
+
+    def add_at_selected(self, list_in, text_field_in):
+        list_in.addItem(text_field_in.text())
+
+    def change_color(self, button):
+        color = QColorDialog.getColor(button.palette().color(QPalette.Background), self)
+        self.set_style_sheet(button, color.name())
+
+    def set_style_sheet(self, button, color_string):
+        button.setStyleSheet("QAbstractButton"
+                             "{"
+                             "background-color:" + color_string + ";"
+                             "border-style:outset;"
+                             "border-color:grey;"
+                             "border-width:1px;"
+                             "border-radius:5px;"
+                             "}"
+                             "QAbstractButton:pressed"
+                             "{"
+                             "border-style:inset;"
+                             "}"
+                             )
