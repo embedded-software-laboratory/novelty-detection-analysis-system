@@ -1,3 +1,5 @@
+# This is the window which is used to load several information and patient data from the tables stored in the SMITH_ASIC_SCHEME.
+
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
 from PyQt5.QtGui import QRegExpValidator
@@ -19,6 +21,7 @@ class ImportDatabaseWindow(QMainWindow):
         return self.parent
         
     def closeEvent(self, event):
+        # when the window is closed, set this flag in of the main window class to false (it is set to true when this window is opened to prevent that this window is opened multiple times)
         self.parent.importwindowopened = False
         event.accept()
 
@@ -28,15 +31,15 @@ class DatabaseSettingsWidget(QWidget):
         super().__init__(parent)
         self.parameters=""
         self.allPatientIDs = [1,10,100,1000,10000,100000,1000000]
-        reg_exp_number = QRegExp("[0-9]+")
+        reg_exp_number = QRegExp("[0-9]+") #Regular expression which expresses an integer (this is used to ensure that the user only enteres numbers in some fields where this is necessary)
 
         database = QComboBox()
-        database.addItems({"asic_data_mimic", "asic_data_sepsis", "uka_data"})
-        database.currentIndexChanged.connect(lambda: self.loadPatientIds(database.currentText()))
+        database.addItems({"asic_data_mimic", "asic_data_sepsis", "uka_data"}) # dropdown list with all available asic-scheme-tables
+        database.currentIndexChanged.connect(lambda: self.loadPatientIds(database.currentText())) # when the user selects another table, load the patient ids which occur in this table (they are needed by the patient id-slider)
         self.selectLabel = QLabel()
         self.selectLabel.setText("Select patient by patient id")
         self.patientId = QLineEdit()
-        self.patientId.setValidator(QRegExpValidator(reg_exp_number))
+        self.patientId.setValidator(QRegExpValidator(reg_exp_number)) # ensure that only numbers can be entered into this field
         self.patiendIDSlider = QSlider(Qt.Horizontal)
         self.patiendIDSlider.setMinimum(1)
         self.patiendIDSlider.setMaximum(1000000)
@@ -50,7 +53,7 @@ class DatabaseSettingsWidget(QWidget):
         self.patientEntriesLabel = QLabel()
         self.patientEntriesLabel.setText("Show the patients who has the most entries in total in the database:")
         self.numberOfPatients = QLineEdit()
-        self.numberOfPatients.setValidator(QRegExpValidator(reg_exp_number))
+        self.numberOfPatients.setValidator(QRegExpValidator(reg_exp_number)) # ensure that only numbers can be entered into this field
         self.patientIdsScrollbar = QScrollArea()
         self.patientIdsScrollbar.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
         self.patientIdsScrollbar.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
@@ -96,14 +99,19 @@ class DatabaseSettingsWidget(QWidget):
         layout.addRow(showPatients2)
 
         self.setLayout(layout)
-        self.loadPatientIds(database.currentText())
+        self.loadPatientIds(database.currentText()) # load the patient ids which occur in the current selected database so that the range of the patient id slider can be set accordingly
 
     def loadPatient(self, parent, patientid, tableName):
+        """
+        loads the specified patient of the specified asic_data-table into the NDAS
+        """
         filename = os.getcwd()+"\\ndas\\local_data\\imported_patients\\{}_patient_{}.csv".format(tableName, str(patientid))
         result = 0
         parent.getParent().overlay.show()
-        if not os.path.exists(filename):
-            result = interface.loadPatientData(tableName, str(patientid))
+        if not os.path.exists(filename): # check if there already exists a local copy of the data
+            result = interface.loadPatientData(tableName, str(patientid)) # if not, load the data directly from the database (they are stored into a csv file at the above path)
+            
+        # if something went wrong during loading the data, present a respective error message
         if result == -1:
             parent.getParent().overlay.hide()
             QMessageBox.critical(self, "Error", "Patient not found.", QMessageBox.Ok)
@@ -120,6 +128,7 @@ class DatabaseSettingsWidget(QWidget):
             parent.getParent().overlay.hide()
             QMessageBox.critical(self, "Error", "Database authentication failed, please make sure that you entered correct authentication data", QMessageBox.Ok)
         else:
+            # if everything is ok, load the data into the NDAS and close this window
             data.set_instance("CSVImporter", filename)
             data.get_instance().signals.result_signal.connect(
                 lambda result_data, labels: parent.getParent().data_import_result_slot(result_data, labels))
@@ -134,13 +143,26 @@ class DatabaseSettingsWidget(QWidget):
         self.loadPatient(parent, identifier, tableName)
 
     def showPatients(self, parent, numberOfPatients, tableName):
+        """
+        Loads the patients who has the most entries in the specified table and shows the result in the patientidsLabel
+        
+        Paramters:
+            - numberOfPatients (int) - the number of patients that should be depicted
+            - tableName (str) - the name of the table (there must be a table with this name in the SMITH_ASIC_SCHEME)
+        """
+        
+        #determine the right postfix first, because the data are loaded from the look up table named asic_lookup_<source_db>
         db = ""
         if tableName == "asic_data_mimic":
             db = "mimic"
         elif tableName == "asic_data_sepsis":
             db = "sepsis"
+            
+        #retrieve the results    
         result = interface.selectBestPatients(db, numberOfPatients)
         patientids = ["Patient-ID | Number of entries\n", "----------------\n"]
+        
+        #if something went wrong, depict an according error message
         if result == []:
             patientids = ["No result found"]
         elif result == -3:
@@ -152,19 +174,35 @@ class DatabaseSettingsWidget(QWidget):
         elif result == -6:
             QMessageBox.critical(self, "Error", "Database authentication failed, please make sure that you entered correct authentication data", QMessageBox.Ok)
         else:
+        # print the result to the user interface
             for patient in result:
                 patientSplit = patient.split("\t")
                 patientids.append(patientSplit[0] + " | " + patientSplit[1])
         self.patiendidsLabel.setText(''.join(patientids))
 
     def showPatientsWithParameter(self, parent, numberOfPatients, database):
+        """
+        Loads the patient ids and numbers of entries per parameter which have the most entries for the specified parameters in the given table and shows the result in the patientidsLabel
+        The parameters are selected by the user in a seperate window and stored in the global variable self.parameters
+        
+        Paramters:
+           - numberOfPatients (int) - the number of patients that should be depicted
+           - tableName (str) - the name of the table (there must be a table with this name in the SMITH_ASIC_SCHEME)
+        
+        """
+        
+        #determine the right postfix first, because the data are loaded from the look up table named asic_lookup_<source_db>
         db = ""
         if database == "asic_data_mimic":
             db = "mimic"
         elif database == "asic_data_sepsis":
             db = "sepsis"
+            
+        #retrieve the result
         result = interface.selectBestPatientsWithParameters(db, numberOfPatients, self.parameters)
         patientids = []
+        
+        #if something went wrong, depict an according error message
         if result == -1:
             patientids = ["No result found"]
         elif result == -2:
@@ -178,6 +216,7 @@ class DatabaseSettingsWidget(QWidget):
         elif result == -6:
             QMessageBox.critical(self, "Error", "Database authentication failed, please make sure that you entered correct authentication data", QMessageBox.Ok)
         else:
+        # print the result to the user interface
             for patient in result:
                 patientSplit = patient.split("\t")
                 temp = patientSplit[0]
@@ -187,15 +226,17 @@ class DatabaseSettingsWidget(QWidget):
         self.patiendidsLabel2.setText(''.join(patientids))
 
     def chooseParameters(self):
+        # opens a window in which the user can select a couple of parameters (these are used as the input for the showPatientsWithParameter-function)
         self.selectParameters = SelectParametersWindow(self)
         self.selectParameters.show()
 
     def setSelectedParameters(self, parameters, label):
+        # sets the selected parameters which the user selected in the SelectParametersWindow (see chooseParameters-function). This function is called by the selectParametersWindow.
         self.selectedParameters.setText(label)
         self.parameters = parameters
-        # print(self.parameters)
             
     def sliderChanged(self, newValue): 
+        # the slider step range is set to 1, but usually not all patient ids from the min to the max value exists in the asic-scheme tables. So if the user changes the slider, this function determines the nearest actual existing patient id for the selected value and chooses this als the selected patient id
         threshold = float("inf")
         nearestValue = -1
         for i in self.allPatientIDs:
@@ -208,28 +249,35 @@ class DatabaseSettingsWidget(QWidget):
         self.patientId.setText(str(nearestValue))
         
     def loadPatientIds(self, table):
-        if not os.path.exists(os.getcwd()+"\\ndas\\local_data\\{}_patient_ids.txt".format(table)):
-            result = interface.loadPatientIds(table)
+        # load all existing patient ids from the given table. These are used to set the range of the patient id slider correctly and by the sliderChanged function
+        if not os.path.exists(os.getcwd()+"\\ndas\\local_data\\{}_patient_ids.txt".format(table)): # check if there already exist a local copy for this table
+            result = interface.loadPatientIds(table) # if not, load the data directly from the datababase
+            
+            # error messages for the different possible failures
             if result == -6:
                 QMessageBox.critical(self, "Error", "Database authentication failed, please make sure that you entered correct authentication data", QMessageBox.Ok)
                 return
-            #elif result == -3:
-            #    QMessageBox.critical(self, "Error", "Connection to the database failed, make sure that you are connected to the i11-VPN", QMessageBox.Ok)
-            #    return
-            #elif result == -4:
-            #    QMessageBox.critical(self, "Error", "Could not establish a connection to the database (connection timed out)", QMessageBox.Ok)
-            #    return
-            #elif result == -5:
-            #    QMessageBox.critical(self, "Error", "SSH authentication failed, please make sure that you entered correct authentication data", QMessageBox.Ok)
-            #    return
+            elif result == -3:
+                QMessageBox.critical(self, "Error", "Connection to the database failed, make sure that you are connected to the i11-VPN", QMessageBox.Ok)
+                return
+            elif result == -4:
+                QMessageBox.critical(self, "Error", "Could not establish a connection to the database (connection timed out)", QMessageBox.Ok)
+                return
+            elif result == -5:
+                QMessageBox.critical(self, "Error", "SSH authentication failed, please make sure that you entered correct authentication data", QMessageBox.Ok)
+                return
+                
+            # write the result to a text file. This reduces the loading time for further uses
             file = open(os.getcwd()+"\\ndas\\local_data\\{}_patient_ids.txt".format(table), "w")
             for id in result:
                 file.write(id)
             file.close()
         else:
+            # if there already exists the local text file, load the ids from there
             file = open(os.getcwd()+"\\ndas\\local_data\\{}_patient_ids.txt".format(table), "r")
             result = file.readlines()
             
+        # find the smallest and biggest ids and set the range of the slider accordingly
         self.allPatientIDs = result
         maxValue = -1
         minValue = float("inf")
