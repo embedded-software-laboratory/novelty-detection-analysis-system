@@ -1,4 +1,4 @@
-from PyQt5.QtCore import QAbstractTableModel, Qt, QSortFilterProxyModel, pyqtSignal, QRect, QPoint
+from PyQt5.QtCore import QAbstractTableModel, Qt, QSortFilterProxyModel, pyqtSignal, QRect, QPoint, pyqtSlot, QAbstractAnimation, QPropertyAnimation, QParallelAnimationGroup
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
 import pandas as pd
@@ -12,9 +12,17 @@ class OptionsWindow(QMainWindow):
     def __init__(self, parent=None):
         self.parent = parent
         super().__init__(parent)
-        self.setCentralWidget(OptionsWidget(self))
+        self.scroll = QScrollArea()
+        self.scroll.setWidgetResizable(True)
+        self.setCentralWidget(self.scroll)
+        self.optionswidget = OptionsWidget(self)
+        self.scroll.setWidget(self.optionswidget)
+        width = self.optionswidget.geometry().width()*1.1
+        height = self.parent.frameGeometry().height()*0.9
+        self.scroll.setMinimumWidth(width)
+        self.resize(width, height)
         self.setWindowTitle("Configure settings")
-        self.move(parent.frameGeometry().center() - QRect(QPoint(), self.sizeHint()).center())
+        self.move(parent.frameGeometry().center() - QRect(QPoint(), self.size()).center())
 
     def closeEvent(self, event):
         self.parent.optionsopened = False
@@ -27,17 +35,40 @@ class OptionsWidget(QWidget):
         super().__init__()
         self.layout = QVBoxLayout()
         self.config = yaml.safe_load(open("ndas/config/config.yml"))
-        self.groupbox_dict = {}
         self.setLayout(self.layout)
+        self.create_settings_from_dict(self.layout, self.config)
+        self.button_layout = QHBoxLayout()
+        self.apl_cur_ses_btn = QPushButton("Apply Settings for Current Session")
+        self.sav_set_btn = QPushButton("Apply Settings and Save for future Sessions")
+        self.res_btn = QPushButton("Reset all Settings to saved values")
+        self.button_layout.addWidget(self.apl_cur_ses_btn)
+        self.button_layout.addWidget(self.sav_set_btn)
+        self.button_layout.addWidget(self.res_btn)
+        self.layout.addLayout(self.button_layout)
+
+    def create_settings_from_dict(self, layout, dict_in, collapsible=False):
+        groupbox_dict = {}
         element_number = 0
-        for k, v in self.config.items():
+        for k, v in dict_in.items():
             if v:
-                groupbox = QGroupBox(k)
+                if collapsible:
+                    groupbox = CollapsibleBox(k)
+                elif k == "physiologicalinfo":
+                    groupbox = QGroupBox(k)
+                    gr_layout = QVBoxLayout()
+                    gr_scrollarea = QScrollArea()
+                    gr_scrollarea.setFrameShape(QFrame.NoFrame)
+                    gr_layout.addWidget(gr_scrollarea)
+                    groupbox.setLayout(gr_layout)
+                    gr_scrollarea.setWidgetResizable(True)
+                    scroll_content = QWidget()
+                    gr_scrollarea.setWidget(scroll_content)
+                else:
+                    groupbox = QGroupBox(k)
                 if k == "physiologicalinfo":
-                    print(k)
                     groupbox_layout = QVBoxLayout()
+                    self.create_settings_from_dict(groupbox_layout, v, collapsible=True)
                 elif k == "colors":
-                    print(k)
                     groupbox_layout = QGridLayout()
                     element_number = 0
                 else:
@@ -45,12 +76,11 @@ class OptionsWidget(QWidget):
                     groupbox_layout.setFieldGrowthPolicy(1)
                     groupbox_layout.setFormAlignment(Qt.AlignLeft | Qt.AlignVCenter)
                     groupbox_layout.setLabelAlignment(Qt.AlignLeft)
-                groupbox.setLayout(groupbox_layout)
-                self.groupbox_dict[k] = groupbox_layout
-                self.layout.addWidget(groupbox)
+                groupbox_dict[k] = groupbox_layout
+                layout.addWidget(groupbox)
                 for k2, v2 in v.items():
                     if k == "physiologicalinfo":
-                        print(k2)
+                        skip = 1
                     elif k == "colors":
                         label = QLabel(k2)
                         groupbox_layout.addWidget(label, element_number // 3, 2*(element_number % 3))
@@ -72,9 +102,10 @@ class OptionsWidget(QWidget):
                             list_w.setSizePolicy(QSizePolicy.Ignored, QSizePolicy.Ignored)
                             buttons_layout = QHBoxLayout()
                             new_item = QLineEdit()
+                            new_item.setPlaceholderText("Title of new item")
                             a_button = QPushButton("Add as new item")
                             a_button.clicked.connect(lambda ignore, list_local=list_w, text_field_local=new_item: self.add_at_selected(list_local, text_field_local))
-                            r_button = QPushButton("Remove Selection")
+                            r_button = QPushButton("Remove Selected")
                             r_button.clicked.connect(lambda ignore, list_local=list_w: self.remove_selected(list_local))
                             buttons_layout.addWidget(new_item)
                             buttons_layout.addWidget(a_button)
@@ -103,7 +134,24 @@ class OptionsWidget(QWidget):
                             widget = QSpinBox()
                             widget.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
                             widget.setMaximum(10000000)
-                            widget.setSingleStep(10**int(math.log10(v2)))
+                            if not v2:
+                                widget.setSingleStep(1)
+                            else:
+                                widget.setSingleStep(10**int(math.log10(abs(v2))))
+                            widget.setValue(v2)
+                            groupbox_layout.addRow(label, widget)
+                        elif isinstance(v2, float):
+                            label = QLabel(k2)
+                            label.setMinimumWidth(120)
+                            label.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+                            label.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
+                            widget = QDoubleSpinBox()
+                            widget.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+                            widget.setMaximum(10000000)
+                            if not v2:
+                                widget.setSingleStep(1)
+                            else:
+                                widget.setSingleStep(10**int(math.log10(abs(v2))))
                             widget.setValue(v2)
                             groupbox_layout.addRow(label, widget)
                         elif isinstance(v2, str):
@@ -115,7 +163,14 @@ class OptionsWidget(QWidget):
                             widget.setText(v2)
                             groupbox_layout.addRow(label, widget)
                         else:
-                            print("hope not")
+                            print(k2, "- This type of setting is not yet supported by the settings editor.")
+                if collapsible:
+                    groupbox.setContentLayout(groupbox_layout)
+                elif k == "physiologicalinfo":
+                    scroll_content.setLayout(groupbox_layout)
+                    gr_scrollarea.setMinimumHeight(scroll_content.geometry().width()*0.5)
+                else:
+                    groupbox.setLayout(groupbox_layout)
 
     def remove_selected(self, list_in):
         selection = list_in.selectedItems()
@@ -129,7 +184,8 @@ class OptionsWidget(QWidget):
 
     def change_color(self, button):
         color = QColorDialog.getColor(button.palette().color(QPalette.Background), self)
-        self.set_style_sheet(button, color.name())
+        if color.isValid():
+            self.set_style_sheet(button, color.name())
 
     def set_style_sheet(self, button, color_string):
         button.setStyleSheet("QAbstractButton"
@@ -145,3 +201,79 @@ class OptionsWidget(QWidget):
                              "border-style:inset;"
                              "}"
                              )
+
+
+class CollapsibleBox(QWidget):
+    def __init__(self, title="", parent=None):
+        super(CollapsibleBox, self).__init__(parent)
+
+        self.toggle_button = QToolButton(
+            text=title, checkable=True, checked=True
+        )
+        self.toggle_button.setStyleSheet("QToolButton { border: none; }")
+        self.toggle_button.setToolButtonStyle(
+            Qt.ToolButtonTextBesideIcon
+        )
+        self.toggle_button.setArrowType(Qt.RightArrow)
+        self.toggle_button.clicked.connect(self.on_pressed)
+
+        self.toggle_animation = QParallelAnimationGroup(self)
+
+        self.content_area = QScrollArea(
+            maximumHeight=0, minimumHeight=0
+        )
+        self.content_area.setSizePolicy(
+            QSizePolicy.Expanding, QSizePolicy.Fixed
+        )
+        self.content_area.setWidgetResizable(True)
+        self.content_area.setFrameShape(QFrame.NoFrame)
+
+        lay = QVBoxLayout(self)
+        lay.setSpacing(0)
+        lay.setContentsMargins(0, 0, 0, 0)
+        lay.addWidget(self.toggle_button)
+        lay.addWidget(self.content_area)
+
+        self.toggle_animation.addAnimation(
+            QPropertyAnimation(self, b"minimumHeight")
+        )
+        self.toggle_animation.addAnimation(
+            QPropertyAnimation(self, b"maximumHeight")
+        )
+        self.toggle_animation.addAnimation(
+            QPropertyAnimation(self.content_area, b"maximumHeight")
+        )
+
+    @pyqtSlot()
+    def on_pressed(self):
+        checked = self.toggle_button.isChecked()
+        self.toggle_button.setArrowType(
+            Qt.DownArrow if not checked else Qt.RightArrow
+        )
+        self.toggle_animation.setDirection(
+            QAbstractAnimation.Forward
+            if not checked
+            else QAbstractAnimation.Backward
+        )
+        self.toggle_animation.start()
+
+    def setContentLayout(self, layout):
+        lay = self.content_area.layout()
+        del lay
+        self.content_area.setLayout(layout)
+        collapsed_height = (
+            self.sizeHint().height() - self.content_area.maximumHeight()
+        )
+        content_height = layout.sizeHint().height()
+        for i in range(self.toggle_animation.animationCount()):
+            animation = self.toggle_animation.animationAt(i)
+            animation.setDuration(500)
+            animation.setStartValue(collapsed_height)
+            animation.setEndValue(collapsed_height + content_height)
+
+        content_animation = self.toggle_animation.animationAt(
+            self.toggle_animation.animationCount() - 1
+        )
+        content_animation.setDuration(500)
+        content_animation.setStartValue(0)
+        content_animation.setEndValue(content_height)
