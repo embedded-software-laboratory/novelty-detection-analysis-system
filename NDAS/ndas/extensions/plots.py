@@ -40,6 +40,28 @@ def init_graphs(config):
     plot_layout_widget = graphlayoutwidget.GraphLayoutWidget()
 
 
+def update_graphs(config):
+    """
+    Update the plot helper
+
+    Parameters
+    ----------
+    config
+    """
+    global draw_outlier_series_box, outlier_series_threshold, exclusion_substrings
+
+    if config["use_dark_mode"]:
+        pg.setConfigOption('background', 'k')
+        pg.setConfigOption('foreground', 'w')
+    else:
+        pg.setConfigOption('background', 'w')
+        pg.setConfigOption('foreground', 'k')
+
+    draw_outlier_series_box = config["draw_outlier_series_box"]
+    outlier_series_threshold = config["outlier_series_threshold"]
+    exclusion_substrings = [str(v) for v in config["exclusion_substrings"]]
+
+
 def register_plot(name: str, x_data: any, y_data: any, x_label: str, y_label: str):
     """
     Registers a new plot with data

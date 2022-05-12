@@ -130,7 +130,10 @@ def _init_modules(config):
 
     # Init state handler
     logger.init.debug("Initializing state handler")
-    savestate.init_state_handler(config["savestate"])
+    if "savestate" in config.keys():
+        savestate.init_state_handler(config["savestate"])
+    else:
+        savestate.init_state_handler(None)
 
     # Init Annotations
     logger.init.debug("Initializing annotations...")
@@ -142,7 +145,10 @@ def _init_modules(config):
 
     # Init algorithms
     logger.init.debug("Initializing algorithms...")
-    algorithms.init_algorithms(config["algorithms"])
+    if "algorithms" in config.keys():
+        algorithms.init_algorithms(config["algorithms"])
+    else:
+        algorithms.init_algorithms(None)
 
     # Init plots
     logger.init.debug("Initializing plots...")

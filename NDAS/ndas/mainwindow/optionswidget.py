@@ -7,6 +7,9 @@ import yaml
 import qtwidgets
 import math
 import copy
+from ndas.extensions import data, annotations, plots, physiologicallimits
+from ndas.utils import logger
+from ndas.misc import colors
 
 
 class OptionsWindow(QMainWindow):
@@ -38,6 +41,7 @@ class OptionsWidget(QWidget):
 
     def __init__(self, parent=None):
         super().__init__()
+        self.parent = parent
         self.layout = QVBoxLayout()
         self.config = yaml.safe_load(open("ndas/config/config.yml"))
         self.setLayout(self.layout)
@@ -48,11 +52,8 @@ class OptionsWidget(QWidget):
         self.apl_cur_ses_btn.clicked.connect(lambda: self.apply_settings_to_session())
         self.sav_set_btn = QPushButton("Apply Settings and Save for future Sessions")
         self.sav_set_btn.clicked.connect(lambda: self.save_settings_and_apply())
-        self.res_btn = QPushButton("Reset all Settings to saved values")
-        self.res_btn.clicked.connect(lambda: self.reset_settings_to_saved())
         self.button_layout.addWidget(self.apl_cur_ses_btn)
         self.button_layout.addWidget(self.sav_set_btn)
-        self.button_layout.addWidget(self.res_btn)
         if parent:
             parent.container_lay.addLayout(self.button_layout)
         else:
@@ -147,6 +148,7 @@ class OptionsWidget(QWidget):
                             label.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
                             widget = QSpinBox()
                             widget.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+                            widget.setMinimum(-100000000)
                             widget.setMaximum(10000000)
                             if not v2:
                                 widget.setSingleStep(1)
@@ -162,7 +164,9 @@ class OptionsWidget(QWidget):
                             label.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
                             widget = QDoubleSpinBox()
                             widget.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+                            widget.setMinimum(-100000000)
                             widget.setMaximum(10000000)
+                            widget.setDecimals(3)
                             if not v2:
                                 widget.setSingleStep(1)
                             else:
@@ -222,17 +226,15 @@ class OptionsWidget(QWidget):
                              "}"
                              )
 
-    def reset_settings_to_saved(self):
-        x=1
-
     def apply_settings_to_session(self):
         changed_settings = self.get_settings_from_dict(self.groupbox_dict)
-        print(changed_settings)
+        self._update_modules(changed_settings)
 
     def save_settings_and_apply(self):
         self.apply_settings_to_session()
         changed_settings = self.get_settings_from_dict(self.groupbox_dict)
-        print(changed_settings)
+        with open("ndas/config/config.yml", 'w') as outfile:
+            yaml.dump(changed_settings, outfile)
 
     def get_settings_from_dict(self, dict_in):
         result = {}
@@ -266,6 +268,30 @@ class OptionsWidget(QWidget):
             else:
                 result[k] = v
         return result
+
+    def _update_modules(self, config):
+        """
+        Updates all modules with config
+
+        Parameters
+        ----------
+        config
+        """
+        logger.init.debug("Updating annotations...")
+        annotations.set_available_labels(config["annotation"])
+        self.parent.parent.update_labels()
+
+        logger.init.debug("Updating importer...")
+        data.update_data_importer(config["data"])
+
+        logger.init.debug("Updating physiological info...")
+        physiologicallimits.update_physiological_info(config["physiologicalinfo"])
+
+        logger.init.debug("Updating plots...")
+        plots.update_graphs(config["plots"])  # darkmode requires app restart
+
+        logger.init.debug("Updating colors...")
+        colors.init_colors(config["colors"])  # colors are shown with next loaded plot
 
 
 class CollapsibleBox(QWidget):

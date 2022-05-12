@@ -144,8 +144,6 @@ physiologicalinfo:
     nisd-pla-thr: 10
     unit: ""
     aliases: [ ]
-algorithms:
-savestate:
 plots:
   draw_outlier_series_box: True
   outlier_series_threshold: 5
