@@ -6,15 +6,20 @@ import numpy as np
 import yaml
 import qtwidgets
 import math
+import copy
 
 
 class OptionsWindow(QMainWindow):
     def __init__(self, parent=None):
         self.parent = parent
         super().__init__(parent)
+        self.container = QWidget()
+        self.container_lay = QVBoxLayout()
+        self.container.setLayout(self.container_lay)
         self.scroll = QScrollArea()
         self.scroll.setWidgetResizable(True)
-        self.setCentralWidget(self.scroll)
+        self.setCentralWidget(self.container)
+        self.container_lay.addWidget(self.scroll)
         self.optionswidget = OptionsWidget(self)
         self.scroll.setWidget(self.optionswidget)
         width = self.optionswidget.geometry().width()*1.1
@@ -36,21 +41,28 @@ class OptionsWidget(QWidget):
         self.layout = QVBoxLayout()
         self.config = yaml.safe_load(open("ndas/config/config.yml"))
         self.setLayout(self.layout)
-        self.create_settings_from_dict(self.layout, self.config)
+        self.groupbox_dict = {}
+        self.create_settings_from_dict(self.layout, self.config, self.groupbox_dict)
         self.button_layout = QHBoxLayout()
         self.apl_cur_ses_btn = QPushButton("Apply Settings for Current Session")
+        self.apl_cur_ses_btn.clicked.connect(lambda: self.apply_settings_to_session())
         self.sav_set_btn = QPushButton("Apply Settings and Save for future Sessions")
+        self.sav_set_btn.clicked.connect(lambda: self.save_settings_and_apply())
         self.res_btn = QPushButton("Reset all Settings to saved values")
+        self.res_btn.clicked.connect(lambda: self.reset_settings_to_saved())
         self.button_layout.addWidget(self.apl_cur_ses_btn)
         self.button_layout.addWidget(self.sav_set_btn)
         self.button_layout.addWidget(self.res_btn)
-        self.layout.addLayout(self.button_layout)
+        if parent:
+            parent.container_lay.addLayout(self.button_layout)
+        else:
+            self.layout.addLayout(self.button_layout)
 
-    def create_settings_from_dict(self, layout, dict_in, collapsible=False):
-        groupbox_dict = {}
+    def create_settings_from_dict(self, layout, dict_in, dict_of_fields, collapsible=False):
         element_number = 0
         for k, v in dict_in.items():
             if v:
+                local_dict = {}
                 if collapsible:
                     groupbox = CollapsibleBox(k)
                 elif k == "physiologicalinfo":
@@ -67,7 +79,7 @@ class OptionsWidget(QWidget):
                     groupbox = QGroupBox(k)
                 if k == "physiologicalinfo":
                     groupbox_layout = QVBoxLayout()
-                    self.create_settings_from_dict(groupbox_layout, v, collapsible=True)
+                    self.create_settings_from_dict(groupbox_layout, v, local_dict, collapsible=True)
                 elif k == "colors":
                     groupbox_layout = QGridLayout()
                     element_number = 0
@@ -76,7 +88,6 @@ class OptionsWidget(QWidget):
                     groupbox_layout.setFieldGrowthPolicy(1)
                     groupbox_layout.setFormAlignment(Qt.AlignLeft | Qt.AlignVCenter)
                     groupbox_layout.setLabelAlignment(Qt.AlignLeft)
-                groupbox_dict[k] = groupbox_layout
                 layout.addWidget(groupbox)
                 for k2, v2 in v.items():
                     if k == "physiologicalinfo":
@@ -88,6 +99,7 @@ class OptionsWidget(QWidget):
                         self.set_style_sheet(color_button, "#"+v2)
                         color_button.clicked.connect(lambda ignore, button_local=color_button: self.change_color(button_local))
                         groupbox_layout.addWidget(color_button, element_number // 3, 1 + 2*(element_number % 3))
+                        local_dict[k2] = color_button
                         element_number += 1
                     else:
                         if isinstance(v2, list):
@@ -114,6 +126,7 @@ class OptionsWidget(QWidget):
                             list_edit_layout.addWidget(list_w)
                             list_edit_layout.addLayout(buttons_layout)
                             groupbox_layout.addRow(label, list_edit_layout)
+                            local_dict[k2] = list_w
                         elif isinstance(v2, bool):
                             label = QLabel(k2)
                             label.setMinimumWidth(120)
@@ -126,6 +139,7 @@ class OptionsWidget(QWidget):
                             toggling_layout.addItem(QSpacerItem(5, 5, hPolicy=QSizePolicy.MinimumExpanding))
                             widget.setChecked(v2)
                             groupbox_layout.addRow(label, toggling_layout)
+                            local_dict[k2] = widget
                         elif isinstance(v2, int):
                             label = QLabel(k2)
                             label.setMinimumWidth(120)
@@ -140,6 +154,7 @@ class OptionsWidget(QWidget):
                                 widget.setSingleStep(10**int(math.log10(abs(v2))))
                             widget.setValue(v2)
                             groupbox_layout.addRow(label, widget)
+                            local_dict[k2] = widget
                         elif isinstance(v2, float):
                             label = QLabel(k2)
                             label.setMinimumWidth(120)
@@ -154,6 +169,7 @@ class OptionsWidget(QWidget):
                                 widget.setSingleStep(10**int(math.log10(abs(v2))))
                             widget.setValue(v2)
                             groupbox_layout.addRow(label, widget)
+                            local_dict[k2] = widget
                         elif isinstance(v2, str):
                             label = QLabel(k2)
                             label.setMinimumWidth(120)
@@ -162,8 +178,11 @@ class OptionsWidget(QWidget):
                             widget = QLineEdit()
                             widget.setText(v2)
                             groupbox_layout.addRow(label, widget)
+                            local_dict[k2] = widget
                         else:
                             print(k2, "- This type of setting is not yet supported by the settings editor.")
+                            local_dict[k2] = v2
+                dict_of_fields[k] = self.copy_dict(local_dict)
                 if collapsible:
                     groupbox.setContentLayout(groupbox_layout)
                 elif k == "physiologicalinfo":
@@ -181,6 +200,7 @@ class OptionsWidget(QWidget):
 
     def add_at_selected(self, list_in, text_field_in):
         list_in.addItem(text_field_in.text())
+        text_field_in.setText("")
 
     def change_color(self, button):
         color = QColorDialog.getColor(button.palette().color(QPalette.Background), self)
@@ -201,6 +221,51 @@ class OptionsWidget(QWidget):
                              "border-style:inset;"
                              "}"
                              )
+
+    def reset_settings_to_saved(self):
+        x=1
+
+    def apply_settings_to_session(self):
+        changed_settings = self.get_settings_from_dict(self.groupbox_dict)
+        print(changed_settings)
+
+    def save_settings_and_apply(self):
+        self.apply_settings_to_session()
+        changed_settings = self.get_settings_from_dict(self.groupbox_dict)
+        print(changed_settings)
+
+    def get_settings_from_dict(self, dict_in):
+        result = {}
+        for k, v in dict_in.items():
+            if isinstance(v, dict):
+                result[k] = self.get_settings_from_dict(v)
+            elif isinstance(v, QListWidget):
+                list_of_items = []
+                for i in range(v.count()):
+                    list_of_items.append(v.item(i).text())
+                result[k] = list_of_items
+            elif isinstance(v, qtwidgets.Toggle):
+                result[k] = v.isChecked()
+            elif isinstance(v, QSpinBox):
+                result[k] = v.value()
+            elif isinstance(v, QDoubleSpinBox):
+                result[k] = v.value()
+            elif isinstance(v, QLineEdit):
+                result[k] = v.text()
+            elif isinstance(v, QPushButton):
+                result[k] = v.palette().color(QPalette.Background).name()[1:]
+            else:
+                result[k] = v
+        return result
+
+    def copy_dict(self, dict_in):
+        result = {}
+        for k, v in dict_in.items():
+            if isinstance(v, dict):
+                result[k] = self.copy_dict(v)
+            else:
+                result[k] = v
+        return result
 
 
 class CollapsibleBox(QWidget):
