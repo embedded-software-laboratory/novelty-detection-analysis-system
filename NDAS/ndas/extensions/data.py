@@ -31,6 +31,19 @@ def init_data_importer(config):
         _available_importer.append(klass)
 
 
+def update_data_importer(config):
+    """
+    Updates the data importer helper
+    Parameters
+    ----------
+    config
+    """
+    global truncate_size
+
+    if config["auto_truncate_size"]:
+        truncate_size = int(config["auto_truncate_size"])
+
+
 def get_importer(klass, files):
     """
     Returns the selected importer instance

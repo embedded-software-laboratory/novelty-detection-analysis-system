@@ -388,6 +388,15 @@ class MainWindow(QMainWindow):
         for label in label_list:
             self.annotation_active_label.addItem(str(label))
 
+    def update_labels(self):
+        """
+        Updates labels to the list of available labels.
+        """
+        label_list = annotations.get_available_labels()
+        self.annotation_active_label.clear()
+        for label in label_list:
+            self.annotation_active_label.addItem(str(label))
+
     def _add_progressbar(self):
         """
         Adds the progress bar to the GUI

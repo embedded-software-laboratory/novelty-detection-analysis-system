@@ -287,6 +287,15 @@ def get_available_labels():
     return _available_labels
 
 
+def set_available_labels(config):
+    """
+    Sets the currently available labels from config
+
+    """
+    global _available_labels
+    _available_labels = config["labels"]
+
+
 def cast_clicked_to_labeled(plot_name: str, selected_point: 'SelectedPoint', label: str):
     """
     Casts selected points to labeled points

@@ -21,6 +21,19 @@ def init_physiological_info(config):
                 add_physiological_dt_alias(k, alias)
 
 
+def update_physiological_info(config):
+    """
+    Updates the physiological infos from the config file.
+
+    Parameters
+    ----------
+    config
+    """
+    global physiological_data_types
+    physiological_data_types.clear()
+    init_physiological_info(config)
+
+
 def add_physiological_dt(name: str) -> bool:
     """
     Adds a new physiological data type.
