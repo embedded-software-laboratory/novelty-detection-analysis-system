@@ -1,3 +1,5 @@
+# A window which can be used by the user to select multiple parameters from a check box list (used by the importdatabasewidget)
+
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
 import os 
@@ -25,28 +27,21 @@ class DatabaseSettingsWidget(QWidget):
 		self.widget = QWidget()
 
 		self.parameters = []
+        # the chosable parameters are loaded from a csv file: TODO: They rather should be loaded from the table directly, because it can't be guaranteed that all asic-scheme tables use the same columns
 		with open(os.getcwd() + "\\ndas\\database_interface\\Interface_parameter.csv") as parameter_csv:
 			csv_reader_object = csv.reader(parameter_csv, delimiter=";")
 			firstLineFlag = True
 			for row in csv_reader_object:
-				if firstLineFlag:
+				if firstLineFlag: # the first row in the table are the titles of the columns, so do not use it here
 					firstLineFlag = False
 					continue
-				if row[1]=="asic":
+				if row[1]=="asic": # add a labeled checkbox for every asic parameter
 					self.parameters.append(LabeledButton(QCheckBox(row[0], self), row[3]))
 					layout.addRow(self.parameters[-1].button)
-
-
-		#self.parameter1 = QCheckBox("Atemfrequenz (gemessen)", self)
-		#self.parameters.append(self.parameter1)
-		#self.parameter2 = QCheckBox("Herzfrequenz", self)
-		#self.parameters.append(self.parameter2)
 
 		confirm = QPushButton("Confirm")
 		confirm.clicked.connect(lambda: self.confirm(parent))
 
-		#layout.addRow(self.parameter1)
-		#layout.addRow(self.parameter2)
 		layout.addRow(confirm)
 
 		self.widget.setLayout(layout)
@@ -62,13 +57,15 @@ class DatabaseSettingsWidget(QWidget):
 		self.setLayout(layout2)
 
 	def confirm(self, parent):
-		result = ""
-		label = ""
+        # the parameters selected by the users are sent to the importdatabasewidget
+        
+		result = "" # this will be directly integrated into the according sql query
+		label = "" # this is the label that will be integrated into the user interface (so that the user can see what he has selected)
 		for parameter in self.parameters:
 			if parameter.button.isChecked():
 				result = result + parameter.parameter_name + ", "
 				label = label + parameter.button.text() + ", "
-		result = result[:-2]
+		result = result[:-2] # remove the comma from the end of the string
 		label = label[:-2]
 		parent.getParent().setSelectedParameters(result, label)
 		parent.close()

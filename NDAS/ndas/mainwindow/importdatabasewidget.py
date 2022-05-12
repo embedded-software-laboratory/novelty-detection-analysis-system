@@ -21,7 +21,7 @@ class ImportDatabaseWindow(QMainWindow):
         return self.parent
         
     def closeEvent(self, event):
-        # when the window is closed, set this flag in of the main window class to false (it is set to true when this window is opened to prevent that this window is opened multiple times)
+        # when the window is closed, set this flag of the main window class to false (it is set to true when this window is opened to prevent that this window is opened multiple times)
         self.parent.importwindowopened = False
         event.accept()
 
@@ -231,7 +231,7 @@ class DatabaseSettingsWidget(QWidget):
         self.selectParameters.show()
 
     def setSelectedParameters(self, parameters, label):
-        # sets the selected parameters which the user selected in the SelectParametersWindow (see chooseParameters-function). This function is called by the selectParametersWindow.
+        # sets the selected parameters which the user selected in the SelectParametersWindow (see chooseParameters-function). This function is called by the selectparameterswidget.
         self.selectedParameters.setText(label)
         self.parameters = parameters
             
