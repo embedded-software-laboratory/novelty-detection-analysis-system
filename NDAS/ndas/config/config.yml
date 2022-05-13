@@ -1,162 +1,215 @@
 annotation:
   labels:
-    - "Condition"
-    - "Sensor"
-    - "Other/Unknown"
+  - Condition
+  - Sensor
+  - Other/Unknown
 data:
-  # auto-slice imported data larger than this size (x axis)
-  # data is still imported and can be shown, but is initially not plotted for performance reasons
-  auto_truncate_size:
-    100000
+  auto_truncate_size: 100000
 physiologicalinfo:
-  # use these aliases for known phys. limits
-  # high, low: float or None
-  # aliases: list of strings, or empty list
   temperature:
     low: 25
     high: 45
     nisd-pla-thr: 1.8
-    unit: "deg C"
-    aliases: ["temp", "t", "c", "TempC"]
+    unit: deg C
+    aliases:
+    - temp
+    - t
+    - c
+    - TempC
   heartrate:
     low: 15
     high: 230
     nisd-pla-thr: 18
-    unit: "bpm"
-    aliases: ["hr", "HR"]
+    unit: bpm
+    aliases:
+    - hr
+    - HR
   pamean:
     low: 1
     high: 98
     nisd-pla-thr: 10
-    unit: "mmHg"
-    aliases: [ ]
+    unit: mmHg
+    aliases: []
   pasystolic:
     low: 5
     high: 140
     nisd-pla-thr: 10
-    unit: "mmHg"
-    aliases: [ ]
+    unit: mmHg
+    aliases: []
   padiastolic:
     low: 1
     high: 93
     nisd-pla-thr: 10
-    unit: "mmHg"
-    aliases: [ ]
+    unit: mmHg
+    aliases: []
   systemicmean:
     low: 25
     high: 210
     nisd-pla-thr: 20
-    unit: "mmHg"
-    aliases: ["bpm", "pMe"]
+    unit: mmHg
+    aliases:
+    - bpm
+    - pMe
   systemicdiastolic:
     low: 20
     high: 180
     nisd-pla-thr: 17
-    unit: "mmHg"
-    aliases: ["bpd", "pDi"]
+    unit: mmHg
+    aliases:
+    - bpd
+    - pDi
   systemicsystolic:
     low: 35
     high: 280
     nisd-pla-thr: 27
-    unit: "mmHg"
-    aliases: ["bps", "pSy"]
+    unit: mmHg
+    aliases:
+    - bps
+    - pSy
   respiration:
     low: 4
     high: 65
     nisd-pla-thr: 9
-    unit: "bpm"
-    aliases: ["rr", "RR"]
+    unit: bpm
+    aliases:
+    - rr
+    - RR
   sao2:
     low: 20.5
     high: 100
     nisd-pla-thr: 5
-    unit: "%"
-    aliases: ["o2", "sao2", "SaO2"]
+    unit: '%'
+    aliases:
+    - o2
+    - sao2
+    - SaO2
   end-tidal-co2:
     low: 18
     high: 49
     nisd-pla-thr: 6
-    unit: "mmHg"
-    aliases: ["co2", "etco2", "etCO2"]
+    unit: mmHg
+    aliases:
+    - co2
+    - etco2
+    - etCO2
   central-venous-pressure:
     low: -10
     high: 50
     nisd-pla-thr: 10
-    unit: "mmHg"
-    aliases: ["cvp", "CVP"]
+    unit: mmHg
+    aliases:
+    - cvp
+    - CVP
   haemoglobin:
-    low: 4.83 # 3
-    high: 27.38 # 17
-    nisd-pla-thr: 3 # 1.86
-    unit: "g/dL" # "mmol/L"
-    aliases: ["Haemoglobin", "Haemo", "haemo", "hemoglobin", "Hemoglobin", "Hemo", "hemo"]
+    low: 4.83
+    high: 27.38
+    nisd-pla-thr: 3
+    unit: g/dL
+    aliases:
+    - Haemoglobin
+    - Haemo
+    - haemo
+    - hemoglobin
+    - Hemoglobin
+    - Hemo
+    - hemo
   haematocrit:
     low: 18
     high: 52
     nisd-pla-thr: 6
-    unit: "%"
-    aliases: ["Haematocrit", "Haema", "haema", "hematocrit", "Hematocrit", "Hema", "hema"]
+    unit: '%'
+    aliases:
+    - Haematocrit
+    - Haema
+    - haema
+    - hematocrit
+    - Hematocrit
+    - Hema
+    - hema
   pH-arterial:
     low: 6.98
     high: 7.62
     nisd-pla-thr: 0.2
-    unit: ""
-    aliases: ["PH-arterial", "ph", "PH", "pH"]
+    unit: ''
+    aliases:
+    - PH-arterial
+    - ph
+    - PH
+    - pH
   paCO2:
     low: 17
     high: 100
     nisd-pla-thr: 10
-    unit: "mmHg"
-    aliases: ["paco2"]
+    unit: mmHg
+    aliases:
+    - paco2
   thrombocytes:
     low: 6
     high: 941
     nisd-pla-thr: 70
-    unit: "1000/uL"
-    aliases: ["Thrombocytes", "Thrombo","thrombo"]
+    unit: 1000/uL
+    aliases:
+    - Thrombocytes
+    - Thrombo
+    - thrombo
   leukocytes:
     low: 0.2
     high: 52.5
     nisd-pla-thr: 7
-    unit: "1000/uL"
-    aliases: ["Leukocytes", "Leuko", "leuko"]
+    unit: 1000/uL
+    aliases:
+    - Leukocytes
+    - Leuko
+    - leuko
   creatinine:
-    low: 0.191 # 16.808
-    high: 79.352 # 6982.976
-    nisd-pla-thr: 6 # 528
-    unit: "mg/dL" # "umol/L"
-    aliases: ["Creatinine"]
+    low: 0.191
+    high: 79.352
+    nisd-pla-thr: 6
+    unit: mg/dL
+    aliases:
+    - Creatinine
   crp:
     low: 0
     high: 218
     nisd-pla-thr: 28
-    unit: "mg/L"
-    aliases: ["C Reactive Protein", "CRP"]
+    unit: mg/L
+    aliases:
+    - C Reactive Protein
+    - CRP
   bilirubin:
-    low: 0.006 # 0.102
-    high: 1.611 # 27.387
-    nisd-pla-thr: 0.2 # 3.4
-    unit: "mg/dL" # "umol/L"
-    aliases: ["Bilirubin", "Bili", "bili"]
+    low: 0.006
+    high: 1.611
+    nisd-pla-thr: 0.2
+    unit: mg/dL
+    aliases:
+    - Bilirubin
+    - Bili
+    - bili
   default:
     low: 0
     high: 100
     nisd-pla-thr: 10
-    unit: ""
-    aliases: [ ]
+    unit: ''
+    aliases: []
 plots:
-  draw_outlier_series_box: True
+  draw_outlier_series_box: true
   outlier_series_threshold: 5
-  use_dark_mode: False
-  exclusion_substrings: ["ID", "gender", "age", "ethnicity", "height", "weight", "ICD"]
+  use_dark_mode: false
+  exclusion_substrings:
+  - ID
+  - gender
+  - age
+  - ethnicity
+  - height
+  - weight
+  - ICD
 colors:
-  regular: '4e81bd'
-  training: '00afbb'
-  tier-2-novelty: 'e7b800'
-  tier-1-novelty: 'fc4e08'
-  line-color: 'fc4e08'
-  ignored: 'A9A9A9'
-  replaced: 'BD4EB8'
-  added: 'ebb4ff'
-  user-edit: '72821f'
-
+  regular: 4e81bd
+  training: 00afbb
+  tier-2-novelty: e7b800
+  tier-1-novelty: fc4e08
+  line-color: fc4e08
+  ignored: a9a9a9
+  replaced: bd4eb8
+  added: ebb4ff
+  user-edit: 72821f
