@@ -234,7 +234,7 @@ class OptionsWidget(QWidget):
         self.apply_settings_to_session()
         changed_settings = self.get_settings_from_dict(self.groupbox_dict)
         with open("ndas/config/config.yml", 'w') as outfile:
-            yaml.dump(changed_settings, outfile)
+            yaml.dump(changed_settings, outfile, sort_keys=False)
 
     def get_settings_from_dict(self, dict_in):
         result = {}
