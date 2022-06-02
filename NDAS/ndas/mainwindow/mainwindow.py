@@ -1312,8 +1312,11 @@ class MainWindow(QMainWindow):
             self._confirm_error("Error", "Please configure your database authentification data first.")
         elif not self.importwindowopened:
             self.importdatabase = ImportDatabaseWindow(self)
-            self.importdatabase.show()
-            self.importwindowopened = True
+            if self.importdatabase.errorFlag == False:
+                self.importdatabase.show()
+                self.importwindowopened = True
+            else:
+                self.importdatabase.close()
             
 
     def update_plot_selector(self):

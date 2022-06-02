@@ -249,3 +249,29 @@ def loadDatabaseConfiguration():
     """
     databaseConfigurationFile = open(os.getcwd()+"\\ndas\\local_data\\db_asic_scheme.json")
     return json.load(databaseConfigurationFile)
+    
+def testDatabaseConnection():
+    """
+    Test if a connection to the database can successfully be established
+    
+    Returns
+        1 - Connection could successfully be established
+        -3 - paramiko.ssh_exception.NoValidConnectionsError (means most likely that there is no connection to the i11-VPN)
+        -4 - TimeoutError (the ssh connection attempt failed due to a timeout)
+        -5 - paramiko.ssh_exception.AuthenticationException (means that there the ssh authentication data are invalid)
+        -6 - the database authentication data are invalid 
+    """
+    ssh = openSSHConnection()
+    if ssh in [-3,-4,-5]:
+        return ssh
+    databaseConfiguration = loadDatabaseConfiguration()
+    stdin, stdout, stderr = ssh.exec_command('mysql -h{} -u{} -p{} SMITH_SepsisDB -e "select patientid from SMITH_ASIC_SCHEME.asic_data_sepsis limit 1;"'.format(databaseConfiguration['host'], databaseConfiguration['username'], databaseConfiguration['password']))
+    results = stdout.readlines()
+    errors = stderr.readlines()
+    ssh.close()
+    if len(errors) > 0 and errors[0] == "ERROR 1045 (28000): Access denied for user '{}'@'interface.smith.embedded.rwth-aachen.de' (using password: YES)\n".format(databaseConfiguration['username']): #database login data are wrong
+        ssh.close()
+        return -6
+        
+    else:
+        return 1

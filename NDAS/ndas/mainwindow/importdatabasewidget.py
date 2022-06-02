@@ -14,6 +14,7 @@ class ImportDatabaseWindow(QMainWindow):
     def __init__(self, parent=None):
         self.parent = parent
         super().__init__(parent)
+        self.errorFlag = False
         self.setCentralWidget(DatabaseSettingsWidget(self))
         self.setWindowTitle("Import data from database")
 
@@ -99,7 +100,11 @@ class DatabaseSettingsWidget(QWidget):
         layout.addRow(showPatients2)
 
         self.setLayout(layout)
-        self.loadPatientIds(database.currentText()) # load the patient ids which occur in the current selected database so that the range of the patient id slider can be set accordingly
+        result = self.loadPatientIds(database.currentText()) # load the patient ids which occur in the current selected database so that the range of the patient id slider can be set accordingly
+        
+        #if the connection to the database failed, set an according error flag - the main window closes this import window then
+        if result == -1:
+            self.parent().errorFlag = True
 
     def loadPatient(self, parent, patientid, tableName):
         """
@@ -115,18 +120,9 @@ class DatabaseSettingsWidget(QWidget):
         if result == -1:
             parent.getParent().overlay.hide()
             QMessageBox.critical(self, "Error", "Patient not found.", QMessageBox.Ok)
-        elif result == -3:
+        elif result in [-3,-4,-5,-6]:
+            self.showConnectionErrorMessage(result)
             parent.getParent().overlay.hide()
-            QMessageBox.critical(self, "Error", "Connection to the database failed, make sure that you are connected to the i11-VPN", QMessageBox.Ok)
-        elif result == -4:
-            parent.getParent().overlay.hide()
-            QMessageBox.critical(self, "Error", "Could not establish a connection to the database (connection timed out)", QMessageBox.Ok)
-        elif result == -5:
-            parent.getParent().overlay.hide()
-            QMessageBox.critical(self, "Error", "SSH authentication failed, please make sure that you entered correct authentication data", QMessageBox.Ok)
-        elif result == -6:
-            parent.getParent().overlay.hide()
-            QMessageBox.critical(self, "Error", "Database authentication failed, please make sure that you entered correct authentication data", QMessageBox.Ok)
         else:
             # if everything is ok, load the data into the NDAS and close this window
             data.set_instance("CSVImporter", filename)
@@ -165,14 +161,8 @@ class DatabaseSettingsWidget(QWidget):
         #if something went wrong, depict an according error message
         if result == []:
             patientids = ["No result found"]
-        elif result == -3:
-            QMessageBox.critical(self, "Error", "Connection to the database failed, make sure that you are connected to the i11-VPN", QMessageBox.Ok)
-        elif result == -4:
-            QMessageBox.critical(self, "Error", "Could not establish a connection to the database (connection timed out)", QMessageBox.Ok)
-        elif result == -5:
-            QMessageBox.critical(self, "Error", "SSH authentication failed, please make sure that you entered correct authentication data", QMessageBox.Ok)
-        elif result == -6:
-            QMessageBox.critical(self, "Error", "Database authentication failed, please make sure that you entered correct authentication data", QMessageBox.Ok)
+        elif result in [-3,-4,-5,-6]:
+            self.showConnectionErrorMessage(result)
         else:
         # print the result to the user interface
             for patient in result:
@@ -207,14 +197,8 @@ class DatabaseSettingsWidget(QWidget):
             patientids = ["No result found"]
         elif result == -2:
             patientids = ["An error occured, please enter a valid number and valid parameters."]
-        elif result == -3:
-            QMessageBox.critical(self, "Error", "Connection to the database failed, make sure that you are connected to the i11-VPN", QMessageBox.Ok)
-        elif result == -4:
-            QMessageBox.critical(self, "Error", "Could not establish a connection to the database (connection timed out)", QMessageBox.Ok)
-        elif result == -5:
-            QMessageBox.critical(self, "Error", "SSH authentication failed, please make sure that you entered correct authentication data", QMessageBox.Ok)
-        elif result == -6:
-            QMessageBox.critical(self, "Error", "Database authentication failed, please make sure that you entered correct authentication data", QMessageBox.Ok)
+        elif result in [-3,-4,-5,-6]:
+            self.showConnectionErrorMessage(result)
         else:
         # print the result to the user interface
             for patient in result:
@@ -254,18 +238,9 @@ class DatabaseSettingsWidget(QWidget):
             result = interface.loadPatientIds(table) # if not, load the data directly from the datababase
             
             # error messages for the different possible failures
-            if result == -6:
-                QMessageBox.critical(self, "Error", "Database authentication failed, please make sure that you entered correct authentication data", QMessageBox.Ok)
-                return
-            elif result == -3:
-                QMessageBox.critical(self, "Error", "Connection to the database failed, make sure that you are connected to the i11-VPN", QMessageBox.Ok)
-                return
-            elif result == -4:
-                QMessageBox.critical(self, "Error", "Could not establish a connection to the database (connection timed out)", QMessageBox.Ok)
-                return
-            elif result == -5:
-                QMessageBox.critical(self, "Error", "SSH authentication failed, please make sure that you entered correct authentication data", QMessageBox.Ok)
-                return
+            if result in [-3,-4,-5,-6]:
+                self.showConnectionErrorMessage(result)
+                return -1
                 
             # write the result to a text file. This reduces the loading time for further uses
             file = open(os.getcwd()+"\\ndas\\local_data\\{}_patient_ids.txt".format(table), "w")
@@ -274,6 +249,12 @@ class DatabaseSettingsWidget(QWidget):
             file.close()
         else:
             # if there already exists the local text file, load the ids from there
+            # but do a connection test first
+            
+            result = interface.testDatabaseConnection()
+            if not(result == 1): # connection failed, don't need to procced
+                self.showConnectionErrorMessage(result)
+                return -1 
             file = open(os.getcwd()+"\\ndas\\local_data\\{}_patient_ids.txt".format(table), "r")
             result = file.readlines()
             
@@ -289,3 +270,13 @@ class DatabaseSettingsWidget(QWidget):
                 minValue = i
         self.patiendIDSlider.setMinimum(minValue)
         self.patiendIDSlider.setMaximum(maxValue)
+        
+    def showConnectionErrorMessage(self, errorCode):
+        if errorCode == -6:
+            QMessageBox.critical(self, "Error", "Database authentication failed, please make sure that you entered correct authentication data", QMessageBox.Ok)
+        elif errorCode == -3:
+            QMessageBox.critical(self, "Error", "Connection to the database failed, make sure that you are connected to the i11-VPN", QMessageBox.Ok)
+        elif errorCode == -4:
+            QMessageBox.critical(self, "Error", "Could not establish a connection to the database (connection timed out)", QMessageBox.Ok)
+        elif errorCode == -5:
+            QMessageBox.critical(self, "Error", "SSH authentication failed, please make sure that you entered correct authentication data", QMessageBox.Ok)
