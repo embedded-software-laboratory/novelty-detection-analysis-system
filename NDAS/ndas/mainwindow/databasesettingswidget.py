@@ -64,7 +64,7 @@ class DatabaseSettingsWidget(QWidget):
         parent.close()
         
     def togglePasswordField(self):
-        # toggles the password field between hidden and readable (default when the window is opened is hidden)
+        # toggles the password field between password mode and normal text field (default when the window is opened is password mode)
         if self.hidePassword:
             self.password.setEchoMode(QLineEdit.Normal)
             self.show_password.setText("Hide password")
