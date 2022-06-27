@@ -1,4 +1,5 @@
 import pandas as pd
+from ndas.importer import baseimporter, csv, wfm, wfm_numeric
 from ndas.importer import *
 from ndas.utils import logger
 
@@ -24,7 +25,7 @@ def init_data_importer(config):
     if config["auto_truncate_size"]:
         truncate_size = int(config["auto_truncate_size"])
 
-    classes = ([subclasses.__name__ for subclasses in BaseImporter.__subclasses__()])
+    classes = ([subclasses.__name__ for subclasses in baseimporter.BaseImporter.__subclasses__()])
     for klass in classes:
         logger.init.debug("Loaded importer: %s" % klass)
         _available_importer.append(klass)
