@@ -23,7 +23,6 @@ def init_algorithms(config):
     for klass in classes:
         logger.init.debug("Loaded algorithm: %s" % klass)
         _available_algorithms.append(klass)
-    print(_available_algorithms)
     set_specific_algorithm_instance(get_available_algorithms()[0], data.get_dataframe())
 
 
