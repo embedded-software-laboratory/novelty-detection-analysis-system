@@ -2,6 +2,7 @@ import pandas as pd
 
 from ndas.extensions import data
 from ndas.utils import logger
+from ndas.algorithms import basedetector, example, neuralinterdetector, neuralintersamplingdetectorwithphyslimits, neuralintersamplingdetectorwithphyslimitswapprox, physicallimitdetector, sw_absad, sw_absad_mod
 from ndas.algorithms import *
 
 _available_algorithms = []
@@ -18,7 +19,7 @@ def init_algorithms(config):
     config
 
     """
-    classes = ([subclasses.__name__ for subclasses in BaseDetector.__subclasses__()])
+    classes = ([subclasses.__name__ for subclasses in basedetector.BaseDetector.__subclasses__()])
     for klass in classes:
         logger.init.debug("Loaded algorithm: %s" % klass)
         _available_algorithms.append(klass)
