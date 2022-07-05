@@ -132,7 +132,11 @@ def check_libraries():
         'pandas': _missing_package_error_str("pandas"),
         'wfdb': _missing_package_error_str("wfdb"),
         'qtwidgets': _missing_package_error_str("qtwidgets"),
-        'seaborn': _missing_package_error_str("seaborn")
+        'seaborn': _missing_package_error_str("seaborn"),
+        'kneed': _missing_package_error_str("kneed"),
+        'humanfriendly': _missing_package_error_str("humanfriendly"),
+        'mysql': _missing_package_error_str("mysql-connector"),
+        'paramiko': _missing_package_error_str("paramiko")
     }
     _check_modules(modules)
 
