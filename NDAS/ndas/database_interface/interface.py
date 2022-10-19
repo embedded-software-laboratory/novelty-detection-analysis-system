@@ -148,9 +148,7 @@ def loadPatientData(tableName, patientId):
         temp = list(row)
         if not tableName == "uka_data":
             temp.pop(0)
-            temp[0] = datetime.strptime(temp[0], "%Y-%m-%d %H:%M:%S").timestamp()
-        else:
-            temp[0] = int(temp[0])
+        temp[0] = float(temp[0])
         if temp[0] < smallestTimestamp or smallestTimestamp == -1:
             smallestTimestamp = temp[0]
         row = tuple(temp)
