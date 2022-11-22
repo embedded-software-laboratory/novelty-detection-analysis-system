@@ -623,8 +623,8 @@ class MultiSelectViewBox(pg.ViewBox):
         elif ev.button() in [QtCore.Qt.MouseButton.LeftButton]:
             rect = self.parentItem().items[0]
             rect.hide()
-            updated_rect = QtCore.QRectF(self.mapToView(self.mapFromParent(ev.buttonDownPos())),
-                                         self.mapToView(self.mapFromParent(ev.pos())))
+            updated_rect = QtCore.QRectF(self.mapToView(self.mapFromScene(ev.buttonDownScenePos())),
+                                         self.mapToView(self.mapFromScene(ev.scenePos())))
 
             if ev.isFinish():
                 rect_coordinates = updated_rect.getCoords()
