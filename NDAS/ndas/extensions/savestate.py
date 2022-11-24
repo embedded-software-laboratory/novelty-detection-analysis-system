@@ -1,4 +1,5 @@
 import hickle as hkl
+import pandas
 
 from ndas.extensions import annotations, data, plots
 from ndas.utils import logger
@@ -76,8 +77,8 @@ def _save_object(obj: dict, filename: str):
     filename
     """
     logger.savestate.info("Writing state to %s" % filename)
-    hkl.dump(obj, filename, mode='w', compression='lzf', scaleoffset=0,
-             chunks=(100, 100), shuffle=True, fletcher32=True)  # HDF5
+    hkl.dump(obj, filename, mode='w', compression='lzf',
+             shuffle=True, fletcher32=True)  # HDF5
 
 
 def _read_object(filename: str):
