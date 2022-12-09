@@ -1,6 +1,6 @@
 # install_dependencies.bat
 This script can be executed if you want to do development work or run the ndas python script directly. It checks wether... 
-1. ...you have a compatible pythion version istalled,
+1. ...you have a compatible python version istalled,
 2. ...all necessary libraries are installed and if not, installes the missing ones. 
 So this simplifies the setup process as you don't need to install all packages by hand. 
 You don't need to run this script if you just want to use the compiled version (ndas.exe).
