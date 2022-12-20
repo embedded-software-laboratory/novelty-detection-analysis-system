@@ -243,6 +243,7 @@ class MainWindow(QMainWindow):
         self.data_selection_groupbox_layout.addLayout(self.data_selection_range_layout)
         self.data_selection_groupbox_layout.addLayout(self.data_selection_btn_layout)
 
+        self.reset_overlays_btn = QPushButton("Reset Overlays")
         self.reset_view_btn = QPushButton("Reset View")
         self.visual_options_groupbox = QGroupBox("Visualization")
         self.visual_options_groupbox_layout = QVBoxLayout()
@@ -284,10 +285,19 @@ class MainWindow(QMainWindow):
         self.plot_selector_layout.addWidget(self.plot_selector_label)
         self.plot_selector_layout.addWidget(self.plot_selector)
 
+        self.overlay_plot_selector_layout = QHBoxLayout()
+        self.overlay_plot_selector_label = QLabel("Add Overlay Plot:")
+        self.overlay_plot_selector = QComboBox()
+        self.overlay_plot_selector.setDisabled(True)
+        self.overlay_plot_selector_layout.addWidget(self.overlay_plot_selector_label)
+        self.overlay_plot_selector_layout.addWidget(self.overlay_plot_selector)
+
         self.visual_options_groupbox_layout.addLayout(self.vh_lines_layout)
         self.visual_options_groupbox_layout.addLayout(self.toggle_plot_points_layout)
         self.visual_options_groupbox_layout.addLayout(self.point_settings_layout)
         self.visual_options_groupbox_layout.addLayout(self.plot_selector_layout)
+        self.visual_options_groupbox_layout.addLayout(self.overlay_plot_selector_layout)
+        self.visual_options_groupbox_layout.addWidget(self.reset_overlays_btn)
         self.visual_options_groupbox_layout.addWidget(self.reset_view_btn)
 
         self.statistic_groupbox = QGroupBox("Stats")
@@ -370,6 +380,7 @@ class MainWindow(QMainWindow):
         self.setCentralWidget(self.main_widget)
         self.overlay = Overlay(self.centralWidget())
         self.overlay.hide()
+        self.most_recent_opened_file_name = ""
 
     def _add_algorithms(self):
         """
@@ -518,7 +529,7 @@ class MainWindow(QMainWindow):
 
         save_dialog = QFileDialog()
         save_dialog.setDefaultSuffix('ndas')
-        file_name, _ = save_dialog.getSaveFileName(self, "Choose save file location", "",
+        file_name, _ = save_dialog.getSaveFileName(self, "Choose save file location", (os.path.splitext(self.most_recent_opened_file_name)[0]+".ndas"),
                                                    "NDAS Files (*.ndas)", options=options)
 
         if file_name:
@@ -544,6 +555,7 @@ class MainWindow(QMainWindow):
         file_name, _ = QFileDialog.getOpenFileName(self, "Choose NDAS file", "",
                                                    "NDAS Files (*.ndas)", options=options)
         if file_name:
+            self.most_recent_opened_file_name = file_name
             self.overlay.show()
             self.progress_bar_update_slot(15)
 
@@ -568,6 +580,7 @@ class MainWindow(QMainWindow):
         """
         Connects available signals to the slots
         """
+        self.reset_overlays_btn.clicked.connect(lambda: self.clear_overlays_from_current_plot())
         self.reset_view_btn.clicked.connect(lambda: self.plot_widget.autoRange())
         self.analysis_run_btn.clicked.connect(lambda: self.run_detection())
         self.analysis_remove_detected_btn.clicked.connect(lambda: self.remove_detected_points())
@@ -603,6 +616,7 @@ class MainWindow(QMainWindow):
         self.plot_layout_widget.point_labeling_changed_signal.connect(
             lambda num_labeled: self.point_labeling_changed_slot(num_labeled))
         self.plot_selector.currentTextChanged.connect(lambda: self.load_plot())
+        self.overlay_plot_selector.currentTextChanged.connect(lambda: self.load_overlay_plot())
 
         self.data_selection_btn.clicked.connect(lambda: self.slice_data_slot())
         self.data_selection_reset_btn.clicked.connect(lambda: self.reset_data_slice_slot())
@@ -643,6 +657,35 @@ class MainWindow(QMainWindow):
         plots.set_plot_point_status(current_plot_selection, current_pp_checkbox_state)
         plots.plot_layout_widget.set_point_item_visibility(current_pp_checkbox_state)
 
+    def reset_overlay_selector_items(self):
+        self.overlay_plot_selector.clear()
+        self.overlay_plot_selector.addItem("")
+        if plots.registered_plots:
+            for k, v in plots.registered_plots.items():
+                self.overlay_plot_selector.addItem(plots.registered_plots[k].plot_name  + " (" +str(len(v.main_dot_plot.x_data)) + ")")
+
+    def load_overlay_plot(self):
+        selected_plot_name = " ".join(self.plot_selector.currentText().split()[:-1])
+        selected_overlay_index = self.overlay_plot_selector.currentIndex()
+        selected_overlay_plot_name = " ".join(self.overlay_plot_selector.currentText().split()[:-1])
+        if isinstance(selected_plot_name, str):
+            plots.set_overlay_plot(selected_plot_name, selected_overlay_plot_name)
+        self.overlay_plot_selector.setCurrentIndex(0)
+        if selected_overlay_index > 0:
+            self.overlay_plot_selector.removeItem(selected_overlay_index)
+            plots.update_plot_view(retain_zoom=True)
+
+    def clear_overlays_from_current_plot(self, reload=True):
+        plot_name = self.plot_selector.currentText()
+        if not plot_name:
+            return
+
+        selected_plot_name = " ".join(self.plot_selector.currentText().split()[:-1])
+        if isinstance(selected_plot_name, str):
+            plots.remove_overlay_plots(selected_plot_name)
+        if reload:
+            plots.update_plot_view(retain_zoom=True)
+
     @pyqtSlot()
     def load_plot(self):
         """
@@ -651,19 +694,24 @@ class MainWindow(QMainWindow):
         if not self.plot_selector.currentText().split():
             return
 
-        if not self.plot_selector.currentText().split()[0]:
+        selected_plot_name = " ".join(self.plot_selector.currentText().split()[:-1])
+
+        if not selected_plot_name:
             plots.set_plot_active("")
 
-        if isinstance(self.plot_selector.currentText().split()[0], str):
-            current_plot_selection = self.plot_selector.currentText().split()[0]
+        if isinstance(selected_plot_name, str):
+            current_plot_selection = selected_plot_name
             current_pp_checkbox_state = self.toggle_plot_points.isChecked()
             current_pl_checkbox_state = self.toggle_plot_lines.isChecked()
             plots.set_plot_point_status(current_plot_selection, current_pp_checkbox_state)
             plots.set_plot_line_status(current_plot_selection, current_pl_checkbox_state)
-            plots.set_plot_active(self.plot_selector.currentText().split()[0])
+            self.clear_overlays_from_current_plot(reload=False)
+            self.reset_overlay_selector_items()
+            self.overlay_plot_selector.removeItem(self.plot_selector.currentIndex()+1)
+            plots.set_plot_active(selected_plot_name)
 
         else:
-            for plot_name in self.plot_selector.currentText().split()[0]:
+            for plot_name in selected_plot_name:
                 plots.set_plot_active(plot_name)
 
         self.update_statistics()
@@ -776,7 +824,7 @@ class MainWindow(QMainWindow):
 
         save_dialog = QFileDialog()
         save_dialog.setDefaultSuffix('png')
-        file_name, _ = save_dialog.getSaveFileName(self, "Choose file location", "", "png (*.png)", options=options)
+        file_name, _ = save_dialog.getSaveFileName(self, "Choose file location", (os.path.splitext(self.most_recent_opened_file_name)[0]+".png"), "png (*.png)", options=options)
 
         if file_name:
             if file_name[-4:] != ".png":
@@ -794,7 +842,7 @@ class MainWindow(QMainWindow):
 
         save_dialog = QFileDialog()
         save_dialog.setDefaultSuffix('svg')
-        file_name, _ = save_dialog.getSaveFileName(self, "Choose file location", "",
+        file_name, _ = save_dialog.getSaveFileName(self, "Choose file location", (os.path.splitext(self.most_recent_opened_file_name)[0]+".svg"),
                                                    "svg (*.svg)", options=options)
 
         if file_name:
@@ -820,7 +868,7 @@ class MainWindow(QMainWindow):
 
         save_dialog = QFileDialog()
         save_dialog.setDefaultSuffix('csv')
-        file_name, _ = save_dialog.getSaveFileName(self, "Choose file location", "", "csv (*.csv)", options=options)
+        file_name, _ = save_dialog.getSaveFileName(self, "Choose file location", (os.path.splitext(self.most_recent_opened_file_name)[0]+".csv"), "csv (*.csv)", options=options)
 
         if file_name:
             if file_name[-4:] != ".csv":
@@ -840,7 +888,7 @@ class MainWindow(QMainWindow):
 
         save_dialog = QFileDialog()
         save_dialog.setDefaultSuffix('csv')
-        file_name, _ = save_dialog.getSaveFileName(self, "Choose file location", "", "csv (*.csv)", options=options)
+        file_name, _ = save_dialog.getSaveFileName(self, "Choose file location", (os.path.splitext(self.most_recent_opened_file_name)[0]+".csv"), "csv (*.csv)", options=options)
 
         if file_name:
             if file_name[-4:] != ".csv":
@@ -1082,6 +1130,7 @@ class MainWindow(QMainWindow):
         file_name, _ = QFileDialog.getOpenFileName(self, "Choose CSV File", "",
                                                    "csv Files (*.csv)", options=options)
         if file_name:
+            self.most_recent_opened_file_name = file_name
             self.overlay.show()
             data.set_instance("CSVImporter", file_name)
             data.get_instance().signals.result_signal.connect(
@@ -1267,6 +1316,7 @@ class MainWindow(QMainWindow):
         file_names, _ = QFileDialog.getOpenFileNames(self, "Choose Waveform Files", "",
                                                      "wfm files (*.hea)", options=options)
         if file_names:
+            self.most_recent_opened_file_name = file_names[-1]
             self.overlay.show()
             data.set_instance("WFMImporter", file_names)
             data.get_instance().signals.result_signal.connect(
@@ -1287,6 +1337,7 @@ class MainWindow(QMainWindow):
         file_names, _ = QFileDialog.getOpenFileNames(self, "Choose Waveform Files", "",
                                                      "wfm files (*.hea)", options=options)
         if file_names:
+            self.most_recent_opened_file_name = file_names[-1]
             self.overlay.show()
             data.set_instance("WFMNumericImporter", file_names)
             data.get_instance().signals.result_signal.connect(
@@ -1324,16 +1375,21 @@ class MainWindow(QMainWindow):
         Updates the available plots in the plot selector
         """
         self.plot_selector.clear()
+        self.overlay_plot_selector.clear()
+        self.overlay_plot_selector.addItem("")
         self.tab_statistics.plot_selector.clear()
 
         if not plots.registered_plots:
             self.plot_selector.setDisabled(True)
+            self.overlay_plot_selector.setDisabled(True)
             self.tab_statistics.plot_selector.setDisabled(True)
         else:
             self.plot_selector.setDisabled(False)
+            self.overlay_plot_selector.setDisabled(False)
             self.tab_statistics.plot_selector.setDisabled(False)
             for k, v in plots.registered_plots.items():
                 self.plot_selector.addItem(plots.registered_plots[k].plot_name  + " (" +str(len(v.main_dot_plot.x_data)) + ")")
+                self.overlay_plot_selector.addItem(plots.registered_plots[k].plot_name  + " (" +str(len(v.main_dot_plot.x_data)) + ")")
                 self.tab_statistics.plot_selector.addItem(plots.registered_plots[k].plot_name)
         self.tab_benchmark.data_generator_settings_widget.update_plot_selection()
 

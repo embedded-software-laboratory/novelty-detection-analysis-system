@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 import pyqtgraph as pg
 
-from ndas.extensions import data, algorithms
+from ndas.extensions import data, algorithms, physiologicallimits
 from ndas.mainwindow import graphlayoutwidget
 from ndas.misc import graphbox, colors
 from ndas.utils import logger, regression_analysis
@@ -297,12 +297,43 @@ def register_available_plots(current_active_plot=None):
             temp_time = df[columns[0]]
             temp_df = pd.DataFrame({columns[0]: temp_time, col: temp_data})
             temp_df.dropna(axis=0, inplace=True)
-            register_plot(col, temp_df[columns[0]], temp_df[col], labels[0], labels[idx + 1])
+
+            phys_dt = physiologicallimits.get_physical_dt(labels[idx + 1])
+            if phys_dt:
+                y_label = phys_dt.id + " (" + phys_dt.unit + ")"
+            else:
+                y_label = labels[idx + 1]
+
+            register_plot(col, temp_df[columns[0]], temp_df[col], labels[0], y_label)
 
     if current_active_plot is not None:
         set_plot_active(current_active_plot)
     else:
         registered_plots[list(registered_plots.keys())[0]].active = True
+
+
+def set_overlay_plot(name, overlay_name):
+    global registered_plots
+    if overlay_name:
+        reg_plot = registered_plots[name]
+        overlay_reg_plot = registered_plots[overlay_name]
+
+        overlay_plot = pg.ScatterPlotItem(x=overlay_reg_plot.main_dot_plot.x_data.to_numpy(), y=overlay_reg_plot.main_dot_plot.y_data.to_numpy(), brush=pg.mkBrush(colors.OVERLAY),
+                                          pen=pg.mkPen(color='w', width=0.4),
+                                          size=10, hoverable=True)
+        overlay_point_plot_item = SinglePointPlotItem(plot_item_name=overlay_name+"_overlay",
+                                                      x_data=overlay_reg_plot.main_dot_plot.x_data,
+                                                      y_data=overlay_reg_plot.main_dot_plot.y_data, plot_item=overlay_plot, novelties=[])
+
+        reg_plot.supplementary_plots.append(overlay_point_plot_item)
+
+
+def remove_overlay_plots(name):
+    global registered_plots
+    if name:
+        reg_plot = registered_plots[name]
+        new_supplementary_list = [item for item in reg_plot.supplementary_plots if not "_overlay" in item.plot_item_name]
+        reg_plot.supplementary_plots = new_supplementary_list
 
 
 def update_available_plots():

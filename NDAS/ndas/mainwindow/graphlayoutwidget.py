@@ -211,6 +211,11 @@ class GraphLayoutWidget(pg.GraphicsLayoutWidget):
         self.main_line_plot_item = registered_plot_item.main_line_plot.plot_item
         self.main_plot_name = registered_plot_item.main_dot_plot.plot_item_name
 
+        for item in registered_plot_item.supplementary_plots:
+            if "_overlay" in item.plot_item_name:
+                self.supplementary_plots.append(item.plot_item)
+                self.main_plot.addItem(item.plot_item, ignoreBounds=True)
+
         if registered_plot_item.dot_plot_visible:
             self.main_plot.addItem(self.main_dot_plot_item)
 
@@ -224,8 +229,9 @@ class GraphLayoutWidget(pg.GraphicsLayoutWidget):
             self.main_plot.addItem(self._v_line, ignoreBounds=True)
 
         for item in registered_plot_item.supplementary_plots:
-            self.supplementary_plots.append(item.plot_item)
-            self.main_plot.addItem(item.plot_item, ignoreBounds=True)
+            if not "_overlay" in item.plot_item_name:
+                self.supplementary_plots.append(item.plot_item)
+                self.main_plot.addItem(item.plot_item, ignoreBounds=True)
 
         self.main_plot.setLabel(axis='left', text=registered_plot_item.y_label)
         self.main_plot.setLabel(axis='bottom', text=registered_plot_item.x_label)

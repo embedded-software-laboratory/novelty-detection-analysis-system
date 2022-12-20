@@ -11,6 +11,7 @@ IGNORED = 'A9A9A9'
 REPLACED = 'BD4EB8'
 ADDED = 'ebb4ff'
 USEREDIT = '72821f'
+OVERLAY = 'a4bedd'
 
 
 def init_colors(config):
@@ -21,7 +22,7 @@ def init_colors(config):
     ----------
     config
     """
-    global REGULAR, TRAINING, TIER2NOV, TIER1NOV, LINECOLOR, IGNORED, REPLACED, ADDED, USEREDIT
+    global REGULAR, TRAINING, TIER2NOV, TIER1NOV, LINECOLOR, IGNORED, REPLACED, ADDED, USEREDIT, OVERLAY
 
     REGULAR = config["regular"]
     TRAINING = config["training"]
@@ -32,3 +33,4 @@ def init_colors(config):
     REPLACED = config["replaced"]
     ADDED = config["added"]
     USEREDIT = config["user-edit"]
+    OVERLAY = config["overlay"]
