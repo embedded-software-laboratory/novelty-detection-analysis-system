@@ -26,7 +26,8 @@ class Booster:
         if bst:
             y_pred = bst.predict(features)
         else:
-            y_pred = np.nan_to_num(data[:,feature])
+            # y_pred = np.nan_to_num(data[:,feature])
+            y_pred = np.full(data[:,feature].shape, np.nan)
         return y_pred
 
     def predict(self, data, booster):
@@ -89,7 +90,6 @@ class Booster:
             self.load_xgb_model(dim)
             imputed_x = self.xgb_predict(data)
         
-        #data = imputed_x
         data = inverse_MinMaxScaler(imputed_x, mins, maxs)
         
         # Convert to dataframe
