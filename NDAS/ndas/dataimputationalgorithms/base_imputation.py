@@ -1,5 +1,6 @@
 import numpy as np
 from . import pandas_interpolation
+from .ensemble_imputation.booster import Booster
 import pandas as pd
 from scipy.stats import mode
 import logging
@@ -12,7 +13,8 @@ class BaseImputation:
 
     def __init__(self):
         self.Pandas_Interpolation = pandas_interpolation.PandasInterpolation()
-        self.Methods = {'interpolate': self.Pandas_Interpolation.simple_interpolation,  'spline': self.Pandas_Interpolation.spline_interpolation, 'neural inter': self.Pandas_Interpolation.neural_interpolation, 'neural inter mask': self.Pandas_Interpolation.neural_interpolation_mask, 'neural inter mask round': self.Pandas_Interpolation.neural_interpolation_mask_round}
+        self.Booster = Booster()
+        self.Methods = {'interpolate': self.Pandas_Interpolation.simple_interpolation,  'spline': self.Pandas_Interpolation.spline_interpolation, 'neural inter': self.Pandas_Interpolation.neural_interpolation, 'neural inter mask': self.Pandas_Interpolation.neural_interpolation_mask, 'neural inter mask round': self.Pandas_Interpolation.neural_interpolation_mask_round, "lightGBM": self.Booster.lightGbm_imputation}
 
     def base_imputation(self, dataframe, spacing_multiplier=1, current_spacing=5, method_string='neural inter mask round', lim_dir='forward', lim_are='inside'):
         """

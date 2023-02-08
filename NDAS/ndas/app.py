@@ -183,8 +183,11 @@ class Application(QApplication):
         import platform
 
         def make_dpi_aware():
-            if int(platform.release()) >= 8:
-                ctypes.windll.shcore.SetProcessDpiAwareness(True)
+            try:
+                if int(platform.release()) >= 8:
+                    ctypes.windll.shcore.SetProcessDpiAwareness(True)
+            except ValueError:
+                pass
 
         make_dpi_aware()
 
