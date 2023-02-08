@@ -4,6 +4,7 @@ import numpy as np
 import xgboost as xgb
 from os.path import exists
 import pandas as pd
+import os
 
 class Booster:
 
@@ -54,7 +55,8 @@ class Booster:
     def load_light_model(self, dim):
         self.bsts = list()
         for feature in range(dim):
-            path = f'/Users/thanh/Projects/novelty-detection-analysis-system/NDAS/ndas/dataimputationalgorithms/ensemble_imputation/weights/light_feature_{feature}.txt'
+            dir = os.path.dirname(__file__)
+            path = f'{dir}/weights/light_feature_{feature}.txt'
             if exists(path):
                 bst = lgb.Booster(model_file=path)
                 self.bsts.append(bst)
@@ -64,8 +66,10 @@ class Booster:
     def load_xgb_model(self, dim):
         self.bsts = list()
         for feature in range(dim):
-            if exists(f'{self.xgb_weights}_feature_{feature}.txt'):
-                bst = xgb.Booster(model_file=f'{self.xgb_weights}_feature_{feature}.txt')
+            dir = os.path.dirname(__file__)
+            path = f'{dir}/weights/xgb_feature_{feature}.txt'
+            if exists(path):
+                bst = xgb.Booster(model_file=path)
                 self.bsts.append(bst)
             else:
                 self.bsts.append(None)
