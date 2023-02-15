@@ -285,6 +285,10 @@ def get_index_value_at_row_number(row_index):
     Returns the value of the first column at the given position
     """
     global _dataframe
+    print("-------------Debug output")
+    print(row_index)
+    print(get_dataframe_index_column())
+    print("-------------Debug end")
     if _dataframe is not None and row_index < get_dataframe_length():
         return _dataframe[get_dataframe_index_column()][row_index]
     return False
