@@ -66,6 +66,21 @@ def restore_state(loc: str):
         logger.savestate.debug("State restored from file.")
         return True
 
+def restore_additional_lables(loc: str):
+    """
+    Restores additional lables and adds them to the current plots
+    """
+    restore_data = _read_object(loc)
+
+    if restore_data["data"] is None:
+        logger.savestate.error("No data to restore: Canceling")
+        return False
+    else:
+        if restore_data["labels"] is not None:
+            annotations.restore_additional_labels(restore_data["labels"])
+
+        logger.savestate.debug("Additional lables restored from file.")
+        return True
 
 def _save_object(obj: dict, filename: str):
     """

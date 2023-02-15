@@ -245,6 +245,7 @@ class MainWindow(QMainWindow):
 
         self.reset_overlays_btn = QPushButton("Reset Overlays")
         self.reset_view_btn = QPushButton("Reset View")
+        self.load_additional_labels_btn = QPushButton("Load additional labels")
         self.visual_options_groupbox = QGroupBox("Visualization")
         self.visual_options_groupbox_layout = QVBoxLayout()
         self.visual_options_groupbox.setLayout(self.visual_options_groupbox_layout)
@@ -299,6 +300,9 @@ class MainWindow(QMainWindow):
         self.visual_options_groupbox_layout.addLayout(self.overlay_plot_selector_layout)
         self.visual_options_groupbox_layout.addWidget(self.reset_overlays_btn)
         self.visual_options_groupbox_layout.addWidget(self.reset_view_btn)
+        self.visual_options_groupbox_layout.addWidget(self.load_additional_labels_btn)
+        
+
 
         self.statistic_groupbox = QGroupBox("Stats")
         self.statistic_groupbox_layout = QVBoxLayout()
@@ -582,6 +586,7 @@ class MainWindow(QMainWindow):
         """
         self.reset_overlays_btn.clicked.connect(lambda: self.clear_overlays_from_current_plot())
         self.reset_view_btn.clicked.connect(lambda: self.plot_widget.autoRange())
+        self.load_additional_labels_btn.clicked.connect(lambda: self.load_additional_labels())
         self.analysis_run_btn.clicked.connect(lambda: self.run_detection())
         self.analysis_remove_detected_btn.clicked.connect(lambda: self.remove_detected_points())
 
@@ -685,6 +690,15 @@ class MainWindow(QMainWindow):
             plots.remove_overlay_plots(selected_plot_name)
         if reload:
             plots.update_plot_view(retain_zoom=True)
+    
+    def load_additional_labels(self):
+        options = QFileDialog.Options()
+        # options |= QFileDialog.DontUseNativeDialog
+        file_name, _ = QFileDialog.getOpenFileName(self, "Choose NDAS file", "",
+                                                   "NDAS Files (*.ndas)", options=options)
+        if file_name:
+            savestate.restore_additional_lables(file_name)
+
 
     @pyqtSlot()
     def load_plot(self):
