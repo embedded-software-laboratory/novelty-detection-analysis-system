@@ -5,7 +5,10 @@ This section discusses the initial installation and setup of the software.\\
 \\
 If you just want to use the software (instead of developing it), you can just start the mdas.exe and everything should work without any further set up.
 \\If you want to develop the software, read the following installation instructions.
-\\The software is compatible with the following python versions: 3.6, 3.7, 3.8.
+\\There are two options: You can either download and install the required python version and the required packages or you can use the provided conda environment to start the program.
+\section{Install the required python version and packages}
+The software is compatible with the following python versions: 3.6, 3.7, 3.8. Please download and install one of these versions first (\url{https://www.python.org/downloads/}).
+If you already have another (incompatible) python version installed, please be careful which version you add to the PATH, and make sure that you start the NDAS using the compatible python version. In this case, it may be easier to use anaconda instead of installing different python versions at the same time (see section \ref{conda})
 \\
 The main requirements arise from the use of Qt for the graphical user interface. Consequently, it is necessary to install PyQt5 as Python bindings for Qt5. Without these Python bindings it is not possible to run the software. Also, PyQtGraph is a main component of the software, as this graph library is used for visualization and plotting of the data. The analysis system at the time of this documentation has the following requirements: 
 \begin{lstlisting}[caption=requirements.txt: Current requirements for the analysis software.]
@@ -40,3 +43,15 @@ Another option is to just run the script install\_dependencies.bat. It checks we
 The software has a start-up check. If not all required packages are installed, this is shown to the user in an error message.\\
 \\
 No further configuration is necessary to start the software. The graphical user interface can be started by running \texttt{python ndas.py} from the console.
+
+\section{Start the program using Anaconda}\label{conda}
+If you don't want to install a compatible python version directly (e.g. if you already have a newer python version installed), you can use the provided anaconda environment to start the program. To do so, please follow these steps: 
+\begin{enumerate}
+\item Download and install Anaconda (\url{https://www.anaconda.com/products/distribution}).
+\item Open the anaconda powershell and navigate into the project folder (<your local path>\textbackslash novelty-detection-analysis-system \textbackslash NDAS)
+\item Execute the following command: \textbf{conda env create -f ndas\_environment.yml}
+\item Execute the following command: \textbf{conda activate ndas\_environment}
+\item After this, you should be able to start the program using \textbf{python ndas.py}.
+\end{enumerate}
+
+To deactivate the environment, execute the command \textbf{conda deactivate ndas\_environment}.
