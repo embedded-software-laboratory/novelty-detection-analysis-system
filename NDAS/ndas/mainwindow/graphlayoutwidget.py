@@ -85,8 +85,8 @@ class GraphLayoutWidget(pg.GraphicsLayoutWidget):
         self.drag_box.hide()
         self.main_plot.addItem(self.drag_box, ignoreBounds=True)
 
-        self._h_line = pg.InfiniteLine(angle=0, movable=False, pen={'color': "FF0000", 'alpha': 0.3})
-        self._v_line = pg.InfiniteLine(angle=90, movable=False, pen={'color': "FF0000", 'alpha': 0.3})
+        self._h_line = pg.InfiniteLine(angle=0, movable=False, pen={'color': "#ff0000", 'alpha': 0.3})
+        self._v_line = pg.InfiniteLine(angle=90, movable=False, pen={'color': "#ff0000", 'alpha': 0.3})
 
     def _init_nav_plot(self, layout_row: int, layout_col: int):
         """
