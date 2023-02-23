@@ -4,6 +4,7 @@ from copy import deepcopy
 
 _current_point_selection = []
 _current_point_labels = {}
+_additional_loaded_point_labels = {} #labels for the same patient that are loaded from a different file for comparing purposes
 _current_point_labels_history = []
 _current_point_history_index = -1
 _available_labels = []
@@ -162,7 +163,7 @@ def restore_from_save(label_data):
         _current_point_labels[plot_name].append(lp)
     update_history()
 
-def restore_additional_labels(label_data):
+def restore_additional_labels(label_data, file_name):
     """
     Restores additional annotations from save file and adds them to the current plot
 
@@ -170,13 +171,14 @@ def restore_additional_labels(label_data):
     ----------
     label_data
     """
+    print(label_data)
     for single_labeled_point in label_data:
         plot_name = single_labeled_point["plot_name"]
         lp = LabeledPoint(single_labeled_point["value"], single_labeled_point["x"], single_labeled_point["index"],
-                          single_labeled_point["label"], plot_name)
-        if plot_name not in _current_point_labels:
-            _current_point_labels[plot_name] = []
-        _current_point_labels[plot_name].append(lp)
+                          single_labeled_point["label"] + " \n" + file_name, plot_name)
+        if plot_name not in _additional_loaded_point_labels:
+            _additional_loaded_point_labels[plot_name] = []
+        _additional_loaded_point_labels[plot_name].append(lp)
     update_history()
 
 
@@ -212,6 +214,19 @@ def get_labeled_points(plot_name: str):
     """
     if plot_name in _current_point_labels:
         return _current_point_labels[plot_name]
+    else:
+        return []
+
+def get_additional_labeled_points(plot_name: str):
+    """
+    Returns all labeled points for a specific plot
+
+    Parameters
+    ----------
+    plot_name
+    """
+    if plot_name in _additional_loaded_point_labels:
+        return _additional_loaded_point_labels[plot_name]
     else:
         return []
 

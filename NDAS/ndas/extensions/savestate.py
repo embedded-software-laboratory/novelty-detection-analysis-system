@@ -1,5 +1,7 @@
 import hickle as hkl
 import pandas
+import os
+from PyQt5.QtWidgets import QMessageBox
 
 from ndas.extensions import annotations, data, plots
 from ndas.utils import logger
@@ -27,7 +29,7 @@ def get_current_state():
     return current_state
 
 
-def save_state(state: 'State', loc: str):
+def save_state(state: 'State', loc: str, patientinformation: str):
     """
     Saves the current save state to a save file
 
@@ -36,7 +38,7 @@ def save_state(state: 'State', loc: str):
     state
     loc
     """
-    save_data = state.get_save_data()
+    save_data = state.get_save_data(patientinformation)
     _save_object(save_data, loc)
     logger.savestate.debug("Current state saved to file.")
 
@@ -64,23 +66,34 @@ def restore_state(loc: str):
             plots.restore_from_save(restore_data["novelties"])
 
         logger.savestate.debug("State restored from file.")
-        return True
+        try:
+            return True, restore_data["patientinformation"]
+        except KeyError:
+            return True, None
 
-def restore_additional_lables(loc: str):
+def restore_additional_lables(loc: str, patientinformation: str):
     """
     Restores additional lables and adds them to the current plots
     """
     restore_data = _read_object(loc)
 
-    if restore_data["data"] is None:
-        logger.savestate.error("No data to restore: Canceling")
-        return False
-    else:
-        if restore_data["labels"] is not None:
-            annotations.restore_additional_labels(restore_data["labels"])
+    try:
+        if restore_data["patientinformation"] != patientinformation:
+            QMessageBox.critical(None, "Patients not matching", "ERROR: Patients do not match, no additional labels were loaded", QMessageBox.Ok)
+        else:
 
-        logger.savestate.debug("Additional lables restored from file.")
-        return True
+            if restore_data["data"] is None:
+                logger.savestate.error("No data to restore: Canceling")
+                return False
+            else:
+                if restore_data["labels"] is not None:
+                    annotations.restore_additional_labels(restore_data["labels"], os.path.basename(os.path.normpath(loc)))
+
+                logger.savestate.debug("Additional lables restored from file.")
+                return True
+
+    except KeyError:
+        QMessageBox.critical(None, "Incompatible dataformat", "ERROR: Dataformat incompatible", QMessageBox.Ok)
 
 def _save_object(obj: dict, filename: str):
     """
@@ -127,7 +140,8 @@ class State(object):
     def set_labels(self, labels):
         self.labels = labels
 
-    def get_save_data(self):
-        return {'data': self.data,
+    def get_save_data(self, patientinformation):
+        return {'patientinformation': patientinformation,
+                'data': self.data,
                 'novelties': self.novelties,
                 'labels': self.labels}

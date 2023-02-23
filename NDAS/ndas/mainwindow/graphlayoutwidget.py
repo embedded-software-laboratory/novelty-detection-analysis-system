@@ -43,6 +43,7 @@ class GraphLayoutWidget(pg.GraphicsLayoutWidget):
 
     toolTipFlag = True
     showLabels = True
+    showAdditionalLabels = True
 
     def __init__(self, *args, **kwargs):
         """
@@ -106,7 +107,7 @@ class GraphLayoutWidget(pg.GraphicsLayoutWidget):
         """
         Updates the nav plot if the main plot is moved
         """
-        self.region = pg.LinearRegionItem(brush=(225, 225, 255, 60), pen=({'color': "FF0000", 'width': 3}))
+        self.region = pg.LinearRegionItem(brush=(225, 225, 255, 60), pen=({'color': "#ff0000", 'width': 3}))
         self.region.setZValue(10)
         self.nav_plot.addItem(self.region, ignoreBounds=True)
         self.region.sigRegionChanged.connect(self._update_plot_region)
@@ -273,6 +274,10 @@ class GraphLayoutWidget(pg.GraphicsLayoutWidget):
         self.showLabels = flag
         self.update_labels()
 
+    def toggleAdditionalLabelFlag(self, flag):
+        self.showAdditionalLabels = flag
+        self.update_labels()
+
     def set_line_item_visibility(self, status):
         """
         Changes the visibility of the connecting lines
@@ -391,6 +396,18 @@ class GraphLayoutWidget(pg.GraphicsLayoutWidget):
 
         self.point_labeling_changed_signal.emit(annotations.get_number_labeled(self.main_plot_name))
 
+
+    def process_label(self, labeled_point, pColor):
+        if self.showLabels == True:
+            label_text = labeled_point.label
+        else:
+            label_text = labeled_point.label[0]
+        cti = CustomTextItem(index=labeled_point.index, text=label_text, point_x=labeled_point.x,
+                                point_y=labeled_point.val, color=pColor, border='k', anchor=(0.5, 1.1), angle=0,
+                                fill='w')
+        self.main_plot.getViewBox().addItem(cti)
+        cti.setPos(int(labeled_point.x), labeled_point.val)
+
     def update_labels(self):
         """
         Updates the labels of the annotated points
@@ -399,15 +416,11 @@ class GraphLayoutWidget(pg.GraphicsLayoutWidget):
         self._remove_all_labels()
 
         for labeled_point in annotations.get_labeled_points(self.main_plot_name):
-            if self.showLabels == True:
-                label_text = labeled_point.label
-            else:
-                label_text = labeled_point.label[0]
-            cti = CustomTextItem(index=labeled_point.index, text=label_text, point_x=labeled_point.x,
-                                 point_y=labeled_point.val, color='ff0000', border='k', anchor=(0.5, 1.1), angle=0,
-                                 fill='w')
-            self.main_plot.getViewBox().addItem(cti)
-            cti.setPos(int(labeled_point.x), labeled_point.val)
+            self.process_label(labeled_point, "#ff0000")
+
+        if self.showAdditionalLabels:
+            for labeled_point in annotations.get_additional_labeled_points(self.main_plot_name):
+                self.process_label(labeled_point, "#0000ff")
 
         self.point_labeling_changed_signal.emit(annotations.get_number_labeled(self.main_plot_name))
 

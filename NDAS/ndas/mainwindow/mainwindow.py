@@ -271,6 +271,7 @@ class MainWindow(QMainWindow):
         
         self.showPointToolTips = True
         self.showPointLabels = True
+        self.currentPatientInformation = ""
         self.toggle_tooltip_btn = QCheckBox("Show point tooltips")
         self.toggle_tooltip_btn.setChecked(True)
         self.toggle_label_btn = QCheckBox("Show full point labels")
@@ -278,6 +279,11 @@ class MainWindow(QMainWindow):
         self.point_settings_layout = QHBoxLayout()
         self.point_settings_layout.addWidget(self.toggle_tooltip_btn)
         self.point_settings_layout.addWidget(self.toggle_label_btn)
+
+        self.toggle_additional_labels = QCheckBox("Show additional loaded lables")
+        self.toggle_additional_labels.setEnabled(False)
+        self.additional_label_layout = QHBoxLayout()
+        self.additional_label_layout.addWidget(self.toggle_additional_labels)
 
         self.plot_selector_layout = QHBoxLayout()
         self.plot_selector_label = QLabel("Active Plot:")
@@ -296,6 +302,7 @@ class MainWindow(QMainWindow):
         self.visual_options_groupbox_layout.addLayout(self.vh_lines_layout)
         self.visual_options_groupbox_layout.addLayout(self.toggle_plot_points_layout)
         self.visual_options_groupbox_layout.addLayout(self.point_settings_layout)
+        self.visual_options_groupbox_layout.addLayout(self.additional_label_layout)
         self.visual_options_groupbox_layout.addLayout(self.plot_selector_layout)
         self.visual_options_groupbox_layout.addLayout(self.overlay_plot_selector_layout)
         self.visual_options_groupbox_layout.addWidget(self.reset_overlays_btn)
@@ -547,7 +554,7 @@ class MainWindow(QMainWindow):
             self.progress_bar_update_slot(60)
             savestate.get_current_state().set_novelties(plots.format_for_save())
             self.progress_bar_update_slot(90)
-            savestate.save_state(savestate.get_current_state(), file_name)
+            savestate.save_state(savestate.get_current_state(), file_name, self.currentPatientInformation)
             self.progress_bar_update_slot(100)
 
     def load_ndas_slot(self):
@@ -563,7 +570,9 @@ class MainWindow(QMainWindow):
             self.overlay.show()
             self.progress_bar_update_slot(15)
 
-            if savestate.restore_state(file_name):
+            result, patientinformation = savestate.restore_state(file_name)
+            if result:
+                self.currentPatientInformation = patientinformation
                 self.progress_bar_update_slot(85)
                 self.set_data_selection(data.data_slider_start, data.data_slider_end)
                 self.data_selection_slider.setRangeLimit(data.data_slider_start, data.get_dataframe_length())
@@ -602,6 +611,7 @@ class MainWindow(QMainWindow):
         self.toggle_plot_points.clicked.connect(lambda: self.toggle_plot_points_slot())
         self.toggle_tooltip_btn.clicked.connect(lambda: self.toggleTooltipStatus(self.toggle_tooltip_btn, self.toggle_tooltip_btn.isChecked()))
         self.toggle_label_btn.clicked.connect(lambda: self.toggleLabelStatus(self.toggle_label_btn.isChecked()))
+        self.toggle_additional_labels.clicked.connect(lambda: self.toggleAdditionalLabelStatus(self.toggle_additional_labels.isChecked()))
 
         self.annotation_add_label_btn.clicked.connect(
             lambda: self.plot_layout_widget.label_selection(self.annotation_active_label.currentText() + '|' + self.annotation_active_label_sensor.currentText() + '|' + self.annotation_corrected_value.text() + '|' + self.annotation_detailed_comment.text()))
@@ -697,7 +707,10 @@ class MainWindow(QMainWindow):
         file_name, _ = QFileDialog.getOpenFileName(self, "Choose NDAS file", "",
                                                    "NDAS Files (*.ndas)", options=options)
         if file_name:
-            savestate.restore_additional_lables(file_name)
+            savestate.restore_additional_lables(file_name, self.currentPatientInformation)
+            plots.update_plot_view(retain_zoom=True)
+            self.toggle_additional_labels.setEnabled(True)
+            self.toggle_additional_labels.setChecked(True)
 
 
     @pyqtSlot()
@@ -957,6 +970,10 @@ class MainWindow(QMainWindow):
             self.showPointLabels = True
         else:
             self.showPointLabels = False
+
+    @pyqtSlot()
+    def toggleAdditionalLabelStatus(self, isChecked):
+        plots.toggleAdditionalLabelFlag(isChecked)
 
     @pyqtSlot()
     def add_new_plot(self, name, x_data, y_data, x_lbl, y_lbl):
