@@ -245,8 +245,12 @@ class MainWindow(QMainWindow):
 
         self.reset_overlays_btn = QPushButton("Reset Overlays")
         self.reset_view_btn = QPushButton("Reset View")
-        self.load_additional_labels_btn = QPushButton("Load additional labels")
+        self.load_additional_labels_btn = QPushButton("Load Additional Labels")
         self.visual_options_groupbox = QGroupBox("Visualization")
+        self.view_btn_layout = QHBoxLayout()
+        self.view_btn_layout.addWidget(self.reset_overlays_btn)
+        self.view_btn_layout.addWidget(self.reset_view_btn)
+        self.view_btn_layout.addWidget(self.load_additional_labels_btn)
         self.visual_options_groupbox_layout = QVBoxLayout()
         self.visual_options_groupbox.setLayout(self.visual_options_groupbox_layout)
 
@@ -305,9 +309,7 @@ class MainWindow(QMainWindow):
         self.visual_options_groupbox_layout.addLayout(self.additional_label_layout)
         self.visual_options_groupbox_layout.addLayout(self.plot_selector_layout)
         self.visual_options_groupbox_layout.addLayout(self.overlay_plot_selector_layout)
-        self.visual_options_groupbox_layout.addWidget(self.reset_overlays_btn)
-        self.visual_options_groupbox_layout.addWidget(self.reset_view_btn)
-        self.visual_options_groupbox_layout.addWidget(self.load_additional_labels_btn)
+        self.visual_options_groupbox_layout.addLayout(self.view_btn_layout)
         
 
 
@@ -1187,6 +1189,7 @@ class MainWindow(QMainWindow):
         algorithms.reset_detected_novelties()
         plots.register_available_plots()
         annotations.register_plot_annotation()
+        annotations.clear_additional_lables()
 
         self.tab_datainspector.set_data(data.get_dataframe())
         self.set_data_selection(data.data_slider_start, data.data_slider_end)

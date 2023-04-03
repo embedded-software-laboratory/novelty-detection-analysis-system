@@ -21,6 +21,7 @@ def init_annotations(config):
     global _current_point_selection, _current_point_labels, _available_labels
     clear_selections()
     clear_history()
+    clear_additional_lables()
 
     _available_labels = config["labels"]
     for label in _available_labels:
@@ -150,6 +151,7 @@ def restore_from_save(label_data):
     """
     clear_selections()
     clear_history()
+    clear_additional_lables()
 
     for cl in data.get_dataframe_columns():
         register_plot_annotation(cl)
@@ -357,6 +359,10 @@ def clear_history():
     _current_point_labels_history = []
     _current_point_history_index = -1
     logger.annotations.debug("Cleared History, now length 0")
+
+def clear_additional_lables():
+    for plot in list(_additional_loaded_point_labels.keys()):
+        _additional_loaded_point_labels.pop(plot)
 
 
 def update_history():
