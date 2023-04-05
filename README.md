@@ -11,3 +11,6 @@ This research is part of the [medical informatics initiative](https://www.medizi
 
 # License 
 Code licensed under the GPL License. See NDAS/LICENSE.txt file for terms.
+
+# Important information on the GitLab / GitHub repositories
+The repository is maintained at the GitLab of the Embedded Software Laboratory and mirrored to a GitHub repository. That means, changes on the GitLab repository are automatically, regulary pushed to the GitHub repository. **During this process, the content of the GitHub repository gets overwritten completely, so please don't push any changes into the GitHub repository direclty. Otherwise, your work may get lost.**
