@@ -132,6 +132,9 @@ class DatabaseSettingsWidget(QWidget):
             data.get_instance().signals.error_signal.connect(lambda s: parent.getParent().error_msg_slot(s))
             parent.getParent().thread_pool.start(data.get_instance())
             parent.getParent().toggleTooltipStatus(parent.getParent().toggle_tooltip_btn, True)
+            parent.getParent().toggle_additional_labels.setChecked(False)
+            parent.getParent().toggle_additional_labels.setEnabled(False)
+            parent.getParent().currentPatientInformation = tableName + patientid
             parent.close()
 
     def load_randomPatient(self, parent, tableName):

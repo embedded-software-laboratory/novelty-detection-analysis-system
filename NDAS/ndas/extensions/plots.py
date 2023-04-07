@@ -610,6 +610,9 @@ def toggleTooltipFlag(flag):
 def toggleLabelFlag(flag):
     plot_layout_widget.toggleLabelFlag(flag)
 
+def toggleAdditionalLabelFlag(flag):
+    plot_layout_widget.toggleAdditionalLabelFlag(flag)
+
 class SinglePlotItem:
     """
     A plot consisting of multiple plot items
