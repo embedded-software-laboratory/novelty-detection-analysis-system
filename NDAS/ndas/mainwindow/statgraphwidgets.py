@@ -3,6 +3,7 @@ import pyqtgraph as pg
 from PyQt5.QtWidgets import *
 from pyqtgraph.Qt import QtCore
 from scipy import stats
+import pandas as pd
 
 from ndas.extensions import data, plots
 from ndas.misc import graphbox, colors
@@ -153,7 +154,11 @@ class DensityGraphWidget(StatsGraph):
                 continue
 
             row_values = plot_data[c].to_numpy()
-            row_values = row_values[~np.isnan(row_values)]
+            try:
+                row_values = row_values[~np.isnan(row_values)]
+            except TypeError:
+                row_values = plot_data[c].to_numpy()[0]
+                row_values = row_values[~np.isnan(row_values)]
             row_values_length = len(row_values.tolist())
             _x.append(row_values_length)
 
@@ -208,30 +213,54 @@ class BoxplotGraphWidget(StatsGraph):
         active_plot
         """
         self.custom_plot.clear()
-
         plot_data = data.get_dataframe().copy()[active_plot]
-        plot_data = plot_data.dropna(axis=0, how="any")
+        try:
+            plot_data = plot_data.dropna(axis=0, how="any")
 
-        if plot_data.empty:
-            return
+            if plot_data.empty:
+                return
 
-        median = np.median(plot_data)
-        median_y = [3, 7]
-        median_x = [median, median]
+            median = np.median(plot_data)
+            median_y = [3, 7]
+            median_x = [median, median]
 
-        min = np.min(plot_data)
-        min_y = [3, 7]
-        min_x = [min, min]
+            min = np.min(plot_data)
+            min_y = [3, 7]
+            min_x = [min, min]
 
-        max = np.max(plot_data)
-        max_y = [3, 7]
-        max_x = [max, max]
+            max = np.max(plot_data)
+            max_y = [3, 7]
+            max_x = [max, max]
 
-        lq = np.percentile(plot_data, 25)
-        lq_y = [3, 7]
-        lq_x = [lq, lq]
+            lq = np.percentile(plot_data, 25)
+            lq_y = [3, 7]
+            lq_x = [lq, lq]
 
-        uq = np.percentile(plot_data, 75)
+            uq = np.percentile(plot_data, 75)
+        except TypeError:
+            plot_data_series = pd.Series(data=plot_data.values[0], name=plot_data.name)
+            plot_data_series = plot_data_series.dropna(axis=0, how="any")
+            if plot_data_series.empty:
+                return
+
+            median = np.median(plot_data_series)
+            median_y = [3, 7]
+            median_x = [median, median]
+
+            min = np.min(plot_data_series)
+            min_y = [3, 7]
+            min_x = [min, min]
+
+            max = np.max(plot_data_series)
+            max_y = [3, 7]
+            max_x = [max, max]
+
+            lq = np.percentile(plot_data_series, 25)
+            lq_y = [3, 7]
+            lq_x = [lq, lq]
+
+            uq = np.percentile(plot_data_series, 75)
+
         uq_y = [3, 7]
         uq_x = [uq, uq]
 
@@ -322,20 +351,31 @@ class HistogramGraphWidget(StatsGraph):
         self.custom_plot.clear()
 
         plot_data = data.get_dataframe().copy()[active_plot]
-        plot_data = plot_data.dropna(axis=0, how="any")
 
-        if plot_data.empty:
-            return
+        try:
+            plot_data = plot_data.dropna(axis=0, how="any")
 
-        _y, _x = np.histogram(plot_data, density=True, bins=50)
+            if plot_data.empty:
+                return
+            _y, _x = np.histogram(plot_data, density=True, bins=50)
+            gaussian_kde = stats.gaussian_kde(plot_data)  # )bw_method=0.5)
+            mean = np.mean(plot_data)
+            std = np.std(plot_data) 
+        except TypeError:
+            plot_data_series = pd.Series(data=plot_data.values[0], name=plot_data.name)
+            plot_data_series = plot_data_series.dropna(axis=0, how="any")
 
-        gaussian_kde = stats.gaussian_kde(plot_data)  # )bw_method=0.5)
+            if plot_data_series.empty:
+                return
+            _y, _x = np.histogram(plot_data_series, density=True, bins=50)
+            gaussian_kde = stats.gaussian_kde(plot_data_series)  # )bw_method=0.5)
+            mean = np.mean(plot_data_series)
+            std = np.std(plot_data_series)
+
 
         xs = np.arange(np.min(_x), np.max(_x), .1)
         ys = gaussian_kde(xs)
 
-        mean = np.mean(plot_data)
-        std = np.std(plot_data)
 
         mean_y = [0, *gaussian_kde(mean)]
         mean_x = [mean, mean]
@@ -420,23 +460,38 @@ class CorrelationGraphWidget(StatsGraph):
         active_plot
         """
         self.custom_plot.clear()
-
         plot_data = data.get_dataframe().copy()
         time_label = data.get_dataframe_index_column()
         plot_data = plot_data[[time_label]+plots.get_registered_plot_keys()]
-        plot_labels = [single_label for single_label in plot_data.columns.tolist()[1:] if single_label != active_plot]
-        self.set_custom_ticks(plot_labels)
+        try:
+            plot_labels = [single_label for single_label in plot_data.columns.tolist()[1:] if single_label != active_plot]
+            self.set_custom_ticks(plot_labels)
 
-        if plot_data.empty:
-            return
+            if plot_data.empty:
+                return
 
-        if active_plot not in plot_data.columns.tolist():
-            return
+            if active_plot not in plot_data.columns.tolist():
+                return
 
-        corr = plot_data.corr()
-        corr = corr.drop(labels=[active_plot, time_label], axis=0)
+            corr = plot_data.corr()
+            corr = corr.drop(labels=[active_plot, time_label], axis=0)
+            column_data = corr[active_plot].to_numpy()
+        except KeyError:
+            plot_labels = [single_label for single_label in plot_data.columns.tolist()[1:] if single_label != active_plot]
+            self.set_custom_ticks(plot_labels)
 
-        column_data = corr[active_plot].to_numpy()
+            if plot_data.empty:
+                return
+
+            if active_plot not in plot_data.columns.tolist():
+                return
+
+            corr = plot_data.corr()
+            if corr.empty:
+                return
+            corr = corr.drop(labels=[active_plot, time_label], axis=0)
+            column_data = corr[active_plot].to_numpy()
+
         columns = list(range(len(plot_labels)))
 
         _h_line = pg.InfiniteLine(pos=(0, 0), angle=90, movable=False, pen={'color': colors.REGULAR, 'width': 2})

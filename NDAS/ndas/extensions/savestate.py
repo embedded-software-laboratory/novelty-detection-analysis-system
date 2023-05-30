@@ -52,24 +52,42 @@ def restore_state(loc: str):
     loc
     """
     restore_data = _read_object(loc)
+    try:
+        if restore_data["data"] is None:
+            logger.savestate.error("No data to restore: Canceling")
+            return False
+        else:
+            data.restore_from_save(restore_data["data"])
 
-    if restore_data["data"] is None:
-        logger.savestate.error("No data to restore: Canceling")
-        return False
-    else:
-        data.restore_from_save(restore_data["data"])
+            if restore_data["labels"] is not None:
+                annotations.restore_from_save(restore_data["labels"])
 
-        if restore_data["labels"] is not None:
-            annotations.restore_from_save(restore_data["labels"])
+            if restore_data["novelties"] is not None:
+                plots.restore_from_save(restore_data["novelties"])
 
-        if restore_data["novelties"] is not None:
-            plots.restore_from_save(restore_data["novelties"])
+            logger.savestate.debug("State restored from file.")
+            try:
+                return True, restore_data["patientinformation"]
+            except KeyError:
+                return True, None
+    except KeyError:
+        if restore_data["'data'"] is None:
+            logger.savestate.error("No data to restore: Canceling")
+            return False
+        else:
+            data.restore_from_save(restore_data["'data'"])
 
-        logger.savestate.debug("State restored from file.")
-        try:
-            return True, restore_data["patientinformation"]
-        except KeyError:
-            return True, None
+            if restore_data["'labels'"] is not None:
+                annotations.restore_from_save(list(restore_data["'labels'"].values()))
+
+            if restore_data["'novelties'"] is not None:
+                plots.restore_from_save(restore_data["'novelties'"], True)
+
+            logger.savestate.debug("State restored from file.")
+            try:
+                return True, restore_data["'patientinformation'"]
+            except KeyError:
+                return True, None
 
 def restore_additional_lables(loc: str, patientinformation: str):
     """

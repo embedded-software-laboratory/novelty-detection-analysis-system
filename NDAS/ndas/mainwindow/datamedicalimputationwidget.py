@@ -397,14 +397,25 @@ class DataMedicalImputationWidget(QWidget):
             self.visualize_data_and_redraw_graphs(self.Dataframe)
         else:
             self.visualize_data(self.Dataframe)
-        self.data_selection_start.setText(str(self.Dataframe[time_column].dropna().min()))
-        self.data_selection_end.setText(str(self.Dataframe[time_column].dropna().max()))
+        try:
+            self.data_selection_start.setText(str(self.Dataframe[time_column].dropna().min()))
+            self.data_selection_end.setText(str(self.Dataframe[time_column].dropna().max()))
+        except TypeError:
+            time_column_series = pd.Series(data=self.Dataframe[time_column].values[0], name=self.Dataframe[time_column].name)
+            self.data_selection_start.setText(str(time_column_series.dropna().min()))
+            self.data_selection_end.setText(str(time_column_series.dropna().max()))
         self.update_data_selection_slider()
 
-        self.bar_plot.setXRange(self.Dataframe[time_column].dropna().min(), self.Dataframe[time_column].dropna().max())
-        for Plot in self.Graphs:
-            Plot.autoRange()
-            Plot.setXRange(self.Dataframe[time_column].dropna().min(), self.Dataframe[time_column].dropna().max())
+        try:
+            self.bar_plot.setXRange(self.Dataframe[time_column].dropna().min(), self.Dataframe[time_column].dropna().max())
+            for Plot in self.Graphs:
+                Plot.autoRange()
+                Plot.setXRange(self.Dataframe[time_column].dropna().min(), self.Dataframe[time_column].dropna().max())
+        except TypeError:
+            self.bar_plot.setXRange(time_column_series.dropna().min(), time_column_series.dropna().max())
+            for Plot in self.Graphs:
+                Plot.autoRange()
+                Plot.setXRange(time_column_series.dropna().min(), time_column_series.dropna().max())
 
     def on_click_apply_results(self):
         time_col_name = data.get_dataframe_index_column()
@@ -444,7 +455,12 @@ class DataMedicalImputationWidget(QWidget):
             self.data_selection_start.setDisabled(False)
             self.data_selection_end.setDisabled(False)
             self.data_selection_slider.setDisabled(False)
-            self.data_selection_slider.setRangeLimit(self.Dataframe[time_column].dropna().min(), self.Dataframe[time_column].dropna().max())
+
+            try:
+                self.data_selection_slider.setRangeLimit(self.Dataframe[time_column].dropna().min(), self.Dataframe[time_column].dropna().max())
+            except TypeError:
+                time_column_series = pd.Series(data=self.Dataframe[time_column].values[0], name=self.Dataframe[time_column].name)
+                self.data_selection_slider.setRangeLimit(time_column_series.dropna().min(), time_column_series.dropna().max())
 
             self.on_click_reset_range(redraw_graphs=True)
             self.data_selection_slider.valueChanged.connect(lambda start_value, end_value: self.update_data_selection_text(start_value, end_value))
@@ -493,7 +509,11 @@ class DataMedicalImputationWidget(QWidget):
 
         for i, col in enumerate(used_columns):
             self.Show_Graph_Checkboxes[i].setChecked(not update_dataframe[col].isnull().all())
-        length_of_data = update_dataframe[time_column].iloc[(-1)] - update_dataframe[time_column].iloc[0]
+        try:
+            length_of_data = update_dataframe[time_column].iloc[(-1)] - update_dataframe[time_column].iloc[0]
+        except BaseException:
+            time_column_series = pd.Series(data=self.Dataframe[time_column].values[0], name=self.Dataframe[time_column].name)
+            length_of_data = time_column_series.iloc[(-1)] -time_column_series.iloc[0]
         self.bar_plot.clear()
         self.bar_plot.addItem(self.bar_v_line)
 
@@ -508,31 +528,60 @@ class DataMedicalImputationWidget(QWidget):
             else:
                 self.ICD_Labels[i].setToolTip(self.ICD_Descriptions[i])
             icd_col_name = ("ICD"+icd_string).replace('-', '')
-            if icd_col_name in list_icd_columns and update_dataframe[icd_col_name].sum() > 0:
-                local_icd_series = update_dataframe[icd_col_name]
-                self.bar_plot_label.show()
-                self.bar_plot.show()
-                # self.Patient_Information_ICD_Label.show()
-                # self.ICD_Grid_Widget.show()
-                self.layout_left.setRowStretch(0, 1)
-                self.ICD_Labels[i].setToolTip(self.ICD_Labels[i].toolTip()+"\n")
-                self.ICD_Labels[i].setStyleSheet('color: black')
-                list_of_value_change_indices = local_icd_series[(local_icd_series.diff() != 0)].index.tolist()
 
-                if local_icd_series[list_of_value_change_indices[0]] == 0:
-                    list_of_value_change_indices.remove(list_of_value_change_indices[0])
+            try: 
+                if icd_col_name in list_icd_columns and update_dataframe[icd_col_name].sum() > 0:
+                    local_icd_series = update_dataframe[icd_col_name]
+                    self.bar_plot_label.show()
+                    self.bar_plot.show()
+                    # self.Patient_Information_ICD_Label.show()
+                    # self.ICD_Grid_Widget.show()
+                    self.layout_left.setRowStretch(0, 1)
+                    self.ICD_Labels[i].setToolTip(self.ICD_Labels[i].toolTip()+"\n")
+                    self.ICD_Labels[i].setStyleSheet('color: black')
+                    list_of_value_change_indices = local_icd_series[(local_icd_series.diff() != 0)].index.tolist()
 
-                for index in list_of_value_change_indices:
-                    x_value = update_dataframe[time_column][(index - 1 + int(float(local_icd_series[index])))]
-                    if str(x_value) not in icd_changes:
-                        icd_changes[str(x_value)] = []
-                    icd_changes[str(x_value)] = icd_changes[str(x_value)] + [(2 * local_icd_series[index] - 1) * (i + 1)]
-                    if(2 * local_icd_series[index] - 1) >0:
-                        self.ICD_Labels[i].setToolTip(self.ICD_Labels[i].toolTip() + "\nAdded at time: "+str(int(float(x_value))))
-                    else:
-                        self.ICD_Labels[i].setToolTip(self.ICD_Labels[i].toolTip() + "\nRemoved at time: " + str(int(float(x_value))))
-            else:
-                self.ICD_Labels[i].setStyleSheet('color: lightGray')
+                    if local_icd_series[list_of_value_change_indices[0]] == 0:
+                        list_of_value_change_indices.remove(list_of_value_change_indices[0])
+
+                    for index in list_of_value_change_indices:
+                        x_value = update_dataframe[time_column][(index - 1 + int(float(local_icd_series[index])))]
+                        if str(x_value) not in icd_changes:
+                            icd_changes[str(x_value)] = []
+                        icd_changes[str(x_value)] = icd_changes[str(x_value)] + [(2 * local_icd_series[index] - 1) * (i + 1)]
+                        if(2 * local_icd_series[index] - 1) >0:
+                            self.ICD_Labels[i].setToolTip(self.ICD_Labels[i].toolTip() + "\nAdded at time: "+str(int(float(x_value))))
+                        else:
+                            self.ICD_Labels[i].setToolTip(self.ICD_Labels[i].toolTip() + "\nRemoved at time: " + str(int(float(x_value))))
+                else:
+                    self.ICD_Labels[i].setStyleSheet('color: lightGray')
+            except ValueError:
+                icd_col_name_series = pd.Series(data=update_dataframe[icd_col_name].values[0], name=update_dataframe[icd_col_name].name)
+                if icd_col_name in list_icd_columns and icd_col_name_series.sum() > 0:
+                    local_icd_series = icd_col_name_series
+                    self.bar_plot_label.show()
+                    self.bar_plot.show()
+                    # self.Patient_Information_ICD_Label.show()
+                    # self.ICD_Grid_Widget.show()
+                    self.layout_left.setRowStretch(0, 1)
+                    self.ICD_Labels[i].setToolTip(self.ICD_Labels[i].toolTip()+"\n")
+                    self.ICD_Labels[i].setStyleSheet('color: black')
+                    list_of_value_change_indices = local_icd_series[(local_icd_series.diff() != 0)].index.tolist()
+
+                    if local_icd_series[list_of_value_change_indices[0]] == 0:
+                        list_of_value_change_indices.remove(list_of_value_change_indices[0])
+
+                    for index in list_of_value_change_indices:
+                        x_value = time_column_series[(index - 1 + int(float(local_icd_series[index])))]
+                        if str(x_value) not in icd_changes:
+                            icd_changes[str(x_value)] = []
+                        icd_changes[str(x_value)] = icd_changes[str(x_value)] + [(2 * local_icd_series[index] - 1) * (i + 1)]
+                        if(2 * local_icd_series[index] - 1) >0:
+                            self.ICD_Labels[i].setToolTip(self.ICD_Labels[i].toolTip() + "\nAdded at time: "+str(int(float(x_value))))
+                        else:
+                            self.ICD_Labels[i].setToolTip(self.ICD_Labels[i].toolTip() + "\nRemoved at time: " + str(int(float(x_value))))
+                else:
+                    self.ICD_Labels[i].setStyleSheet('color: lightGray')
 
         for key in sorted(icd_changes.keys()):
             bar = pg.BarGraphItem(x0=[int(float(key)) - length_of_data / 120], x1=[int(float(key)) + length_of_data / 120], y=[0], height=0.6, pen=(pg.mkPen('k')), brush=(self.palette().color(QPalette.Highlight)))
@@ -543,14 +592,22 @@ class DataMedicalImputationWidget(QWidget):
         Set general patient information
         """
         if "ID" in update_dataframe.columns:
-            self.Patient_ID.setText(str(int(float(update_dataframe['ID'].iloc[0]))))
+            try:
+                self.Patient_ID.setText(str(int(float(update_dataframe['ID'].iloc[0]))))
+            except TypeError:
+                id_series = pd.Series(data=update_dataframe['ID'].values[0], name=update_dataframe['ID'].name)
+                self.Patient_ID.setText(str(int(float(id_series.iloc[0]))))
             self.Patient_Information_Visibility = True
         else:
             self.Patient_ID.setText("No Specified")
 
         self.Patient_Gender.setText('Not Specified')
         if "gender(n m f)" in update_dataframe.columns:
-            gender = int(update_dataframe['gender(n m f)'].iloc[0])
+            try:
+                gender = int(update_dataframe['gender(n m f)'].iloc[0])
+            except TypeError:
+                gender_series = pd.Series(data=update_dataframe['gender(n m f)'].values[0], name=update_dataframe['gender(n m f)'].name)
+                gender = int(gender_series.iloc[0])
             self.Patient_Information_Visibility = True
             if gender == 1:
                 self.Patient_Gender.setText('Male')
@@ -559,56 +616,109 @@ class DataMedicalImputationWidget(QWidget):
 
         self.Patient_Age.setText('Not Specified')
         if "age(90= >89)" in update_dataframe.columns:
-            age = update_dataframe['age(90= >89)'].iloc[0]
-            self.Patient_Information_Visibility = True
-            if age == 90:
-                self.Patient_Age.setText('Above 89')
-            elif age == -1:
-                self.Patient_Age.setText('Unknown')
-            elif age:
-                self.Patient_Age.setText(str(int(float(age))))
+            try:
+                age = update_dataframe['age(90= >89)'].iloc[0]
+                self.Patient_Information_Visibility = True
+                if age == 90:
+                    self.Patient_Age.setText('Above 89')
+                elif age == -1:
+                    self.Patient_Age.setText('Unknown')
+                elif age:
+                    self.Patient_Age.setText(str(int(float(age))))
+            except ValueError:
+                age_series = pd.Series(data=update_dataframe['age(90= >89)'].values[0], name=update_dataframe['age(90= >89)'].name)
+                age = age_series.iloc[0]
+                self.Patient_Information_Visibility = True
+                if age == 90:
+                    self.Patient_Age.setText('Above 89')
+                elif age == -1:
+                    self.Patient_Age.setText('Unknown')
+                elif age:
+                    self.Patient_Age.setText(str(int(float(age))))
 
         self.Patient_Ethnicity.setText('Not Specified / Other')
-        if "ethnicity(n cauc asia hisp afram natam)" in update_dataframe.columns:
-            eth = update_dataframe['ethnicity(n cauc asia hisp afram natam)'].iloc[0]
-            self.Patient_Information_Visibility = True
-            if eth == 1:
-                self.Patient_Ethnicity.setText('Caucasian')
-            elif eth == 2:
-                self.Patient_Ethnicity.setText('Asian')
-            elif eth == 3:
-                self.Patient_Ethnicity.setText('Hispanic')
-            elif eth == 4:
-                self.Patient_Ethnicity.setText('African American')
-            elif eth == 5:
-                self.Patient_Ethnicity.setText('Native American')
+        try:
+            if "ethnicity(n cauc asia hisp afram natam)" in update_dataframe.columns:
+                eth = update_dataframe['ethnicity(n cauc asia hisp afram natam)'].iloc[0]
+                self.Patient_Information_Visibility = True
+                if eth == 1:
+                    self.Patient_Ethnicity.setText('Caucasian')
+                elif eth == 2:
+                    self.Patient_Ethnicity.setText('Asian')
+                elif eth == 3:
+                    self.Patient_Ethnicity.setText('Hispanic')
+                elif eth == 4:
+                    self.Patient_Ethnicity.setText('African American')
+                elif eth == 5:
+                    self.Patient_Ethnicity.setText('Native American')
+        except ValueError:
+            ethnicity_series = pd.Series(data=update_dataframe['ethnicity(n cauc asia hisp afram natam)'].values[0], name=update_dataframe['ethnicity(n cauc asia hisp afram natam)'].name)
+            if "ethnicity(n cauc asia hisp afram natam)" in update_dataframe.columns:
+                eth = ethnicity_series.iloc[0]
+                self.Patient_Information_Visibility = True
+                if eth == 1:
+                    self.Patient_Ethnicity.setText('Caucasian')
+                elif eth == 2:
+                    self.Patient_Ethnicity.setText('Asian')
+                elif eth == 3:
+                    self.Patient_Ethnicity.setText('Hispanic')
+                elif eth == 4:
+                    self.Patient_Ethnicity.setText('African American')
+                elif eth == 5:
+                    self.Patient_Ethnicity.setText('Native American')
 
         self.Patient_Height.setText('-')
         self.Patient_Weight.setText('-')
         self.Patient_BMI.setText('-')
         height = None
-        if "height(cm)" in update_dataframe.columns:
-            height = float(update_dataframe['height(cm)'].iloc[0])
-            self.Patient_Information_Visibility = True
-            self.Patient_Height.setText('%.1f' % height)
+        try: 
+            if "height(cm)" in update_dataframe.columns:
+                height = float(update_dataframe['height(cm)'].iloc[0])
+                self.Patient_Information_Visibility = True
+                self.Patient_Height.setText('%.1f' % height)
 
-        if "weight(kg)" in update_dataframe.columns:
-            weight = float(update_dataframe['weight(kg)'].iloc[0])
-            self.Patient_Information_Visibility = True
-            self.Patient_Weight.setText('%.1f' % weight)
-            if height:
-                self.Patient_BMI.setText('%.1f' % (weight * 10000 / height / height))
+            if "weight(kg)" in update_dataframe.columns:
+                weight = float(update_dataframe['weight(kg)'].iloc[0])
+                self.Patient_Information_Visibility = True
+                self.Patient_Weight.setText('%.1f' % weight)
+                if height:
+                    self.Patient_BMI.setText('%.1f' % (weight * 10000 / height / height))
+        except TypeError:
+            height_series = pd.Series(data=update_dataframe['height(cm)'].values[0], name=update_dataframe['height(cm)'].name)
+            weight_series = pd.Series(data=update_dataframe['weight(kg)'].values[0], name=update_dataframe['weight(kg)'].name)
+            if "height(cm)" in update_dataframe.columns:
+                height = float(height_series.iloc[0])
+                self.Patient_Information_Visibility = True
+                self.Patient_Height.setText('%.1f' % height)
+
+            if "weight(kg)" in update_dataframe.columns:
+                weight = float(weight_series.iloc[0])
+                self.Patient_Information_Visibility = True
+                self.Patient_Weight.setText('%.1f' % weight)
+                if height:
+                    self.Patient_BMI.setText('%.1f' % (weight * 10000 / height / height))
         """
         Add Data to Graphs and Graph Statistics
         """
         self.Patient_Information.setVisible(self.Patient_Information_Visibility)
         for c_id, col in enumerate(used_columns):
-            x_y_values = update_dataframe[[time_column, col]].dropna()
-            self.Graph_Plots[c_id].setData(x_y_values[time_column].tolist(), x_y_values[col].tolist())
-            self.GI_num_points[c_id].setText(str(x_y_values[col].count()))
-            self.GI_ranges[c_id].setText('[{:.1f} - {:.1f}]'.format(x_y_values[col].min(), x_y_values[col].max()))
-            self.GI_means[c_id].setText('{:.2f}'.format(x_y_values[col].mean()))
-            self.GI_quartiles[c_id].setText('({:.1f}, {:.1f}, {:.1f})'.format(x_y_values[col].quantile(q=0.25), x_y_values[col].quantile(), x_y_values[col].quantile(q=0.75)))
+            try:
+                x_y_values = update_dataframe[[time_column, col]].dropna()
+                self.Graph_Plots[c_id].setData(x_y_values[time_column].tolist(), x_y_values[col].tolist())
+                self.GI_num_points[c_id].setText(str(x_y_values[col].count()))
+                self.GI_ranges[c_id].setText('[{:.1f} - {:.1f}]'.format(x_y_values[col].min(), x_y_values[col].max()))
+                self.GI_means[c_id].setText('{:.2f}'.format(x_y_values[col].mean()))
+                self.GI_quartiles[c_id].setText('({:.1f}, {:.1f}, {:.1f})'.format(x_y_values[col].quantile(q=0.25), x_y_values[col].quantile(), x_y_values[col].quantile(q=0.75)))  
+            except BaseException:
+                x_y_values_col_series = pd.Series(data=x_y_values[col].values[0], name=x_y_values[col].name)
+                x_y_time_column_series = pd.Series(data=x_y_values[time_column].values[0], name=x_y_values[time_column].name)
+                d = {x_y_time_column_series.name: x_y_time_column_series, x_y_values_col_series.name: x_y_values_col_series}
+                x_y_values_new = (pd.DataFrame(d)).dropna()
+                self.Graph_Plots[c_id].setData(x_y_values_new[time_column].tolist(), x_y_values_new[col].tolist())
+                self.GI_num_points[c_id].setText(str(x_y_values_new[col].count()))
+                self.GI_ranges[c_id].setText('[{:.1f} - {:.1f}]'.format(x_y_values_new[col].min(), x_y_values_new[col].max()))
+                self.GI_means[c_id].setText('{:.2f}'.format(x_y_values_new[col].mean()))
+                self.GI_quartiles[c_id].setText('({:.1f}, {:.1f}, {:.1f})'.format(x_y_values_new[col].quantile(q=0.25), x_y_values_new[col].quantile(), x_y_values_new[col].quantile(q=0.75))) 
 
     def list_of_icd_indices_to_tooltip_string(self, time, list_of_icd_indices):
         """
@@ -665,9 +775,15 @@ class DataMedicalImputationWidget(QWidget):
 
         if input_start > input_end:
             return False
-        if input_start < self.Dataframe[time_column].dropna().min():
-            return False
-        if input_end > self.Dataframe[time_column].dropna().max():
-            return False
-
+        try:
+            if input_start < self.Dataframe[time_column].dropna().min():
+                return False
+            if input_end > self.Dataframe[time_column].dropna().max():
+                return False
+        except TypeError:
+            time_column_series = pd.Series(data=self.Dataframe[time_column].values[0], name=self.Dataframe[time_column].name)
+            if input_start < time_column_series.dropna().min():
+                return False
+            if input_end > time_column_series.dropna().max():
+                return False
         self.data_selection_slider.setRange(input_start, input_end)
