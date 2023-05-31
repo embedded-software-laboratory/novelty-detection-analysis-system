@@ -6,7 +6,6 @@ from ndas.extensions import data, algorithms, physiologicallimits
 from ndas.mainwindow import graphlayoutwidget
 from ndas.misc import graphbox, colors
 from ndas.utils import logger, regression_analysis
-
 registered_plots = {}
 plot_layout_widget = None
 
@@ -97,27 +96,14 @@ def register_plot(name: str, x_data: any, y_data: any, x_label: str, y_label: st
         logger.plots.error("Unsupported data format (%s). Failed to add plot %s" % (str(type(x_data)), name))
         return False
 
-    try:
-        plot_scatter = pg.ScatterPlotItem(x=x_data_numpy, y=y_data_numpy, brush=pg.mkBrush(colors.REGULAR),
-                                        pen=pg.mkPen(color='w', width=0.4),
-                                        size=10, tip=None)
-        plot_line = pg.PlotDataItem(x=x_data_numpy, y=y_data_numpy, pen=colors.REGULAR)
+    plot_scatter = pg.ScatterPlotItem(x=x_data_numpy, y=y_data_numpy, brush=pg.mkBrush(colors.REGULAR),
+                                    pen=pg.mkPen(color='w', width=0.4),
+                                    size=10, tip=None)
+    plot_line = pg.PlotDataItem(x=x_data_numpy, y=y_data_numpy, pen=colors.REGULAR)
 
-        main_dot_plot_item = SinglePointPlotItem(plot_item_name=name, x_data=x_data, y_data=y_data,
-                                                plot_item=plot_scatter)
-        main_line_plot_item = SingleLinePlotItem(plot_item_name=name, x_data=x_data, y_data=y_data, plot_item=plot_line)
-    except ValueError:
-        plot_scatter = pg.ScatterPlotItem(x=x_data_numpy[0], y=y_data_numpy[0], brush=pg.mkBrush(colors.REGULAR),
-                                        pen=pg.mkPen(color='w', width=0.4),
-                                        size=10, tip=None)
-        plot_line = pg.PlotDataItem(x=x_data_numpy[0], y=y_data_numpy[0], pen=colors.REGULAR)
-
-        x_data_series = pd.Series(data=x_data.values[0], name=x_data.name)
-        y_data_series = pd.Series(data=y_data.values[0], name=y_data.name)
-        main_dot_plot_item = SinglePointPlotItem(plot_item_name=name, x_data=x_data_series, y_data=y_data_series,
-                                                plot_item=plot_scatter)
-        main_line_plot_item = SingleLinePlotItem(plot_item_name=name, x_data=x_data_series, y_data=y_data_series, plot_item=plot_line)
-
+    main_dot_plot_item = SinglePointPlotItem(plot_item_name=name, x_data=x_data, y_data=y_data,
+                                            plot_item=plot_scatter)
+    main_line_plot_item = SingleLinePlotItem(plot_item_name=name, x_data=x_data, y_data=y_data, plot_item=plot_line)
     registered_plots[name] = MultiPlot(name, x_label, y_label, main_dot_plot_item, main_line_plot_item)
 
 
@@ -285,7 +271,7 @@ def get_available_plot_keys(data):
     return available_plot_keys
 
 
-def register_available_plots(current_active_plot=None, oldDataFormat=False):
+def register_available_plots(current_active_plot=None):
     """
     Registers all plots for the available data
 
@@ -300,11 +286,6 @@ def register_available_plots(current_active_plot=None, oldDataFormat=False):
     plot_layout_widget.clear_plots()
 
     df = data.get_dataframe()
-    if oldDataFormat:
-        df_dict = {}
-        for i in range(len(df.columns)):
-            df_dict.update({df.columns[i]: df.values[0][i]})
-        df = pd.DataFrame(data=df_dict)
     columns = data.get_dataframe_columns()
     labels = data.get_dataframe_labels()
 
@@ -605,7 +586,7 @@ def format_for_save():
     return novelties
 
 
-def restore_from_save(data, oldDataFormat=False):
+def restore_from_save(data):
     """
     Restore the plots from a save file
 
@@ -614,7 +595,7 @@ def restore_from_save(data, oldDataFormat=False):
     data
     """
     global registered_plots
-    register_available_plots(oldDataFormat=oldDataFormat)
+    register_available_plots()
 
     for key, value in data.items():
         if key in registered_plots:

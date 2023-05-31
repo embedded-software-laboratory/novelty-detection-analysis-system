@@ -8,7 +8,6 @@ import pandas as pd
 from ndas.extensions import data, plots
 from ndas.misc import graphbox, colors
 
-
 class StatsGraph(pg.GraphicsLayoutWidget):
     """
     Parent class of all statistics graphs
@@ -154,11 +153,7 @@ class DensityGraphWidget(StatsGraph):
                 continue
 
             row_values = plot_data[c].to_numpy()
-            try:
-                row_values = row_values[~np.isnan(row_values)]
-            except TypeError:
-                row_values = plot_data[c].to_numpy()[0]
-                row_values = row_values[~np.isnan(row_values)]
+            row_values = row_values[~np.isnan(row_values)]
             row_values_length = len(row_values.tolist())
             _x.append(row_values_length)
 
@@ -238,6 +233,7 @@ class BoxplotGraphWidget(StatsGraph):
 
             uq = np.percentile(plot_data, 75)
         except TypeError:
+            QMessageBox.critical(None, "title", "Ich bin hier", QMessageBox.Ok)
             plot_data_series = pd.Series(data=plot_data.values[0], name=plot_data.name)
             plot_data_series = plot_data_series.dropna(axis=0, how="any")
             if plot_data_series.empty:
@@ -362,6 +358,7 @@ class HistogramGraphWidget(StatsGraph):
             mean = np.mean(plot_data)
             std = np.std(plot_data) 
         except TypeError:
+            QMessageBox.critical(None, "title", "Ich bin hier", QMessageBox.Ok)
             plot_data_series = pd.Series(data=plot_data.values[0], name=plot_data.name)
             plot_data_series = plot_data_series.dropna(axis=0, how="any")
 
@@ -477,6 +474,7 @@ class CorrelationGraphWidget(StatsGraph):
             corr = corr.drop(labels=[active_plot, time_label], axis=0)
             column_data = corr[active_plot].to_numpy()
         except KeyError:
+            QMessageBox.critical(None, "title", "Ich bin hier", QMessageBox.Ok)
             plot_labels = [single_label for single_label in plot_data.columns.tolist()[1:] if single_label != active_plot]
             self.set_custom_ticks(plot_labels)
 

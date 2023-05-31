@@ -157,22 +157,9 @@ def restore_from_save(label_data):
         register_plot_annotation(cl)
 
     for single_labeled_point in label_data:
-        try:
-            plot_name = single_labeled_point["plot_name"]
-            lp = LabeledPoint(single_labeled_point["value"], single_labeled_point["x"], single_labeled_point["index"],
-                            single_labeled_point["label"], plot_name)
-        except KeyError:
-            plot_name = str(single_labeled_point["'plot_name'"].astype(str))
-            if type(single_labeled_point["'x'"]) == tuple:
-                single_labeled_point["'x'"]= single_labeled_point["'x'"][0]
-            else:
-                single_labeled_point["'x'"] = float(single_labeled_point["'x'"].astype(float))
-            if type(single_labeled_point["'value'"]) == tuple:
-                single_labeled_point["'value'"]= single_labeled_point["'value'"][0]
-            else:
-                single_labeled_point["'value'"] = float(single_labeled_point["'value'"].astype(float))
-            lp = LabeledPoint(single_labeled_point["'value'"], single_labeled_point["'x'"], single_labeled_point["'index'"],
-                            str(single_labeled_point["'label'"].astype(str)), plot_name)
+        plot_name = single_labeled_point["plot_name"]
+        lp = LabeledPoint(single_labeled_point["value"], single_labeled_point["x"], single_labeled_point["index"],
+                        single_labeled_point["label"], plot_name)
         if plot_name not in _current_point_labels:
             _current_point_labels[plot_name] = []
         _current_point_labels[plot_name].append(lp)

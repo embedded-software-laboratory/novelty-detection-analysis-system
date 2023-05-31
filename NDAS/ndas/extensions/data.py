@@ -331,21 +331,9 @@ def restore_from_save(data: dict):
     data
     """
     global _dataframe, _imputed_dataframe, _mask_dataframe, _dataframe_labels, data_slider_start, data_slider_end
-    try:
-        _dataframe_labels = data['dataframe_labels']
-        _dataframe = pd.DataFrame.from_records(data['dataframe'], columns=_dataframe_labels)
-        data_slider_start = data['data_slider_start']
-        data_slider_end = data['data_slider_end']
-    except KeyError:
-        _dataframe_labels = []
-        temp = data["'dataframe_labels'"]
-        for label in temp:
-            _dataframe_labels.append(str(label.astype(str)))
-        temp = list(data["'dataframe'"])
-        temp[0] = data["'dataframe'"][0].T
-        data["'dataframe'"] = tuple(temp)
-        _dataframe = pd.DataFrame.from_records(data["'dataframe'"], columns=_dataframe_labels)
-        data_slider_start = int(data["'data_slider_start'"].astype(int))
-        data_slider_end = int(data["'data_slider_end'"].astype(int))
+    _dataframe_labels = data['dataframe_labels']
+    _dataframe = pd.DataFrame.from_records(data['dataframe'], columns=_dataframe_labels)
+    data_slider_start = data['data_slider_start']
+    data_slider_end = data['data_slider_end']
     _imputed_dataframe = pd.DataFrame.from_records(data.get('imputed_dataframe', []), columns=_dataframe_labels)
     _mask_dataframe = pd.DataFrame.from_records(data.get('mask_dataframe', []), columns=_dataframe_labels)
