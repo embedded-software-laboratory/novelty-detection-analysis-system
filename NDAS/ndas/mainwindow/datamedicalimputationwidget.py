@@ -10,7 +10,6 @@ import pyqtgraph as pg
 import qtwidgets
 from ndas.dataimputationalgorithms import base_imputation
 
-
 class DataMedicalImputationWidget(QWidget):
     """
     Widget to overview the imported data and apply imputation algorithms
@@ -444,6 +443,7 @@ class DataMedicalImputationWidget(QWidget):
             self.data_selection_start.setDisabled(False)
             self.data_selection_end.setDisabled(False)
             self.data_selection_slider.setDisabled(False)
+
             self.data_selection_slider.setRangeLimit(self.Dataframe[time_column].dropna().min(), self.Dataframe[time_column].dropna().max())
 
             self.on_click_reset_range(redraw_graphs=True)
@@ -508,6 +508,7 @@ class DataMedicalImputationWidget(QWidget):
             else:
                 self.ICD_Labels[i].setToolTip(self.ICD_Descriptions[i])
             icd_col_name = ("ICD"+icd_string).replace('-', '')
+
             if icd_col_name in list_icd_columns and update_dataframe[icd_col_name].sum() > 0:
                 local_icd_series = update_dataframe[icd_col_name]
                 self.bar_plot_label.show()
@@ -608,7 +609,7 @@ class DataMedicalImputationWidget(QWidget):
             self.GI_num_points[c_id].setText(str(x_y_values[col].count()))
             self.GI_ranges[c_id].setText('[{:.1f} - {:.1f}]'.format(x_y_values[col].min(), x_y_values[col].max()))
             self.GI_means[c_id].setText('{:.2f}'.format(x_y_values[col].mean()))
-            self.GI_quartiles[c_id].setText('({:.1f}, {:.1f}, {:.1f})'.format(x_y_values[col].quantile(q=0.25), x_y_values[col].quantile(), x_y_values[col].quantile(q=0.75)))
+            self.GI_quartiles[c_id].setText('({:.1f}, {:.1f}, {:.1f})'.format(x_y_values[col].quantile(q=0.25), x_y_values[col].quantile(), x_y_values[col].quantile(q=0.75)))  
 
     def list_of_icd_indices_to_tooltip_string(self, time, list_of_icd_indices):
         """
@@ -669,5 +670,4 @@ class DataMedicalImputationWidget(QWidget):
             return False
         if input_end > self.Dataframe[time_column].dropna().max():
             return False
-
         self.data_selection_slider.setRange(input_start, input_end)

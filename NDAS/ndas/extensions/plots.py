@@ -6,7 +6,6 @@ from ndas.extensions import data, algorithms, physiologicallimits
 from ndas.mainwindow import graphlayoutwidget
 from ndas.misc import graphbox, colors
 from ndas.utils import logger, regression_analysis
-
 registered_plots = {}
 plot_layout_widget = None
 
@@ -98,14 +97,13 @@ def register_plot(name: str, x_data: any, y_data: any, x_label: str, y_label: st
         return False
 
     plot_scatter = pg.ScatterPlotItem(x=x_data_numpy, y=y_data_numpy, brush=pg.mkBrush(colors.REGULAR),
-                                      pen=pg.mkPen(color='w', width=0.4),
-                                      size=10, tip=None)
+                                    pen=pg.mkPen(color='w', width=0.4),
+                                    size=10, tip=None)
     plot_line = pg.PlotDataItem(x=x_data_numpy, y=y_data_numpy, pen=colors.REGULAR)
 
     main_dot_plot_item = SinglePointPlotItem(plot_item_name=name, x_data=x_data, y_data=y_data,
-                                             plot_item=plot_scatter)
+                                            plot_item=plot_scatter)
     main_line_plot_item = SingleLinePlotItem(plot_item_name=name, x_data=x_data, y_data=y_data, plot_item=plot_line)
-
     registered_plots[name] = MultiPlot(name, x_label, y_label, main_dot_plot_item, main_line_plot_item)
 
 

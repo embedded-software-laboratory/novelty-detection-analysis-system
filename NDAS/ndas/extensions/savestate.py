@@ -1,5 +1,6 @@
 import hickle as hkl
-import pandas
+import pickle
+import numpy
 import os
 from PyQt5.QtWidgets import QMessageBox
 
@@ -52,24 +53,117 @@ def restore_state(loc: str):
     loc
     """
     restore_data = _read_object(loc)
+    try:
+        if restore_data["data"] is None:
+            logger.savestate.error("No data to restore: Canceling")
+            return False
+        else:
+            data.restore_from_save(restore_data["data"])
 
-    if restore_data["data"] is None:
-        logger.savestate.error("No data to restore: Canceling")
-        return False
-    else:
-        data.restore_from_save(restore_data["data"])
+            if restore_data["labels"] is not None:
+                annotations.restore_from_save(restore_data["labels"])
 
-        if restore_data["labels"] is not None:
-            annotations.restore_from_save(restore_data["labels"])
+            if restore_data["novelties"] is not None:
+                plots.restore_from_save(restore_data["novelties"])
 
-        if restore_data["novelties"] is not None:
-            plots.restore_from_save(restore_data["novelties"])
-
-        logger.savestate.debug("State restored from file.")
+            logger.savestate.debug("State restored from file.")
+            try:
+                return True, restore_data["patientinformation"]
+            except KeyError:
+                return True, None
+    except KeyError: #for some older ndas files, there are differences in the exact data structure. To preserve backward compatibility with the older files, this case is catched and handled here
         try:
-            return True, restore_data["patientinformation"]
+            if restore_data["'data'"] is None:
+                logger.savestate.error("No data to restore: Canceling")
+                return False
+            else:
+                dataframe = []
+                if type(restore_data["'data'"]["'dataframe'"]) == hkl.lookup.RecoveredDataset:
+                    for set in list(restore_data["'data'"]["'dataframe'"].astype(list)):
+                        dataframe.append(list(set.astype(list)))         
+                else:
+                    dataframe = restore_data["'data'"]["'dataframe'"][0]
+                dataframe_labels_list = []
+                for label in list(restore_data["'data'"]["'dataframe_labels'"].astype(list)):
+                    dataframe_labels_list.append(label.decode("utf-8"))
+                new_data_dict = {'dataframe': dataframe, 'dataframe_labels': dataframe_labels_list, 'data_slider_start': int(restore_data["'data'"]["'data_slider_start'"].astype(int)), 'data_slider_end': int(restore_data["'data'"]["'data_slider_end'"].astype(int)), 'imputed_dataframe': numpy.ndarray(shape=(0, 0), dtype=numpy.float64), 'mask_dataframe': numpy.ndarray(shape=(0, 0), dtype=numpy.float64)}
+                data.restore_from_save(new_data_dict)
+
+                if restore_data["'labels'"] is not None:
+                    new_label_array = []
+                    for key in restore_data["'labels'"]:
+                        try:
+                            new_label_array.append({'value': float(restore_data["'labels'"][key]["'value'"].astype(float)), 
+                                                    'x':  float(restore_data["'labels'"][key]["'x'"].astype(float)), 
+                                                    'index':  restore_data["'labels'"][key]["'index'"][0], 
+                                                    'label':  str(restore_data["'labels'"][key]["'label'"].astype(str)), 
+                                                    'plot_name':  str(restore_data["'labels'"][key]["'plot_name'"].astype(str))})
+                        except AttributeError:
+                            new_label_array.append({'value': restore_data["'labels'"][key]["'value'"][0], 'x':  restore_data["'labels'"][key]["'x'"][0], 'index':  restore_data["'labels'"][key]["'index'"][0], 'label':  str(restore_data["'labels'"][key]["'label'"].astype(str)), 'plot_name':  str(restore_data["'labels'"][key]["'plot_name'"].astype(str))})
+                        except IndexError:
+                            new_label_array.append({'value': float(restore_data["'labels'"][key]["'value'"].astype(float)), 
+                                                    'x':  float(restore_data["'labels'"][key]["'x'"].astype(float)), 
+                                                    'index':  int(restore_data["'labels'"][key]["'index'"].astype(int)), 
+                                                    'label':  str(restore_data["'labels'"][key]["'label'"].astype(str)), 
+                                                    'plot_name':  str(restore_data["'labels'"][key]["'plot_name'"].astype(str))})
+                    annotations.restore_from_save(new_label_array)
+
+                if restore_data["'novelties'"] is not None:
+                    plots.restore_from_save(restore_data["'novelties'"])
+
+                logger.savestate.debug("State restored from file.")
+                try:
+                    return True, restore_data["'patientinformation'"]
+                except KeyError:
+                    return True, None
         except KeyError:
-            return True, None
+            if restore_data['"data"'] is None:
+                logger.savestate.error("No data to restore: Canceling")
+                return False
+            else:
+                dataframe = []
+                if type(restore_data['"data"']['"dataframe"']) == hkl.lookup.RecoveredDataset:
+                    for set in list(restore_data['"data"']['"dataframe"'].astype(list)):
+                        dataframe.append(list(set.astype(list)))         
+                else:
+                    dataframe = restore_data['"data"']['"dataframe"'][0]
+                dataframe_labels_list = []
+                for key in restore_data['"data"']['"dataframe_labels"']:
+                    temp = list(restore_data['"data"']['"dataframe_labels"'][key][0].astype(list))
+                    temp2 = []
+                    for label in temp:
+                        temp2.append(label.decode("utf-8", "replace"))
+                    dataframe_labels_list.append(''.join(temp2))
+                new_data_dict = {'dataframe': dataframe, 'dataframe_labels': dataframe_labels_list, 'data_slider_start': int(restore_data['"data"']['"data_slider_start"'].astype(int)), 'data_slider_end': int(restore_data['"data"']['"data_slider_end"'].astype(int)), 'imputed_dataframe': numpy.ndarray(shape=(0, 0), dtype=numpy.float64), 'mask_dataframe': numpy.ndarray(shape=(0, 0), dtype=numpy.float64)}
+                data.restore_from_save(new_data_dict)
+
+                if restore_data['"labels"'] is not None:
+                    new_label_array = []
+                    for key in restore_data['"labels"']:
+                        try:
+                            new_label_array.append({'value': float(restore_data['"labels"'][key]['"value"'].astype(float)), 
+                                                    'x':  float(restore_data['"labels"'][key]['"x"'].astype(float)), 
+                                                    'index':  restore_data['"labels"'][key]['"index"'][0], 
+                                                    'label':  str(restore_data['"labels"'][key]['"label"'].astype(str)), 
+                                                    'plot_name':  str(restore_data['"labels"'][key]['"plot_name"'].astype(str))})
+                        except AttributeError:
+                            new_label_array.append({'value': restore_data['"labels"'][key]['"value"'][0], 'x':  restore_data['"labels"'][key]['"x"'][0], 'index':  restore_data['"labels"'][key]['"index"'][0], 'label':  str(restore_data['"labels"'][key]['"label"'].astype(str)), 'plot_name':  str(restore_data['"labels"'][key]['"plot_name"'].astype(str))})
+                        except IndexError:
+                            new_label_array.append({'value': float(restore_data['"labels"'][key]['"value"'].astype(float)), 
+                                                    'x':  float(restore_data['"labels"'][key]['"x"'].astype(float)), 
+                                                    'index':  int(restore_data['"labels"'][key]['"index"'].astype(int)), 
+                                                    'label':  str(restore_data['"labels"'][key]['"label"'].astype(str)), 
+                                                    'plot_name':  str(restore_data['"labels"'][key]['"plot_name"'].astype(str))})
+                    annotations.restore_from_save(new_label_array)
+
+                if restore_data['"novelties"'] is not None:
+                    plots.restore_from_save(restore_data['"novelties"'])
+
+                logger.savestate.debug("State restored from file.")
+                try:
+                    return True, restore_data['"patientinformation"']
+                except KeyError:
+                    return True, None
 
 def restore_additional_lables(loc: str, patientinformation: str):
     """
@@ -105,8 +199,11 @@ def _save_object(obj: dict, filename: str):
     filename
     """
     logger.savestate.info("Writing state to %s" % filename)
-    hkl.dump(obj, filename, mode='w', compression='lzf',
+    hkl.dump(obj, filename, mode='wb', compression='lzf',
              shuffle=True, fletcher32=True)  # HDF5
+    file = open(filename, mode="wb")
+    pickle.dump(obj, file)
+    file.close()
 
 
 def _read_object(filename: str):
@@ -118,7 +215,15 @@ def _read_object(filename: str):
     filename
     """
     logger.savestate.info("Loading state from %s" % filename)
-    return hkl.load(filename)
+    # Because of compatibility issues, that existed between files saved by the compiled version and files by the script version, we switched from hickle to pickle to save the data.
+    # So, we first try to load the file using pickle. But, to preserve backward compatibility with older files, we use hickle if the loading process fails with pickle. 
+    try:
+        file = open(filename, mode="rb")
+        load = pickle.load(file)
+        file.close()
+        return load
+    except pickle.UnpicklingError:
+        return(hkl.load(filename))
 
 
 class State(object):
