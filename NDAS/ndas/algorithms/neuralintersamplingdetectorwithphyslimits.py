@@ -80,6 +80,16 @@ class NeuralInterSamplingDetectorWithPhysicalLimits(BaseDetector):
                 data_diff = (data - imputed_data).abs()
                 sorted_data_diff = np.sort(data_diff.values, axis=None)
                 sorted_data_diff = sorted_data_diff[~np.isnan(sorted_data_diff)]
+                print(imputation_accumulated)
+                print("------------")
+                print(data)
+                print("------------")
+                print(imputed_data)
+                print("------------")
+                print(data_diff)
+                print("------------")
+                print(sorted_data_diff)
+                print("------------")
                 knee_result = KneeLocator(range(len(sorted_data_diff)), sorted_data_diff, S=self.s_value, curve='convex', direction='increasing')
                 threshold_value = knee_result.knee_y
                 for index, row in data_diff.iterrows():

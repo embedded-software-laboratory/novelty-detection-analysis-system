@@ -127,7 +127,7 @@ def loadPatientData(tableName, patientId):
             firstLine.append(name[0]) 
         index+=1
         
-    # load the actual data for the specified patient    
+    # load the actual data for the specified patient 
     stdin, stdout, stderr = ssh.exec_command('mysql -h{} -u{} -p{} SMITH_SepsisDB -e "select * from SMITH_ASIC_SCHEME.{} where patientid = {}"'.format(databaseConfiguration['host'], databaseConfiguration['username'], databaseConfiguration['password'], tableName, patientId))
     result = stdout.readlines()
     errors = stderr.readlines()

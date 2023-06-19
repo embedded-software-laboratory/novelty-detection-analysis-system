@@ -24,7 +24,7 @@ class BaseImputation:
             logging.warning("Time Column is not monotonically increasing, aborting imputation and returning input.")
             return dataframe
 
-        current_spacing = mode(differences.values, axis=None, nan_policy='omit')[0][0]
+        current_spacing = mode(differences.values, axis=None, nan_policy='omit', keepdims=True)[0][0]
         imputation_dataframe = dataframe
 
         for idx, val in reversed(list(enumerate(differences))):

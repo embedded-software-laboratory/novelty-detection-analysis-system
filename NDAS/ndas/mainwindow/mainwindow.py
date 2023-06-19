@@ -1436,8 +1436,8 @@ class MainWindow(QMainWindow):
         text
         """
         reply = QMessageBox.critical(self, title, text, QMessageBox.Ok)
+        self.analysis_run_btn.setDisabled(False)
         if reply != QMessageBox.Ok:
-            self.analysis_run_btn.setDisabled(False)
             return False
         return True
 
