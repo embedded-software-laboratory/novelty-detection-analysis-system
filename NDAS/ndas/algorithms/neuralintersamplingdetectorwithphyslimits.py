@@ -1,3 +1,4 @@
+from math import nan
 import numpy as np
 import pandas as pd
 from ndas.algorithms.basedetector import BaseDetector  # Import the basedetector class
@@ -5,6 +6,7 @@ from ndas.misc.parameter import ArgumentType
 from ndas.dataimputationalgorithms.base_imputation import BaseImputation
 from ndas.extensions import plots
 from kneed import KneeLocator
+import sys
 
 
 class NeuralInterSamplingDetectorWithPhysicalLimits(BaseDetector):
@@ -59,7 +61,8 @@ class NeuralInterSamplingDetectorWithPhysicalLimits(BaseDetector):
             temp_imputation = temp_imputation.where(mask>=(1/3), other= BaseImputation().base_imputation(dataframe=clipped_dataset.where(mask>=(1/3), other=np.nan), method_string='neural inter mask'))
             temp_imputation = temp_imputation.where((mask<(1/3)) | (mask>=(2/3)), other= BaseImputation().base_imputation(dataframe=clipped_dataset.where((mask<(1/3)) | (mask>=(2/3)), other=np.nan), method_string='neural inter mask'))
             temp_imputation = temp_imputation.where(mask<(2/3), other= BaseImputation().base_imputation(dataframe=clipped_dataset.where(mask<(2/3), other=np.nan), method_string='neural inter mask'))
-            imputation_accumulated = imputation_accumulated + temp_imputation
+            
+            imputation_accumulated = imputation_accumulated + (temp_imputation.replace(to_replace=nan, value=0))
             current_status += 1.4
 
         # Calculate the Neural Inter Imputation
@@ -80,23 +83,14 @@ class NeuralInterSamplingDetectorWithPhysicalLimits(BaseDetector):
                 data_diff = (data - imputed_data).abs()
                 sorted_data_diff = np.sort(data_diff.values, axis=None)
                 sorted_data_diff = sorted_data_diff[~np.isnan(sorted_data_diff)]
-                print(imputation_accumulated)
-                print("------------")
-                print(data)
-                print("------------")
-                print(imputed_data)
-                print("------------")
-                print(data_diff)
-                print("------------")
-                print(sorted_data_diff)
-                print("------------")
                 knee_result = KneeLocator(range(len(sorted_data_diff)), sorted_data_diff, S=self.s_value, curve='convex', direction='increasing')
                 threshold_value = knee_result.knee_y
-                for index, row in data_diff.iterrows():
-                    if row[c] > threshold_value:
-                        novelty_data[datasets[time_column].values[index]] = 1
-                    else:
-                        novelty_data[datasets[time_column].values[index]] = 0
+                if threshold_value != None:
+                    for index, row in data_diff.iterrows():
+                        if row[c] > threshold_value:
+                            novelty_data[datasets[time_column].values[index]] = 1
+                        else:
+                            novelty_data[datasets[time_column].values[index]] = 0
             data_c = datasets[[time_column, c]]
             phys_info = self.get_physiological_information(c)
 
@@ -107,6 +101,7 @@ class NeuralInterSamplingDetectorWithPhysicalLimits(BaseDetector):
                 for index, row in data_c.iterrows():
                     if row[c] > phys_info.high or row[c] < phys_info.low:
                         novelty_data[row[time_column]] = 1
+                        print(novelty_data[row[time_column]])
 
             result[c] = novelty_data
             current_status += status_length

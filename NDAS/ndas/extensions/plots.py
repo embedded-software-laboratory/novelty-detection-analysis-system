@@ -456,7 +456,7 @@ def _match_novelties_to_timedata(x_data: pd.Series, novelties: dict):
     novelties
     """
     novelty_data = []
-    for index, x in x_data.iteritems():
+    for index, x in x_data.items():
         if x in novelties:
             novelty_data.append(novelties[x])
         else:

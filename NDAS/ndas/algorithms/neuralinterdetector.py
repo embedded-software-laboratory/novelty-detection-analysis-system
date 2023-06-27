@@ -43,10 +43,8 @@ class NeuralInterDetector(BaseDetector):
 
         # Calculate the Neural Inter Imputation
         imputed_dataset = BaseImputation().base_imputation(dataframe=datasets, method_string='neural inter')
-
         time_column = datasets.columns[0]
         used_columns = [col for col in datasets.columns if col in plots.get_available_plot_keys(datasets)]
-
         status_length = 90 / len(used_columns)
         current_status = 10.0
         self.signal_percentage(int(current_status) % 100)
