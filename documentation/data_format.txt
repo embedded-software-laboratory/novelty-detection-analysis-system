@@ -1,9 +1,0 @@
-The expected data format for a csv file is as follows:
-
-The first column must be the time-axis, with integer numbers as time-values. (usually these would be minutes from admission). The column name is irrelevant.
-
-The remaining columns will be considered as time-series measurements, except for columns that contain specific substrings. By default those are: "ID", "gender", "age", "ethnicity", "height", "weight" and "ICD". The excluded substrings can be set in th config file.
-
-The first value of the columns whose name contains the default substrings "ID", "gender", "age", "ethnicity", "height" or "weight" will be shown in the imputation view.
-Columns containing the substring "ICD" should have the following characteristics: This currently supports ICD9 diagnoses, related to diseases of blood, circulatory system, respiratory system and injury. Diagnoses should be divided into the individual disease subcategoreis as found on wikipedia their name should then be in a format like "ICD280285" for Anemia. 
-The values should either be 0 or 1, where 0 signifies a diagnosis nott being present at a specific time, while 1 signifies it is present at a certain time. These values will be displayed in a time bar-graph.

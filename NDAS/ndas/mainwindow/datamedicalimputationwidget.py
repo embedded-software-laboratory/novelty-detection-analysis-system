@@ -9,6 +9,7 @@ from ndas.extensions import data, plots, physiologicallimits
 import pyqtgraph as pg
 import qtwidgets
 from ndas.dataimputationalgorithms import base_imputation
+import numpy as np
 
 class DataMedicalImputationWidget(QWidget):
     """
@@ -562,11 +563,11 @@ class DataMedicalImputationWidget(QWidget):
         if "age(90= >89)" in update_dataframe.columns:
             age = update_dataframe['age(90= >89)'].iloc[0]
             self.Patient_Information_Visibility = True
-            if age == 90:
+            if age >= 90:
                 self.Patient_Age.setText('Above 89')
-            elif age == -1:
+            elif age <= -1:
                 self.Patient_Age.setText('Unknown')
-            elif age:
+            elif age and not np.isnan(age):
                 self.Patient_Age.setText(str(int(float(age))))
 
         self.Patient_Ethnicity.setText('Not Specified / Other')
