@@ -92,10 +92,10 @@ def loadPatientData(tableName, patientId):
     Loads all data of the specified patient from the given table and stores it into a csv table.
     
     This method is called by the NDAS when the user loads a patient using the "load patient from database" functionality. The data are stored into a csv table 
-    so avoid the loading time for further accesses. (The NDAS perfomrs a check if there already exists this csv table before calling this function). 
+    to avoid the loading time for further accesses. (The NDAS perfomrs a check if there already exists this csv table before calling this function). 
 
     Parameters:
-        tableName (str) - the name of the table which contains the data. There must exist a table with this name in the scheme ASIC_DATA_SCHEME. 
+        tableName (str) - the name of the table / database which contains the data. There must either exist a table with this name in the scheme ASIC_DATA_SCHEME or you'll have to implement the compatibility for other darabases by hand. 
         patientId (int) - the id of the patient
         
         Returns:
@@ -111,52 +111,80 @@ def loadPatientData(tableName, patientId):
     if ssh in [-3,-4,-5]:
         return ssh
     databaseConfiguration = loadDatabaseConfiguration()
-    
-    # first, get all column names of the table and add the respective unit to the column titel (this is done so that the NDAS can show the unit for every parameter). 
-    stdin, stdout, stderr = ssh.exec_command('mysql -h{} -u{} -p{} SMITH_SepsisDB -e "show columns from SMITH_ASIC_SCHEME.{}"'.format(databaseConfiguration['host'], databaseConfiguration['username'], databaseConfiguration['password'], tableName)) #get all column names
-    columnNames = stdout.readlines()
-    columnNames = columnNames[2:] #remove the first two elements of the result list (the first element contains the column names of the query result and the second element (the first query result element) is the "patientid" column, which is not further needed).
-    firstLine = []
-    units = ["", "mmHg", "mmHg", "%", "", "°C", "mmHg", "cmH2O", "/min", "/min", "mmol/L", "mmol/L", "µmol/L", "U/L", "mL/cmH2O", "mmHg", "%", "mmol/L", "", "µmol/L", "mmol/L", "10^3/µL", "ng/mL", "mmHg", "mmHg", "%", "mmHg", "", "s", "mmHg", "mL/kg", "U/L", "mmHg", "mmHg", "L/min/m2", "µmol/L", "L/min", "pmol/L", "dyn.s/cm-5/m2", "mmHg", "ng/mL", "dyn.s/cm-5/m2", "cmH2O", "mmHg", "%", "nmol/L", "L/min", "L/min/m2", "ml/m2", "/min", "L/min", "%", "µg/kg/min", "mg/h", "mL/h", "mg/h", "µg/kg/min", "IE/min", "µg/kg/min", "µg/kg/min", "mg/h", "µg/h", "mg", "mg", "mg/h", "mg/h", "mg/h", "µg/kg/min", "mg", "mg", "mg", "mg/h", "µg", "µg/kg/h", "mg", "%", "µg/L", "10^3/µL", "mL", "U/L", "mmol/L", "U/L", "U/L", "ppm", "cmH2O", "", "mL/m2", "mL/Tag", "/min", "%", "", "cmH2O", "mL/kg", "cmH2O", "cmH2O", "cmH2O"] #the units for all colums. TODO: This has to be solved in another way since at this point, the table columns need to be in the correct order, and this cannot be guaranteed for upcoming tables in the SMITH_ASIC_SCHEME. 
-    index = 0
-    for name in columnNames:
-        name = name.split()
-        if index < len(units):
-            firstLine.append(name[0] + "(" + units[index] + ")") # add the unit to the column title
-        else:
-            firstLine.append(name[0]) 
-        index+=1
-        
-    # load the actual data for the specified patient    
-    stdin, stdout, stderr = ssh.exec_command('mysql -h{} -u{} -p{} SMITH_SepsisDB -e "select * from SMITH_ASIC_SCHEME.{} where patientid = {}"'.format(databaseConfiguration['host'], databaseConfiguration['username'], databaseConfiguration['password'], tableName, patientId))
-    result = stdout.readlines()
-    errors = stderr.readlines()
-    ssh.close()
-    if len(errors) > 0 and errors[0] == "ERROR 1045 (28000): Access denied for user '{}'@'interface.smith.embedded.rwth-aachen.de' (using password: YES)\n".format(databaseConfiguration['username']): # wrong database authentication data
-        return -6
-    elif len(errors) > 0:
-        for error in errors:
-            logging.error(error)
-    result = result[1:]
-    if result == []:
-        return -1
-        
-    convertedRowsTemp = []
-    smallestTimestamp = -1
-    for row in result:
-        row = row.split("\t")
-        temp = list(row)
-        temp.pop(0)
-        temp[0] = float(temp[0])
-        if temp[0] < smallestTimestamp or smallestTimestamp == -1:
-            smallestTimestamp = temp[0]
-        row = tuple(temp)
-        convertedRowsTemp.append(row)
-        convertedRows = [] 
-    for row in convertedRowsTemp:
-        temp = list(row)
-        temp[0] = temp[0] - smallestTimestamp
-        convertedRows.append(tuple(temp))
+    firstLine = [None]
+    convertedRows = []
+
+    if tableName == "smith_omop": # load patient from the smith_omop database
+        stdin, stdout, stderr = ssh.exec_command('mysql -h{} -u{} -p{} SMITH_OMOP -e "with a as (select distinct drug_exposure_start_datetime as pTime from SMITH_OMOP.drug_exposure where person_id = {}), b as (select distinct measurement_datetime as pTime from SMITH_OMOP.measurement where person_id = {}), c as (select distinct observation_datetime as pTime from SMITH_OMOP.observation where person_id = {}), d as (select distinct procedure_datetime as pTime from SMITH_OMOP.procedure_occurrence where person_id = {}) select pTime from (select * from a union select * from b union select * from c union select * from d) as res order by pTime;"'.format(databaseConfiguration['host'], databaseConfiguration['username'], databaseConfiguration['password'], patientId, patientId, patientId, patientId)) # get all timestamps at which data exist in the database to the patient
+        timestamps = stdout.readlines()[1:]
+        for timestamp in timestamps:
+            convertedRows.append([timestamp])
+        tableNames = {"drug_exposure": "drug_concept_id", "measurement": "measurement_concept_id", "observation": "observation_concept_id"}
+        timeColumns = {"drug_exposure": "drug_datetime", "measurement": "measurement_datetime", "observation": "observation_datetime"}
+        for table, concept_id in tableNames.items():
+            if table == "drug_exposure":
+                value_column = "quantity"
+            else:
+                value_column = "value_as_number"
+            stdin, stdout, stderr = ssh.exec_command('mysql -h{} -u{} -p{} SMITH_OMOP -e "select distinct {} from SMITH_OMOP.{} where person_id = {}"'.format(databaseConfiguration['host'], databaseConfiguration['username'], databaseConfiguration['password'], concept_id, table, patientId)) #iterate over all tables that may contain data to the patient
+            for loaded_concept_id in stdout.readlines()[1:]:
+                firstLine.append(loaded_concept_id)
+                for row in convertedRows:
+                    stdin, stdout, stderr = ssh.exec_command('mysql -h{} -u{} -p{} SMITH_OMOP -e "select {} from SMITH_OMOP.{} where person_id = {} and {} = {}"'.format(databaseConfiguration['host'], databaseConfiguration['username'], databaseConfiguration['password'], value_column, table, patientId, timeColumns[table], row[0])) #select the data that exists in the table at the given time
+                    result = stdout.readlines()
+                    print("----------------------")
+                    print('mysql -h{} -u{} -p{} SMITH_OMOP -e "select {} from SMITH_OMOP.{} where person_id = {} and {} = \'{}\'"'.format(databaseConfiguration['host'], databaseConfiguration['username'], databaseConfiguration['password'], value_column, table, patientId, timeColumns[table], row[0]))
+                    print("------------------------")
+                    if result:
+                        row.append(result[0])
+                    else:
+                        row.append(None)
+
+    else: # if nothing else applies, load data from the smith_asic_scheme
+        # first, get all column names of the table and add the respective unit to the column titel (this is done so that the NDAS can show the unit for every parameter). 
+        stdin, stdout, stderr = ssh.exec_command('mysql -h{} -u{} -p{} SMITH_SepsisDB -e "show columns from SMITH_ASIC_SCHEME.{}"'.format(databaseConfiguration['host'], databaseConfiguration['username'], databaseConfiguration['password'], tableName)) #get all column names
+        columnNames = stdout.readlines()
+        columnNames = columnNames[2:] #remove the first two elements of the result list (the first element contains the column names of the query result and the second element (the first query result element) is the "patientid" column, which is not further needed).
+        units = ["", "mmHg", "mmHg", "%", "", "°C", "mmHg", "cmH2O", "/min", "/min", "mmol/L", "mmol/L", "µmol/L", "U/L", "mL/cmH2O", "mmHg", "%", "mmol/L", "", "µmol/L", "mmol/L", "10^3/µL", "ng/mL", "mmHg", "mmHg", "%", "mmHg", "", "s", "mmHg", "mL/kg", "U/L", "mmHg", "mmHg", "L/min/m2", "µmol/L", "L/min", "pmol/L", "dyn.s/cm-5/m2", "mmHg", "ng/mL", "dyn.s/cm-5/m2", "cmH2O", "mmHg", "%", "nmol/L", "L/min", "L/min/m2", "ml/m2", "/min", "L/min", "%", "µg/kg/min", "mg/h", "mL/h", "mg/h", "µg/kg/min", "IE/min", "µg/kg/min", "µg/kg/min", "mg/h", "µg/h", "mg", "mg", "mg/h", "mg/h", "mg/h", "µg/kg/min", "mg", "mg", "mg", "mg/h", "µg", "µg/kg/h", "mg", "%", "µg/L", "10^3/µL", "mL", "U/L", "mmol/L", "U/L", "U/L", "ppm", "cmH2O", "", "mL/m2", "mL/Tag", "/min", "%", "", "cmH2O", "mL/kg", "cmH2O", "cmH2O", "cmH2O"] #the units for all colums. TODO: This has to be solved in another way since at this point, the table columns need to be in the correct order, and this cannot be guaranteed for upcoming tables in the SMITH_ASIC_SCHEME. 
+        index = 0
+        for name in columnNames:
+            name = name.split()
+            if index < len(units):
+                firstLine.append(name[0] + "(" + units[index] + ")") # add the unit to the column title
+            else:
+                firstLine.append(name[0]) 
+            index+=1
+            
+        # load the actual data for the specified patient    
+        stdin, stdout, stderr = ssh.exec_command('mysql -h{} -u{} -p{} SMITH_SepsisDB -e "select * from SMITH_ASIC_SCHEME.{} where patientid = {}"'.format(databaseConfiguration['host'], databaseConfiguration['username'], databaseConfiguration['password'], tableName, patientId))
+        result = stdout.readlines()
+        errors = stderr.readlines()
+        ssh.close()
+        if len(errors) > 0 and errors[0] == "ERROR 1045 (28000): Access denied for user '{}'@'interface.smith.embedded.rwth-aachen.de' (using password: YES)\n".format(databaseConfiguration['username']): # wrong database authentication data
+            return -6
+        elif len(errors) > 0:
+            for error in errors:
+                logging.error(error)
+        result = result[1:]
+        if result == []:
+            return -1
+            
+        convertedRowsTemp = []
+        smallestTimestamp = -1
+        for row in result:
+            row = row.split("\t")
+            temp = list(row)
+            temp.pop(0)
+            temp[0] = float(temp[0])
+            if temp[0] < smallestTimestamp or smallestTimestamp == -1:
+                smallestTimestamp = temp[0]
+            row = tuple(temp)
+            convertedRowsTemp.append(row)
+            convertedRows = [] 
+        for row in convertedRowsTemp:
+            temp = list(row)
+            temp[0] = temp[0] - smallestTimestamp
+            convertedRows.append(tuple(temp))
     if not os.path.exists(os.getcwd() + "\\ndas\\local_data\\imported_patients"):
         os.makedirs(os.getcwd() + "\\ndas\\local_data\\imported_patients") #create the folder where the csv table has to be stored
     #write the data to the csv file
@@ -170,10 +198,10 @@ def loadPatientData(tableName, patientId):
 
 def loadPatientIds(table):
     """
-    Returns all patient ids in a list which occur in the specified table.
+    Returns all patient ids in a list which occur in the specified table / database.
     
     Parameters:
-        table (str) - the name of the table. There must exist a table with this nam ein the ASIC_DATA_SCHEME.
+        table (str) - the name of the table. There must exist a table with this nam ein the ASIC_DATA_SCHEME. For other databases, the functionality has to be extended manually. 
         
     Returns:
     If there occurs some type of an error, an error code is returned which indicates the type of the error:
@@ -190,7 +218,10 @@ def loadPatientIds(table):
     databaseConfiguration = loadDatabaseConfiguration()
     
     #retrieve the data from the database
-    stdin, stdout, stderr = ssh.exec_command('mysql -h{} -u{} -p{} SMITH_SepsisDB -e "select distinct patientid from SMITH_ASIC_SCHEME.{};"'.format(databaseConfiguration['host'], databaseConfiguration['username'], databaseConfiguration['password'], table))
+    if table == "smith_omop": # load patient ids from the omop database
+        stdin, stdout, stderr = ssh.exec_command('mysql -h{} -u{} -p{} SMITH_OMOP -e "select distinct person_id from SMITH_OMOP.person;"'.format(databaseConfiguration['host'], databaseConfiguration['username'], databaseConfiguration['password']))
+    else: #assume that the given table name is a table in the SMITH_ASIC_SCHEME database
+        stdin, stdout, stderr = ssh.exec_command('mysql -h{} -u{} -p{} SMITH_SepsisDB -e "select distinct patientid from SMITH_ASIC_SCHEME.{};"'.format(databaseConfiguration['host'], databaseConfiguration['username'], databaseConfiguration['password'], table))
     results = stdout.readlines()
     errors = stderr.readlines()
     ssh.close()
