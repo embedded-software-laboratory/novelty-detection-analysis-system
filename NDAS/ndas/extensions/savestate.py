@@ -40,6 +40,10 @@ def save_state(state: 'State', loc: str, patientinformation: str):
     loc
     """
     save_data = state.get_save_data(patientinformation)
+    print("---------------------------------")
+    print(type(save_data))
+    print(save_data)
+    print("---------------------------------")
     _save_object(save_data, loc)
     logger.savestate.debug("Current state saved to file.")
 
@@ -215,7 +219,7 @@ def _read_object(filename: str):
     filename
     """
     logger.savestate.info("Loading state from %s" % filename)
-    # Because of compatibility issues, that existed between files saved by the compiled version and files by the script version, we switched from hickle to pickle to save the data.
+    # Because of compatibility issues that existed between files saved by the compiled version and files by the script version, we switched from hickle to pickle to save the data.
     # So, we first try to load the file using pickle. But, to preserve backward compatibility with older files, we use hickle if the loading process fails with pickle. 
     try:
         file = open(filename, mode="rb")

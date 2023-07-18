@@ -1,0 +1,21 @@
+% !TEX root = ../main.tex
+
+\chapter{Data format}
+In this section, I will describe the data format which is used to save the current state into a file. 
+\\The data is stored into a dictionary, which contains the following elements:
+\begin{itemize}
+\item \textbf{patientinformation} - information about the database where the patient comes from and its ID, if available. This is used for the functionality to load additional labels from a different file for the same patient, to check weither the two files represents really the same patient. 
+\item \textbf{data} - a dictionary which contains the plot data. It consists of the following elements:
+\begin{itemize}
+\item \textit{dataframe} - This is a two dimensional numpy.ndarry which contains the actual plot data. The fist column represents the time line (i.e. the X axis of the plot), and the remaining columns represents the data for every parameter that are uses as Y values for the plot.
+\item \textit{dataframe\_labels} - These are the titles for every column of the previous array. 
+\item \textit{data\_slider\_start} - If the user sliced the data, the value of the left control element of the slider is stored here.
+\item \textit{dater\_slicer\_end} - If the user sliced the data, the value of the right control element of the slider is stored here.
+\item \textit{imputed\_dataframe} - If the user used the imputation functionality, the new imputed data are stored here into a numpy.ndarray. The dataframe array is overwritten by this array as soon as the user presses the \glqq apply results onto loaded data set\grqq{} button.
+\item \textit{mask\_dataframe} - TBD
+\end{itemize}
+\item \textbf{Novelties} - This is a dictionary, which contains information which point was marked as a novelty, if the user executed a novelty detection algorithm. Every key of the dictionary is a plotname and every value is a list which is as long as the according plot contains points. A one means, that the according point is marked as a novelty, and a zero means the opposite, i.e. the point is not marked as a novelty.
+\item \textbf{Labels} - This is an array which contains the information about every label which the user added via the annotation view. Every element of the array is a dictionary which consists information about the point coordinates, the plotname and the label itself.  
+\end{itemize}
+
+When saving the data, this dictionary is serialized using pickle and then written into a file. Originally, the hickle package was used to serialize the dictionary, but this caused compatibility issues between the compiled NDAS version and the script version for whatever reasons. To avoid this, we switched to pickle. Older saved files should nevertheless still be loadable, because if loading using pickle fails, the NDAS tries to load the file using hickle, to maintain backward compatibility. 
