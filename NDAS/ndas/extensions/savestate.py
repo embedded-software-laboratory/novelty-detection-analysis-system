@@ -40,10 +40,6 @@ def save_state(state: 'State', loc: str, patientinformation: str):
     loc
     """
     save_data = state.get_save_data(patientinformation)
-    print("---------------------------------")
-    print(type(save_data))
-    print(save_data)
-    print("---------------------------------")
     _save_object(save_data, loc)
     logger.savestate.debug("Current state saved to file.")
 

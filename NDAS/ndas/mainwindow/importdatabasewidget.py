@@ -35,7 +35,7 @@ class DatabaseSettingsWidget(QWidget):
         reg_exp_number = QRegExp("[0-9]+") #Regular expression which expresses an integer (this is used to ensure that the user only enteres numbers in some fields where this is necessary)
 
         database = QComboBox()
-        database.addItems({"asic_data_mimic", "asic_data_sepsis", "uka_data"}) # dropdown list with all available asic-scheme-tables
+        database.addItems({"asic_data_mimic", "asic_data_sepsis", "uka_data", "smith_omop"}) # dropdown list with all available databases
         database.currentIndexChanged.connect(lambda: self.loadPatientIds(database.currentText())) # when the user selects another table, load the patient ids which occur in this table (they are needed by the patient id-slider)
         self.selectLabel = QLabel()
         self.selectLabel.setText("Select patient by patient id")
@@ -108,7 +108,7 @@ class DatabaseSettingsWidget(QWidget):
 
     def loadPatient(self, parent, patientid, tableName):
         """
-        loads the specified patient of the specified asic_data-table into the NDAS
+        loads the specified patient of the specified table / database into the NDAS
         """
         filename = os.getcwd()+"\\ndas\\local_data\\imported_patients\\{}_patient_{}.csv".format(tableName, str(patientid))
         result = 0
@@ -236,8 +236,8 @@ class DatabaseSettingsWidget(QWidget):
         self.patientId.setText(str(nearestValue))
         
     def loadPatientIds(self, table):
-        # load all existing patient ids from the given table. These are used to set the range of the patient id slider correctly and by the sliderChanged function
-        if not os.path.exists(os.getcwd()+"\\ndas\\local_data\\{}_patient_ids.txt".format(table)): # check if there already exist a local copy for this table
+        # load all existing patient ids from the given table / database. These are used to set the range of the patient id slider correctly and by the sliderChanged function
+        if not os.path.exists(os.getcwd()+"\\ndas\\local_data\\{}_patient_ids.txt".format(table)): # check if there already exist a local copy for this table / database
             result = interface.loadPatientIds(table) # if not, load the data directly from the datababase
             
             # error messages for the different possible failures
