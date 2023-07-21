@@ -12,7 +12,13 @@ In this section, I will describe the data format which is used to save the curre
 \item \textit{data\_slider\_start} - If the user sliced the data, the value of the left control element of the slider is stored here.
 \item \textit{dater\_slicer\_end} - If the user sliced the data, the value of the right control element of the slider is stored here.
 \item \textit{imputed\_dataframe} - If the user used the imputation functionality, the new imputed data are stored here into a numpy.ndarray. The dataframe array is overwritten by this array as soon as the user presses the \glqq apply results onto loaded data set\grqq{} button.
-\item \textit{mask\_dataframe} - TBD
+\item \textit{mask\_dataframe} - This is a two dimensional numpy.ndarray with the length of the plot data. Every cell holds the following value:
+\begin{itemize}
+\item 0, if the current plot value at this point holds the original value
+\item 1, if the user changed the value in the \textit{Data Inspector}
+\item 2, if the value was added by an imputation algorithm.
+\end{itemize}
+It is used to color the points in the plot view accordingly, so that the user can see which values come from the original data and which values were changed or added. 
 \end{itemize}
 \item \textbf{Novelties} - This is a dictionary, which contains information which point was marked as a novelty, if the user executed a novelty detection algorithm. Every key of the dictionary is a plotname and every value is a list which is as long as the according plot contains points. A one means, that the according point is marked as a novelty, and a zero means the opposite, i.e. the point is not marked as a novelty.
 \item \textbf{Labels} - This is an array which contains the information about every label which the user added via the annotation view. Every element of the array is a dictionary which consists information about the point coordinates, the plotname and the label itself.  
