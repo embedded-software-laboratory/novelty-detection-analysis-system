@@ -115,30 +115,32 @@ def loadPatientData(tableName, patientId):
     convertedRows = []
 
     if tableName == "smith_omop": # load patient from the smith_omop database
+        original_timestamps = []
         stdin, stdout, stderr = ssh.exec_command('mysql -h{} -u{} -p{} SMITH_OMOP -e "with a as (select distinct drug_exposure_start_datetime as pTime from SMITH_OMOP.drug_exposure where person_id = {}), b as (select distinct measurement_datetime as pTime from SMITH_OMOP.measurement where person_id = {}), c as (select distinct observation_datetime as pTime from SMITH_OMOP.observation where person_id = {}), d as (select distinct procedure_datetime as pTime from SMITH_OMOP.procedure_occurrence where person_id = {}) select pTime from (select * from a union select * from b union select * from c union select * from d) as res order by pTime;"'.format(databaseConfiguration['host'], databaseConfiguration['username'], databaseConfiguration['password'], patientId, patientId, patientId, patientId)) # get all timestamps at which data exist in the database to the patient
         timestamps = stdout.readlines()[1:]
         for timestamp in timestamps:
-            convertedRows.append([timestamp])
-        tableNames = {"drug_exposure": "drug_concept_id", "measurement": "measurement_concept_id", "observation": "observation_concept_id"}
+            original_timestamps.append(timestamp)
+            convertedRows.append([(datetime.strptime(timestamp.replace("\n", ""), '%Y-%m-%d %H:%M:%S') - datetime.strptime(timestamps[0].replace("\n", ""), '%Y-%m-%d %H:%M:%S')).total_seconds()])
+       
+        conceptColumns = {"drug_exposure": "drug_concept_id", "measurement": "measurement_concept_id", "observation": "observation_concept_id"}
         timeColumns = {"drug_exposure": "drug_datetime", "measurement": "measurement_datetime", "observation": "observation_datetime"}
-        for table, concept_id in tableNames.items():
+        for table, concept_id in conceptColumns.items():
             if table == "drug_exposure":
                 value_column = "quantity"
             else:
                 value_column = "value_as_number"
-            stdin, stdout, stderr = ssh.exec_command('mysql -h{} -u{} -p{} SMITH_OMOP -e "select distinct {} from SMITH_OMOP.{} where person_id = {}"'.format(databaseConfiguration['host'], databaseConfiguration['username'], databaseConfiguration['password'], concept_id, table, patientId)) #iterate over all tables that may contain data to the patient
-            for loaded_concept_id in stdout.readlines()[1:]:
-                firstLine.append(loaded_concept_id)
-                for row in convertedRows:
-                    stdin, stdout, stderr = ssh.exec_command('mysql -h{} -u{} -p{} SMITH_OMOP -e "select {} from SMITH_OMOP.{} where person_id = {} and {} = {}"'.format(databaseConfiguration['host'], databaseConfiguration['username'], databaseConfiguration['password'], value_column, table, patientId, timeColumns[table], row[0])) #select the data that exists in the table at the given time
-                    result = stdout.readlines()
-                    print("----------------------")
-                    print('mysql -h{} -u{} -p{} SMITH_OMOP -e "select {} from SMITH_OMOP.{} where person_id = {} and {} = \'{}\'"'.format(databaseConfiguration['host'], databaseConfiguration['username'], databaseConfiguration['password'], value_column, table, patientId, timeColumns[table], row[0]))
-                    print("------------------------")
-                    if result:
-                        row.append(result[0])
-                    else:
-                        row.append(None)
+            stdin, stdout, stderr = ssh.exec_command('mysql -h{} -u{} -p{} SMITH_OMOP -e "select distinct {} from SMITH_OMOP.{} where person_id = {}"'.format(databaseConfiguration['host'], databaseConfiguration['username'], databaseConfiguration['password'], concept_id, table, patientId)) #iterate over all tables that may contain data to the patient and get the concept ids to which data exist
+            concept_ids = stdout.readlines()[1:]
+            if concept_ids != []:
+                for loaded_concept_id in concept_ids:
+                    firstLine.append(int(loaded_concept_id))  
+                    for i in range(len(timestamps)):                                                                                                                                                                                                                                                                                                                                                                                                                                        
+                        stdin, stdout, stderr = ssh.exec_command('mysql -h{} -u{} -p{} SMITH_OMOP -e "select {} from SMITH_OMOP.{} where person_id = {} and {} = \'{}\' and {} = {} "'.format(databaseConfiguration['host'], databaseConfiguration['username'], databaseConfiguration['password'], value_column, table, patientId, timeColumns[table], timestamps[i], conceptColumns[table], loaded_concept_id)) #select the data that exists in the table at the given time
+                        result = stdout.readlines()[1:]                                                                                                                                                                                                                                                                                                                                                                                                                                                                 
+                        if result:
+                            convertedRows[i].append(float(result[0]))
+                        else:
+                            convertedRows[i].append("NULL")
 
     else: # if nothing else applies, load data from the smith_asic_scheme
         # first, get all column names of the table and add the respective unit to the column titel (this is done so that the NDAS can show the unit for every parameter). 
