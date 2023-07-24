@@ -115,12 +115,14 @@ def loadPatientData(tableName, patientId):
     convertedRows = []
 
     if tableName == "smith_omop": # load patient from the smith_omop database
-        original_timestamps = []
+        original_timestamps = "("
         stdin, stdout, stderr = ssh.exec_command('mysql -h{} -u{} -p{} SMITH_OMOP -e "with a as (select distinct drug_exposure_start_datetime as pTime from SMITH_OMOP.drug_exposure where person_id = {}), b as (select distinct measurement_datetime as pTime from SMITH_OMOP.measurement where person_id = {}), c as (select distinct observation_datetime as pTime from SMITH_OMOP.observation where person_id = {}), d as (select distinct procedure_datetime as pTime from SMITH_OMOP.procedure_occurrence where person_id = {}) select pTime from (select * from a union select * from b union select * from c union select * from d) as res order by pTime;"'.format(databaseConfiguration['host'], databaseConfiguration['username'], databaseConfiguration['password'], patientId, patientId, patientId, patientId)) # get all timestamps at which data exist in the database to the patient
         timestamps = stdout.readlines()[1:]
         for timestamp in timestamps:
-            original_timestamps.append(timestamp)
+            original_timestamps = original_timestamps + " '" + timestamp + "', "
             convertedRows.append([(datetime.strptime(timestamp.replace("\n", ""), '%Y-%m-%d %H:%M:%S') - datetime.strptime(timestamps[0].replace("\n", ""), '%Y-%m-%d %H:%M:%S')).total_seconds()])
+        original_timestamps = original_timestamps[:-2] # remove the last comma
+        original_timestamps = original_timestamps + ")"
        
         conceptColumns = {"drug_exposure": "drug_concept_id", "measurement": "measurement_concept_id", "observation": "observation_concept_id"}
         timeColumns = {"drug_exposure": "drug_datetime", "measurement": "measurement_datetime", "observation": "observation_datetime"}
@@ -133,14 +135,26 @@ def loadPatientData(tableName, patientId):
             concept_ids = stdout.readlines()[1:]
             if concept_ids != []:
                 for loaded_concept_id in concept_ids:
-                    firstLine.append(int(loaded_concept_id))  
-                    for i in range(len(timestamps)):                                                                                                                                                                                                                                                                                                                                                                                                                                        
-                        stdin, stdout, stderr = ssh.exec_command('mysql -h{} -u{} -p{} SMITH_OMOP -e "select {} from SMITH_OMOP.{} where person_id = {} and {} = \'{}\' and {} = {} "'.format(databaseConfiguration['host'], databaseConfiguration['username'], databaseConfiguration['password'], value_column, table, patientId, timeColumns[table], timestamps[i], conceptColumns[table], loaded_concept_id)) #select the data that exists in the table at the given time
-                        result = stdout.readlines()[1:]                                                                                                                                                                                                                                                                                                                                                                                                                                                                 
-                        if result:
-                            convertedRows[i].append(float(result[0]))
-                        else:
-                            convertedRows[i].append("NULL")
+                    firstLine.append(int(loaded_concept_id))                                                                                                                                                                                                                                                                                                                                                                                                                                        
+                    stdin, stdout, stderr = ssh.exec_command('mysql -h{} -u{} -p{} SMITH_OMOP -e "select {}, {} from SMITH_OMOP.{} where person_id = {} and {} in {} and {} = {} order by {} asc"'.format(databaseConfiguration['host'], databaseConfiguration['username'], databaseConfiguration['password'], value_column, timeColumns[table], table, patientId, timeColumns[table], original_timestamps, conceptColumns[table], loaded_concept_id, timeColumns[table])) #select the data that exists in the table at the given time
+                    results = stdout.readlines()[1:] 
+                    counter = 0;
+                    for result in results:  
+                        resultList = result.split("\t")                                                                                                                                                                                                                                                                                                                                                                                                                                                            
+                        while timestamps[counter] != resultList[1]: # skip all timestamps to which not exist data with this concept id 
+                            convertedRows[counter].append("NULL")
+                            counter+=1 #since the results come in sorted order, we do not need to iterate over all timestamps in every loop
+                            if counter >= len(timestamps): 
+                                break
+                        if counter >= len(timestamps):
+                            break
+                        convertedRows[counter].append(resultList[0])
+                        counter+=1
+                    while counter != len(timestamps):
+                        convertedRows[counter].append("NULL")
+                        counter+=1
+
+                        
 
     else: # if nothing else applies, load data from the smith_asic_scheme
         # first, get all column names of the table and add the respective unit to the column titel (this is done so that the NDAS can show the unit for every parameter). 
