@@ -231,12 +231,13 @@ def loadPatientData(tableName, patientId):
         newLine = list(line)
         writer.writerow(newLine)
 
-def loadPatientIds(table):
+def loadPatientIds(table, omop_data_source=None):
     """
     Returns all patient ids in a list which occur in the specified table / database.
     
     Parameters:
         table (str) - the name of the table. There must exist a table with this nam ein the ASIC_DATA_SCHEME. For other databases, the functionality has to be extended manually. 
+        omop_data_source (str) - the name of the data source, from which the patient ids should be loaded. Only necessary for the omop_database (can be ommited in other cases). (The omop database contains data from other databases like MIMIC3 or HIRID, which were converted into the OMOP CDM)
         
     Returns:
     If there occurs some type of an error, an error code is returned which indicates the type of the error:
@@ -254,7 +255,7 @@ def loadPatientIds(table):
     
     #retrieve the data from the database
     if table == "smith_omop": # load patient ids from the omop database
-        stdin, stdout, stderr = ssh.exec_command('mysql -h{} -u{} -p{} SMITH_OMOP -e "select distinct person_id from SMITH_OMOP.person;"'.format(databaseConfiguration['host'], databaseConfiguration['username'], databaseConfiguration['password']))
+        stdin, stdout, stderr = ssh.exec_command('mysql -h{} -u{} -p{} SMITH_OMOP -e "select distinct person_id from SMITH_OMOP.person where person_source_value like \'{}%\';"'.format(databaseConfiguration['host'], databaseConfiguration['username'], databaseConfiguration['password'], omop_data_source))
     else: #assume that the given table name is a table in the SMITH_ASIC_SCHEME database
         stdin, stdout, stderr = ssh.exec_command('mysql -h{} -u{} -p{} SMITH_SepsisDB -e "select distinct patientid from SMITH_ASIC_SCHEME.{};"'.format(databaseConfiguration['host'], databaseConfiguration['username'], databaseConfiguration['password'], table))
     results = stdout.readlines()
