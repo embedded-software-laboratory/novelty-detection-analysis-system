@@ -255,7 +255,10 @@ def loadPatientIds(table, omop_data_source=None):
     
     #retrieve the data from the database
     if table == "smith_omop": # load patient ids from the omop database
-        stdin, stdout, stderr = ssh.exec_command('mysql -h{} -u{} -p{} SMITH_OMOP -e "select distinct person_id from SMITH_OMOP.person where person_source_value like \'{}%\';"'.format(databaseConfiguration['host'], databaseConfiguration['username'], databaseConfiguration['password'], omop_data_source))
+        if omop_data_source == "MIMIC3":
+            stdin, stdout, stderr = ssh.exec_command('mysql -h{} -u{} -p{} SMITH_OMOP -e "select distinct person_id from SMITH_OMOP.person where person_source_value like \'MIMIC%\' and person_source_value not like \'MIMICIV%\';"'.format(databaseConfiguration['host'], databaseConfiguration['username'], databaseConfiguration['password']))
+        else: 
+            stdin, stdout, stderr = ssh.exec_command('mysql -h{} -u{} -p{} SMITH_OMOP -e "select distinct person_id from SMITH_OMOP.person where person_source_value like \'{}%\';"'.format(databaseConfiguration['host'], databaseConfiguration['username'], databaseConfiguration['password'], omop_data_source))
     else: #assume that the given table name is a table in the SMITH_ASIC_SCHEME database
         stdin, stdout, stderr = ssh.exec_command('mysql -h{} -u{} -p{} SMITH_SepsisDB -e "select distinct patientid from SMITH_ASIC_SCHEME.{};"'.format(databaseConfiguration['host'], databaseConfiguration['username'], databaseConfiguration['password'], table))
     results = stdout.readlines()
