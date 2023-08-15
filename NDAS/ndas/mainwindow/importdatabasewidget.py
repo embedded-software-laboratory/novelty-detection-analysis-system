@@ -1,5 +1,6 @@
 # This is the window which is used to load several information and patient data from the tables stored in the SMITH_ASIC_SCHEME.
 
+from tkinter import OFF
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
 from PyQt5.QtGui import QRegExpValidator
@@ -35,8 +36,11 @@ class DatabaseSettingsWidget(QWidget):
         reg_exp_number = QRegExp("[0-9]+") #Regular expression which expresses an integer (this is used to ensure that the user only enteres numbers in some fields where this is necessary)
 
         database = QComboBox()
-        database.addItems({"asic_data_mimic", "asic_data_sepsis", "uka_data"}) # dropdown list with all available asic-scheme-tables
-        database.currentIndexChanged.connect(lambda: self.loadPatientIds(database.currentText())) # when the user selects another table, load the patient ids which occur in this table (they are needed by the patient id-slider)
+        database.addItems({"asic_data_mimic", "asic_data_sepsis", "uka_data", "smith_omop"}) # dropdown list with all available databases
+        database.currentIndexChanged.connect(lambda: self.switchDatabase(database.currentText())) # when the user selects another table, load the patient ids which occur in this table (they are needed by the patient id-slider)
+
+        self.data_source_flag = False
+
         self.selectLabel = QLabel()
         self.selectLabel.setText("Select patient by patient id")
         self.patientId = QLineEdit()
@@ -61,8 +65,8 @@ class DatabaseSettingsWidget(QWidget):
         self.patientIdsScrollbar.setWidgetResizable(True)
         self.patiendidsLabel = QLabel()
         self.patientIdsScrollbar.setWidget(self.patiendidsLabel)
-        showPatients = QPushButton("Show patient ids")
-        showPatients.clicked.connect(lambda: self.showPatients(parent, self.numberOfPatients.text(), database.currentText()))
+        self.showPatientsBtn = QPushButton("Show patient ids")
+        self.showPatientsBtn.clicked.connect(lambda: self.showPatients(parent, self.numberOfPatients.text(), database.currentText()))
 
         self.parameterEntriesLabel = QLabel()
         self.parameterEntriesLabel.setText("Show the patients who has the most entries for a specific parameter:")
@@ -77,30 +81,30 @@ class DatabaseSettingsWidget(QWidget):
         self.patientIdsScrollbar2.setWidgetResizable(True)
         self.patiendidsLabel2 = QLabel()
         self.patientIdsScrollbar2.setWidget(self.patiendidsLabel2)
-        showPatients2 = QPushButton("Show patient ids")
-        showPatients2.clicked.connect(lambda: self.showPatientsWithParameter(parent, self.numberOfPatients2.text(), database.currentText()))
+        self.showPatientsBtn2 = QPushButton("Show patient ids")
+        self.showPatientsBtn2.clicked.connect(lambda: self.showPatientsWithParameter(parent, self.numberOfPatients2.text(), database.currentText()))
 
 
-        layout = QFormLayout()
-        layout.addRow("Select database: ", database)
-        layout.addRow(self.selectLabel)
-        layout.addRow(self.patientId)
-        layout.addRow(self.patiendIDSlider)
-        layout.addRow(confirm)
-        layout.addRow(select_random)
-        layout.addRow(self.patientEntriesLabel)
-        layout.addRow("Enter number of patients:", self.numberOfPatients)
-        layout.addRow(self.patientIdsScrollbar)
-        layout.addRow(showPatients)
-        layout.addRow(self.parameterEntriesLabel)
-        layout.addRow("Enter number of patients:", self.numberOfPatients2)
-        layout.addRow(self.parameter)
-        layout.addRow("Selected parameters: ", self.selectedParameters)
-        layout.addRow(self.patientIdsScrollbar2)
-        layout.addRow(showPatients2)
+        self.layout = QFormLayout()
+        self.layout.addRow("Select database: ", database)
+        self.layout.addRow(self.selectLabel)
+        self.layout.addRow(self.patientId)
+        self.layout.addRow(self.patiendIDSlider)
+        self.layout.addRow(confirm)
+        self.layout.addRow(select_random)
+        self.layout.addRow(self.patientEntriesLabel)
+        self.layout.addRow("Enter number of patients:", self.numberOfPatients)
+        self.layout.addRow(self.patientIdsScrollbar)
+        self.layout.addRow(self.showPatientsBtn)
+        self.layout.addRow(self.parameterEntriesLabel)
+        self.layout.addRow("Enter number of patients:", self.numberOfPatients2)
+        self.layout.addRow(self.parameter)
+        self.layout.addRow("Selected parameters: ", self.selectedParameters)
+        self.layout.addRow(self.patientIdsScrollbar2)
+        self.layout.addRow(self.showPatientsBtn2)
 
-        self.setLayout(layout)
-        result = self.loadPatientIds(database.currentText()) # load the patient ids which occur in the current selected database so that the range of the patient id slider can be set accordingly
+        self.setLayout(self.layout)
+        result = self.switchDatabase(database.currentText()) # load the patient ids which occur in the current selected database so that the range of the patient id slider can be set accordingly
         
         #if the connection to the database failed, set an according error flag - the main window closes this import window then
         if result == -1:
@@ -108,13 +112,14 @@ class DatabaseSettingsWidget(QWidget):
 
     def loadPatient(self, parent, patientid, tableName):
         """
-        loads the specified patient of the specified asic_data-table into the NDAS
+        loads the specified patient of the specified table / database into the NDAS
         """
         filename = os.getcwd()+"\\ndas\\local_data\\imported_patients\\{}_patient_{}.csv".format(tableName, str(patientid))
         result = 0
         parent.getParent().overlay.show()
-        if not os.path.exists(filename): # check if there already exists a local copy of the data
-            result = interface.loadPatientData(tableName, str(patientid)) # if not, load the data directly from the database (they are stored into a csv file at the above path)
+        if tableName == "smith_omop":
+            if not os.path.exists(filename): # check if there already exists a local copy of the data
+                result = interface.loadPatientData(tableName, str(patientid), self.omop_data_source.currentText()) # if not, load the data directly from the database (they are stored into a csv file at the above path)
             
         # if something went wrong during loading the data, present a respective error message
         if result == -1:
@@ -134,7 +139,8 @@ class DatabaseSettingsWidget(QWidget):
             parent.getParent().toggleTooltipStatus(parent.getParent().toggle_tooltip_btn, True)
             parent.getParent().toggle_additional_labels.setChecked(False)
             parent.getParent().toggle_additional_labels.setEnabled(False)
-            parent.getParent().currentPatientInformation = tableName + patientid
+            parent.getParent().currentPatientInformation = tableName + str(patientid)
+            parent.getParent().setWindowTitle("NDAS (Patient Nr. " + str(patientid) + " aus " + tableName + " geladen)")
             parent.close()
 
     def load_randomPatient(self, parent, tableName):
@@ -234,11 +240,20 @@ class DatabaseSettingsWidget(QWidget):
                 if threshold == 0:
                     break
         self.patientId.setText(str(nearestValue))
-        
-    def loadPatientIds(self, table):
-        # load all existing patient ids from the given table. These are used to set the range of the patient id slider correctly and by the sliderChanged function
-        if not os.path.exists(os.getcwd()+"\\ndas\\local_data\\{}_patient_ids.txt".format(table)): # check if there already exist a local copy for this table
-            result = interface.loadPatientIds(table) # if not, load the data directly from the datababase
+
+    def loadPatientIDs(self, table):
+        # load all existing patient ids from the given table / database. These are used to set the range of the patient id slider correctly and by the sliderChanged function
+        txtFileName = ""
+        if table == "smith_omop":
+            txtFileName = table + self.omop_data_source.currentText()
+        else:
+            txtFileName = table
+
+        if not os.path.exists(os.getcwd()+"\\ndas\\local_data\\{}_patient_ids.txt".format(txtFileName)): # check if there already exist a local copy for this table / database
+            if table == "smith_omop":
+                result = interface.loadPatientIds(table, self.omop_data_source.currentText()) # if not, load the data directly from the datababase
+            else:
+                result = interface.loadPatientIds(table) # if not, load the data directly from the datababase
             
             # error messages for the different possible failures
             if result in [-3,-4,-5,-6]:
@@ -246,7 +261,7 @@ class DatabaseSettingsWidget(QWidget):
                 return -1
                 
             # write the result to a text file. This reduces the loading time for further uses
-            file = open(os.getcwd()+"\\ndas\\local_data\\{}_patient_ids.txt".format(table), "w")
+            file = open(os.getcwd()+"\\ndas\\local_data\\{}_patient_ids.txt".format(txtFileName), "w")
             for id in result:
                 file.write(id)
             file.close()
@@ -258,7 +273,7 @@ class DatabaseSettingsWidget(QWidget):
             if not(result == 1): # connection failed, don't need to procced
                 self.showConnectionErrorMessage(result)
                 return -1 
-            file = open(os.getcwd()+"\\ndas\\local_data\\{}_patient_ids.txt".format(table), "r")
+            file = open(os.getcwd()+"\\ndas\\local_data\\{}_patient_ids.txt".format(txtFileName), "r")
             result = file.readlines()
             
         # find the smallest and biggest ids and set the range of the slider accordingly
@@ -273,6 +288,28 @@ class DatabaseSettingsWidget(QWidget):
                 minValue = i
         self.patiendIDSlider.setMinimum(minValue)
         self.patiendIDSlider.setMaximum(maxValue)
+
+    def switchDatabase(self, table):
+        if table == "smith_omop" or table == "uka_data": 
+            self.showPatientsBtn.setEnabled(False)
+            self.showPatientsBtn2.setEnabled(False)
+            self.parameter.setEnabled(False)
+        else:
+            self.showPatientsBtn.setEnabled(True)
+            self.showPatientsBtn2.setEnabled(True)
+            self.parameter.setEnabled(True)
+        if table == "smith_omop" and self.data_source_flag == False: 
+            self.omop_data_source = QComboBox()
+            self.omop_data_source.addItems({"MIMIC3", "MIMICIV", "HIRID"})
+            self.omop_data_source.currentIndexChanged.connect(lambda: self.loadPatientIDs("smith_omop"))
+            self.layout.insertRow(1, "Select data source: ", self.omop_data_source)
+            self.data_source_flag = True
+        else:
+            if self.data_source_flag == True:
+                self.layout.removeRow(1)
+                self.data_source_flag = False
+        
+        self.loadPatientIDs(table)        
         
     def showConnectionErrorMessage(self, errorCode):
         if errorCode == -6:
