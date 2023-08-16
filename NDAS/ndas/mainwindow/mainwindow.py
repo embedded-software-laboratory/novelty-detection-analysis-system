@@ -577,7 +577,7 @@ class MainWindow(QMainWindow):
                 self.currentPatientInformation = patientinformation
                 self.progress_bar_update_slot(85)
                 self.set_data_selection(data.data_slider_start, data.data_slider_end)
-                self.data_selection_slider.setRangeLimit(data.data_slider_start, data.get_dataframe_length())
+                self.data_selection_slider.setRangeLimit(0, data.get_dataframe_length())
                 self.data_selection_slider.valueChanged.connect(
                     lambda start_value, end_value: self.update_data_selection_text(start_value, end_value))
                 self.data_selection_start.textChanged.connect(lambda: self.update_data_selection_slider())
