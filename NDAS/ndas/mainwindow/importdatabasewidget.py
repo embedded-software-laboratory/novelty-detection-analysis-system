@@ -117,9 +117,8 @@ class DatabaseSettingsWidget(QWidget):
         filename = os.getcwd()+"\\ndas\\local_data\\imported_patients\\{}_patient_{}.csv".format(tableName, str(patientid))
         result = 0
         parent.getParent().overlay.show()
-        if tableName == "smith_omop":
-            if not os.path.exists(filename): # check if there already exists a local copy of the data
-                result = interface.loadPatientData(tableName, str(patientid), self.omop_data_source.currentText()) # if not, load the data directly from the database (they are stored into a csv file at the above path)
+        if not os.path.exists(filename): # check if there already exists a local copy of the data
+            result = interface.loadPatientData(tableName, str(patientid)) # if not, load the data directly from the database (they are stored into a csv file at the above path)
             
         # if something went wrong during loading the data, present a respective error message
         if result == -1:
