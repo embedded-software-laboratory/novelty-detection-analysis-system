@@ -180,8 +180,9 @@ def loadPatientData(tableName, patientId):
         stdin, stdout, stderr = ssh.exec_command('mysql -h{} -u{} -p{} SMITH_SepsisDB -e "show columns from SMITH_ASIC_SCHEME.{}"'.format(databaseConfiguration['host'], databaseConfiguration['username'], databaseConfiguration['password'], tableName)) #get all column names
         columnNames = stdout.readlines()
         columnNames = columnNames[2:] #remove the first two elements of the result list (the first element contains the column names of the query result and the second element (the first query result element) is the "patientid" column, which is not further needed).
-        units = ["", "mmHg", "mmHg", "%", "", "°C", "mmHg", "cmH2O", "/min", "/min", "mmol/L", "mmol/L", "µmol/L", "U/L", "mL/cmH2O", "mmHg", "%", "mmol/L", "", "µmol/L", "mmol/L", "10^3/µL", "ng/mL", "mmHg", "mmHg", "%", "mmHg", "", "s", "mmHg", "mL/kg", "U/L", "mmHg", "mmHg", "L/min/m2", "µmol/L", "L/min", "pmol/L", "dyn.s/cm-5/m2", "mmHg", "ng/mL", "dyn.s/cm-5/m2", "cmH2O", "mmHg", "%", "nmol/L", "L/min", "L/min/m2", "ml/m2", "/min", "L/min", "%", "µg/kg/min", "mg/h", "mL/h", "mg/h", "µg/kg/min", "IE/min", "µg/kg/min", "µg/kg/min", "mg/h", "µg/h", "mg", "mg", "mg/h", "mg/h", "mg/h", "µg/kg/min", "mg", "mg", "mg", "mg/h", "µg", "µg/kg/h", "mg", "%", "µg/L", "10^3/µL", "mL", "U/L", "mmol/L", "U/L", "U/L", "ppm", "cmH2O", "", "mL/m2", "mL/Tag", "/min", "%", "", "cmH2O", "mL/kg", "cmH2O", "cmH2O", "cmH2O"] #the units for all colums. TODO: This has to be solved in another way since at this point, the table columns need to be in the correct order, and this cannot be guaranteed for upcoming tables in the SMITH_ASIC_SCHEME. 
+        units = ["mmHg", "mmHg", "%", "", "°C", "mmHg", "cmH2O", "/min", "/min", "mmol/L", "mmol/L", "µmol/L", "U/L", "mL/cmH2O", "mmHg", "%", "mmol/L", "", "µmol/L", "mmol/L", "10^3/µL", "ng/mL", "mmHg", "mmHg", "%", "mmHg", "", "s", "mmHg", "mL/kg", "U/L", "mmHg", "mmHg", "L/min/m2", "µmol/L", "L/min", "pmol/L", "dyn.s/cm-5/m2", "mmHg", "ng/mL", "dyn.s/cm-5/m2", "cmH2O", "mmHg", "%", "nmol/L", "L/min", "L/min/m2", "ml/m2", "/min", "L/min", "%", "µg/kg/min", "mg/h", "mL/h", "mg/h", "µg/kg/min", "IE/min", "µg/kg/min", "µg/kg/min", "mg/h", "µg/h", "mg", "mg", "mg/h", "mg/h", "mg/h", "µg/kg/min", "mg", "mg", "mg", "mg/h", "µg", "µg/kg/h", "mg", "%", "µg/L", "10^3/µL", "mL", "U/L", "mmol/L", "U/L", "U/L", "ppm", "cmH2O", "", "mL/m2", "mL/Tag", "/min", "%", "", "cmH2O", "mL/kg", "cmH2O", "cmH2O", "cmH2O"] #the units for all colums. TODO: This has to be solved in another way since at this point, the table columns need to be in the correct order, and this cannot be guaranteed for upcoming tables in the SMITH_ASIC_SCHEME. 
         index = 0
+        columnNames = columnNames[1:]
         for name in columnNames:
             name = name.split()
             if index < len(units):
@@ -211,6 +212,8 @@ def loadPatientData(tableName, patientId):
             temp = list(row)
             temp.pop(0)
             temp[0] = float(temp[0])
+            if temp[0] == 17584.0000000000:
+                print(row)
             if temp[0] < smallestTimestamp or smallestTimestamp == -1:
                 smallestTimestamp = temp[0]
             row = tuple(temp)
@@ -219,16 +222,18 @@ def loadPatientData(tableName, patientId):
         for row in convertedRowsTemp:
             temp = list(row)
             temp[0] = temp[0] - smallestTimestamp
+            temp[-1] = temp[-1].replace("\n", "")
             convertedRows.append(tuple(temp))
     if not os.path.exists(os.getcwd() + "\\ndas\\local_data\\imported_patients"):
         os.makedirs(os.getcwd() + "\\ndas\\local_data\\imported_patients") #create the folder where the csv table has to be stored
     #write the data to the csv file
     filename = os.getcwd()+"\\ndas\\local_data\\imported_patients\\{}_patient_{}.csv".format(tableName, patientId)
-    file = open(filename, 'w')
+    file = open(filename, 'w', newline="")
     writer = csv.writer(file, delimiter=";", quoting=csv.QUOTE_ALL)
     writer.writerow(firstLine)
     for line in convertedRows:
         newLine = list(line)
+        print(newLine)
         writer.writerow(newLine)
 
 def loadPatientIds(table, omop_data_source=None):
