@@ -40,7 +40,7 @@ class MainWindow(QMainWindow):
         }
     """
 
-    def __init__(self, threadpool_obj, *args, **kwargs):
+    def __init__(self, threadpool_obj, hdf5_warning, *args, **kwargs):
         """
         Creates the main window with all buttons and options
         Parameters
@@ -52,6 +52,8 @@ class MainWindow(QMainWindow):
         super(MainWindow, self).__init__(*args, **kwargs)
 
         self.setWindowTitle('NDAS')
+
+        self.hdf5_warning = hdf5_warning
 
         self.main_widget = QTabWidget()
         self.tab_annotation = QWidget()
@@ -453,9 +455,14 @@ class MainWindow(QMainWindow):
         open_ndas_action = QAction("Load", self)
         open_ndas_action.triggered.connect(lambda: self.load_ndas_slot())
         self.main_menu.addAction(open_ndas_action)
-        save_ndas_action = QAction("Save", self)
-        save_ndas_action.triggered.connect(lambda: self.save_ndas_slot())
-        self.main_menu.addAction(save_ndas_action)
+
+        self.save_menu = self.main_menu.addMenu("Save")
+        save_ndas_action = QAction("Save as pickle file", self)
+        save_ndas_action.triggered.connect(lambda: self.save_ndas_slot("pickle"))
+        self.save_menu.addAction(save_ndas_action)
+        save_ndas_action = QAction("Save as HDF5 file", self)
+        save_ndas_action.triggered.connect(lambda: self.save_ndas_slot("hickle"))
+        self.save_menu.addAction(save_ndas_action)
 
         export_menu = self.main_menu.addMenu("Export as")
         export_png_action = QAction("PNG", self)
@@ -533,13 +540,27 @@ class MainWindow(QMainWindow):
         self.status_bar.showMessage("Ready")
         self.setStatusBar(self.status_bar)
 
-    def save_ndas_slot(self):
+    def save_ndas_slot(self, mode):
         """
         Calls the save option for NDAS files
         """
+        if mode == "hickle" and self.hdf5_warning:
+            msg = QMessageBox()
+            msg.setWindowTitle("Warning")
+            msg.setText("Attention: Using the HDF5 format causes compatibility issues between the script version and the compiled version of the NDAS - files which were saved by the script version in this format cannot be loaded by the compiled version correctly. To avoid this, use the pickle format instead.")
+            msg.setIcon(QMessageBox.Warning)
+            msg.addButton("Ok, I understood", QMessageBox.AcceptRole)
+            msg.addButton(QMessageBox.Abort)
+            checkBox = QCheckBox("Do not show this warning again in this session (you can turn it permanently off in the configuration menu)")
+            msg.setCheckBox(checkBox)
+            res = msg.exec()
+            if res == QMessageBox.Abort:
+                return
+            if checkBox.checkState() == Qt.CheckState.Checked:
+                self.hdf5_warning = False
+
         options = QFileDialog.Options()
         # options |= QFileDialog.DontUseNativeDialog
-
         save_dialog = QFileDialog()
         save_dialog.setDefaultSuffix('ndas')
         file_name, _ = save_dialog.getSaveFileName(self, "Choose save file location", (os.path.splitext(self.most_recent_opened_file_name)[0]+".ndas"),
@@ -556,7 +577,7 @@ class MainWindow(QMainWindow):
             self.progress_bar_update_slot(60)
             savestate.get_current_state().set_novelties(plots.format_for_save())
             self.progress_bar_update_slot(90)
-            savestate.save_state(savestate.get_current_state(), file_name, self.currentPatientInformation)
+            savestate.save_state(savestate.get_current_state(), file_name, self.currentPatientInformation, mode)
             self.progress_bar_update_slot(100)
 
     def load_ndas_slot(self):

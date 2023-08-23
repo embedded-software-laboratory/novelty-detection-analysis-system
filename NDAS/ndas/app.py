@@ -66,7 +66,7 @@ def run():
     init(config)
 
     # Creating mainwindow
-    window = mainwindow.MainWindow(q_threadpool)
+    window = mainwindow.MainWindow(q_threadpool, config["hdf5 warning"])
     logger.init.debug("MainWindow created")
     logger.init.debug("Multithreading with maximum %d threads" % q_threadpool.maxThreadCount())
     window.showMaximized()
@@ -157,6 +157,7 @@ def _init_modules(config):
     # Init colors
     logger.init.debug("Initializing colors...")
     colors.init_colors(config["colors"])
+
 
 
 class Application(QApplication):

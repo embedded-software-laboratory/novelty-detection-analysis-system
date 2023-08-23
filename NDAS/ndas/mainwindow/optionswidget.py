@@ -62,7 +62,15 @@ class OptionsWidget(QWidget):
     def create_settings_from_dict(self, layout, dict_in, dict_of_fields, collapsible=False):
         element_number = 0
         for k, v in dict_in.items():
-            if v:
+            if k == "hdf5 warning":
+                hdf5_checkbox = QCheckBox("Show the compatibility warning when saving into the hdf5 file format")
+                if v:
+                    hdf5_checkbox.setCheckState(Qt.CheckState.Checked)
+                else:  
+                    hdf5_checkbox.setCheckState(Qt.CheckState.Unchecked)
+                layout.addWidget(hdf5_checkbox)
+                dict_of_fields[k] = hdf5_checkbox
+            elif v:
                 local_dict = {}
                 if collapsible:
                     groupbox = CollapsibleBox(k)
@@ -256,6 +264,11 @@ class OptionsWidget(QWidget):
                 result[k] = v.text()
             elif isinstance(v, QPushButton):
                 result[k] = v.palette().color(QPalette.Background).name()[1:]
+            elif isinstance(v, QCheckBox):
+                if(v.checkState() == Qt.CheckState.Checked):
+                    result[k] = True
+                else:
+                    result[k] = False
             else:
                 result[k] = v
         return result
@@ -292,6 +305,8 @@ class OptionsWidget(QWidget):
 
         logger.init.debug("Updating colors...")
         colors.init_colors(config["colors"])  # colors are shown with next loaded plot
+
+        self.parent.parent.hdf5_warning = config["hdf5 warning"]
 
 
 class CollapsibleBox(QWidget):

@@ -193,7 +193,7 @@ physiologicalinfo:
     aliases: []
 plots:
   draw_outlier_series_box: true
-  outlier_series_threshold: 5
+  outlier_series_threshold: -407
   use_dark_mode: false
   exclusion_substrings:
   - ID
@@ -214,3 +214,4 @@ colors:
   added: ebb4ff
   user-edit: 72821f
   overlay: a4bedd
+hdf5 warning: false

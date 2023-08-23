@@ -30,7 +30,7 @@ def get_current_state():
     return current_state
 
 
-def save_state(state: 'State', loc: str, patientinformation: str):
+def save_state(state: 'State', loc: str, patientinformation: str, mode: str):
     """
     Saves the current save state to a save file
 
@@ -40,7 +40,7 @@ def save_state(state: 'State', loc: str, patientinformation: str):
     loc
     """
     save_data = state.get_save_data(patientinformation)
-    _save_object(save_data, loc)
+    _save_object(save_data, loc, mode)
     logger.savestate.debug("Current state saved to file.")
 
 
@@ -189,7 +189,7 @@ def restore_additional_lables(loc: str, patientinformation: str):
     except KeyError:
         QMessageBox.critical(None, "Incompatible dataformat", "ERROR: Dataformat incompatible", QMessageBox.Ok)
 
-def _save_object(obj: dict, filename: str):
+def _save_object(obj: dict, filename: str, mode: str):
     """
     Writes the HDF5-file
 
@@ -199,10 +199,12 @@ def _save_object(obj: dict, filename: str):
     filename
     """
     logger.savestate.info("Writing state to %s" % filename)
-    hkl.dump(obj, filename, mode='wb', compression='lzf',
-             shuffle=True, fletcher32=True)  # HDF5
     file = open(filename, mode="wb")
-    pickle.dump(obj, file)
+    if mode == "hickle":
+        hkl.dump(obj, filename, mode='wb', compression='lzf',
+                shuffle=True, fletcher32=True)  # HDF5
+    elif mode == "pickle":
+        pickle.dump(obj, file)
     file.close()
 
 
