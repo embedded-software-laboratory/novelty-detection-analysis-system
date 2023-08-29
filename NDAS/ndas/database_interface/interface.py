@@ -212,8 +212,6 @@ def loadPatientData(tableName, patientId):
             temp = list(row)
             temp.pop(0)
             temp[0] = float(temp[0])
-            if temp[0] == 17584.0000000000:
-                print(row)
             if temp[0] < smallestTimestamp or smallestTimestamp == -1:
                 smallestTimestamp = temp[0]
             row = tuple(temp)
@@ -233,7 +231,6 @@ def loadPatientData(tableName, patientId):
     writer.writerow(firstLine)
     for line in convertedRows:
         newLine = list(line)
-        print(newLine)
         writer.writerow(newLine)
 
 def loadPatientIds(table, omop_data_source=None):
