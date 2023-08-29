@@ -457,12 +457,15 @@ class MainWindow(QMainWindow):
         self.main_menu.addAction(open_ndas_action)
 
         self.save_menu = self.main_menu.addMenu("Save")
-        save_ndas_action = QAction("Save as pickle file", self)
-        save_ndas_action.triggered.connect(lambda: self.save_ndas_slot("pickle"))
-        self.save_menu.addAction(save_ndas_action)
-        save_ndas_action = QAction("Save as HDF5 file", self)
-        save_ndas_action.triggered.connect(lambda: self.save_ndas_slot("hickle"))
-        self.save_menu.addAction(save_ndas_action)
+        save_ndas_action_pickle = QAction("Save as pickle file", self)
+        save_ndas_action_pickle.triggered.connect(lambda: self.save_ndas_slot("pickle"))
+        self.save_menu.addAction(save_ndas_action_pickle)
+        save_ndas_action_hickle = QAction("Save as HDF5 file", self)
+        save_ndas_action_hickle.triggered.connect(lambda: self.save_ndas_slot("hickle"))
+        self.save_menu.addAction(save_ndas_action_hickle)
+        difference = QAction("What is the difference?", self)
+        difference.triggered.connect(lambda: self.show_save_information())
+        self.save_menu.addAction(difference)
 
         export_menu = self.main_menu.addMenu("Export as")
         export_png_action = QAction("PNG", self)
@@ -558,13 +561,13 @@ class MainWindow(QMainWindow):
                 return
             if checkBox.checkState() == Qt.CheckState.Checked:
                 self.hdf5_warning = False
-
+        
         options = QFileDialog.Options()
         # options |= QFileDialog.DontUseNativeDialog
         save_dialog = QFileDialog()
         save_dialog.setDefaultSuffix('ndas')
         file_name, _ = save_dialog.getSaveFileName(self, "Choose save file location", (os.path.splitext(self.most_recent_opened_file_name)[0]+".ndas"),
-                                                   "NDAS Files (*.ndas)", options=options)
+                                                    "NDAS Files (*.ndas)", options=options)
 
         if file_name:
             if file_name[-5:] != ".ndas":
@@ -579,6 +582,10 @@ class MainWindow(QMainWindow):
             self.progress_bar_update_slot(90)
             savestate.save_state(savestate.get_current_state(), file_name, self.currentPatientInformation, mode)
             self.progress_bar_update_slot(100)
+
+    def show_save_information(self):
+        QMessageBox.information(self, "Difference between pickle and hickle", "Pickle is a python module which implements the functionality to serialize and de-serialize python objects, so it enables us to save a python object into a file. Hickle does the same, but it stores the data into a HDF5 file format, which can be also used by other programming languages, not only by python like the pickle format. It also promises to be faster than pickle. The disadvantage is that it causes compatibility issues between the script version and the compiled version (=ndas.exe) of the NDAS - files stored in this format by the script version will not be loaded correclty by the compiled version. For this reason, we enabled the option to save to both file formats.")
+
 
     def load_ndas_slot(self):
         """
