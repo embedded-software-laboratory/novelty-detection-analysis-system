@@ -215,3 +215,286 @@ colors:
   user-edit: 72821f
   overlay: a4bedd
 hdf5 warning: true
+plot_names:
+  horovitz: Horovitz-Quotient
+  pao2: Arterieller Sauerstoffpartialdruck (PaO2)
+  fio2_gemessen: Inspiratorische Sauerstoffkonzentration (FiO2) - gemessen
+  ie_gemessen: Atemzeitverhältnis (I:E) - gemessen
+  koerperkerntemperatur: Körperkerntemperatur
+  map: Mittlerer arterieller Blutdruck (MAP)
+  peep_gemessen: Positiver endexpiratorischer Druck (PEEP) - gemessen
+  atemfrequenz_gemessen: Atemfrequenz (gemessen)
+  herzfrequenz: Herzfrequenz
+  be_arteriell: Base Excess (BE)
+  bicarbonat_arteriell: Bicarbonat (arteriell)
+  bilirubin_ges: Bilirubin (gesamt)
+  ck: Creatinin-Kinase (CK)
+  compliance: Compliance
+  dap: Diastolischer arterieller Blutdruck (DAP)
+  haematokrit: Hämatokrit
+  haemoglobin: Hämoglobin
+  inr: International Normalized Ratio (INR)
+  kreatinin: Kreatinin
+  lactat: Lactat
+  leukozyten: Leukozyten
+  lipase: Lipase
+  sap: Systolischer arterieller Blutdruck (SAP)
+  sao2: Arterielle Sauerstoffsättigung (SaO2)
+  szvo2: Zentralvenöse Sauerstoffsättigung (SzvO2)
+  zvd: Zentralvenöser Druck (ZVD)
+  ph: pH-Wert
+  ptt: Partielle Thromboplastinzeit (PTT)
+  paco2: Arterieller Kohlendioxidpartialdruck (PaCO2)
+  evlwi: Extravaskuläres Lungenwasser-Index
+  ck_mb: CK-MB
+  pcwp: Lungenkapillaren-Verschlussdruck (PCWP)
+  mpap: mittlerer pulmonalarterieller Druck (MPAP)
+  khi: Herzindex (kontinuierlich)
+  albumin: Albumin
+  khzv: Herzzeitvolumen (kontinuierlich)
+  bnp: BNP
+  pvri: pulmonaler vaskulärer Resistance-Index (PVRI)
+  dpap: diastolischer pulmonalarterieller Druck (DPAP)
+  pct: PCT
+  svri: systemischer vaskulärer Resistance-Index (SVRI)
+  p_ei_peak: Endinspiratorischer Spitzendruck (P EI peak)
+  spap: systolischer pulmonalarterieller Druck (SPAP)
+  etco2: enttidales CO2 (etCO2)
+  crp: C-reaktives Protein (CRP)
+  bhzv: Herzzeitvolumen (bolusweise)
+  bhi: Herzindex (bolusweise)
+  svi: Schlagvolumenindex
+  af_spontan: Atemfrequenz (spontan)
+  gasfluss: Extrakorporaler Gasfluss (O2)
+  gaszusammensetzung_o2: Gaszusammensetzung (%O2)
+  norepinephrin: Norepinephrin
+  propofol: Propofol
+  isofluran: Isofluran
+  clonidin: Clonidin
+  epinephrin: Epinephrin
+  vasopressin: Vasopressin
+  dobutamin: Dobutamin
+  levosimendan: Levosimendan
+  furosemid: Furosemid
+  sufentanil: Sufentanil
+  rocuronium: Rocuronium
+  hydrocortison: Hydrocortison
+  midazolam: Midazolam
+  morphin: Morphin
+  ketanest: Ketanest
+  milrinon: Milrinon
+  terlipressin: Terlipressin
+  prednisolon: Prednisolon
+  dexamethason: Dexamethason
+  fentanyl: Fentanyl
+  iloprost: Iloprost
+  dexmedetomidin: Dexmedetomidin
+  fludrocortison: Fludrocortison
+  spo2: Pulsoxymetrisch gemessene Sauerstoffsättigung (SpO2)
+  troponin: Troponin
+  thrombozyten: Thrombozyten
+  schlagvolumen: Schlagvolumen
+  amylase: Amylase
+  harnstoff: Harnstoff
+  got: Glutamat-Oxalacetat-Transaminase (GOT)
+  gpt: Glutamat-Pyruvat-Transaminsase (GPT)
+  no_inhalativ: Inhalatives Stickstoffmonoxid
+  deltap: Differenz zwischen P EI und PEEP (DeltaP)
+  ecmo: extrakorporale Membranoxygenierung (ECMO)
+  gedvi: globales enddiastolisches Volumen-Index
+  output_24h: 24h-Flüssigkeitsbilanz
+  atemfrequenz_eingestellt: Atemfrequenz (eingestellt)
+  fio2_eingestellt: Inspiratorische Sauerstoffkonzentration (FiO2) - eingestellt
+  ie_eingestellt: Atemzeitverhältnis (I:E) - eingestellt
+  peep_eingestellt: Positiver endexpiratorischer Druck (PEEP) - eingestellt
+  tidalvolumen: Tidalvolumen
+  p_ei_insp: Endinspiratorischer Druck (P EI insp)
+  p_ei_plat: Endinspiratorischer Plateuadruck (P EI plat)
+  p_ei_mean: Durchschnittlicher ndinspiratorischer Druck (P EI mean)
+  lagerungstherapie: Lagerungstherapie
+  24h-Bilanz_(Fluessigkeiten-Einfuhr_vs_-Ausfuhr): 24h-Flüssigkeitsbilanz
+  AF: Atemfrequenz (gemessen)
+  AF_spontan: Atemfrequenz (spontan)
+  Albumin: Albumin
+  BE_arteriell: Base Excess (BE)
+  Bicarbonat_arteriell: Bicarbonat (arteriell)
+  Bilirubin_ges.: Bilirubin (gesamt)
+  CK-MB: CK-MB 
+  CK: Creatinin-Kinase (CK)
+  Compliance: Compliance
+  DAP: Diastolischer arterieller Blutdruck (DAP)
+  GOT: Glutamat-Oxalacetat-Transaminase (GOT)
+  GPT: Glutamat-Pyruvat-Transaminsase (GPT)
+  HF: Herzfrequenz
+  Haematokrit: Hämatokrit
+  Haemoglobin: Hämoglobin
+  Harnstoff: Harnstoff
+  Horowitz-Quotient_(ohne_Temp-Korrektur): Horovitz-Quotient
+  INR: International Normalized Ratio (INR)
+  Koerperkerntemperatur: Körperkerntemperatur
+  Kreatinin: Kreatinin
+  LDH: Laktatdehydrogenase (LDH)
+  Laktat_arteriell: Laktat (arteriell)
+  Leukozyten: Leukozyten
+  Lipase: Lipase
+  MAP: Mittlerer arterieller Blutdruck (MAP)
+  PCT: PCT
+  PEEP: Positiver endexpiratorischer Druck (PEEP)
+  P_EI: Endinspiratorischer Druck (P EI)
+  SAP: Systolischer arterieller Blutdruck (SAP)
+  SaO2: Arterielle Sauerstoffsättigung (SaO2)
+  SpO2: Pulsoxymetrisch gemessene Sauerstoffsättigung (SpO2)
+  SzvO2: Zentralvenöse Sauerstoffsättigung (SzvO2)
+  Thrombozyten: Thrombozyten
+  ZVD: Zentralvenöser Druck (ZVD)
+  individuelles_Tidalvolumen_pro_kg_idealem_Koerpergewicht: Individuelles Tidalvolumen pro kg idealem Körpergewicht
+  pH_arteriell: pH-Wert (arteriell)
+  pTT:  Partielle Thromboplastinzeit (PTT)
+  paCO2_(ohne_Temp-Korrektur): Arterieller Kohlendioxidpartialdruck (PaCO2)
+  paO2_(ohne_Temp-Korrektur): Arterieller Sauerstoffpartialdruck (PaO2)
+  SVRI: systemischer vaskulärer Resistance-Index (SVRI)
+  etCO2: enttidales CO2 (etCO2)
+  SVI_(kontinuierlich): Schlagvolumenindex (kontinuierlich)
+  CRP: C-reaktives Protein (CRP)
+  HI_(kontinuierlich): Herzindex (kontinuierlich)
+  IL-6: Interleukin-6 (IL-6)
+  Lagerungstherapie: Lagerungstherapie 
+  HZV_(kontinuierlich): Herzzeitvolumen (kontinuierlich)
+  ECMO: extrakorporale Membranoxygenierung (ECMO)
+  Extrakorporaler_Gasfluss_(O2): Extrakorporaler Gasfluss (O2)
+  MPAP: mittlerer pulmonalarterieller Druck (MPAP)
+  HI_(Bolus): Herzindex (Bolus)
+  Lymphozyten_absolut: Lymphozyten (absolut)
+  D-Dimere: D-Dimere
+  SVI_(Bolus): Schlagvolumenindex (Bolus)
+  Gaszusammensetzung_(%O2): Gaszusammensetzung (%O2) 
+  Extrakorporaler_Blutfluss: Extrakorporaler Blutfluss
+  BNP: BNP
+  Lymphozyten_prozentual: Lypmphozyten (prozentual)
+  SV_(kontinuierlich): Schlagvolumen (kontinuierlich)
+  NT-pro_BNP: NT-pro_BNP 
+  DPAP: diastolischer pulmonalarterieller Druck (DPAP)
+  EVLWI: Extravaskuläres Lungenwasser-Index
+  HZV_(Bolus): Herzzeitvolumen (Bolus)
+  Troponin: Troponin
+  I:E: Atemzeitverhältnis (I:E)
+  Inhalatives_NO: Inhalatives Stickstoffmonoxid
+  PVRI: pulmonaler vaskulärer Resistance-Index (PVRI)
+  FiO2: Inspiratorische Sauerstoffkonzentration (FiO2)
+  GEDVI: globales enddiastolisches Volumen-Index
+  Amylase: Amylase
+  deltaP: Differenz zwischen P EI und PEEP (DeltaP)
+  SPAP: systolischer pulmonalarterieller Druck (SPAP)
+  FeO2: expiratorische Sauerstoffkonzentration (FeO2)
+  PCWP: Lungenkapillaren-Verschlussdruck (PCWP)
+  SV_(Bolus): Schlagvolumen (Bolus)
+  Clonidin_intravenoes_kontinuierlich: Clonidin
+  Furosemid_intravenoes_kontinuierlich: Furosemid
+  Norepinephrin_intravenoes_kontinuierlich: Norepinephrin
+  Propofol_intravenoes_kontinuierlich: Propofol
+  Sufentanil_intravenoes_kontinuierlich: Sufentanil
+  Hydrocortison_intravenoes_bolusweise: Hydrocortison
+  Vasopressin_intravenoes_kontinuierlich: Vasopressin
+  Rocuronium_intravenoes_bolusweise: Rocuronium
+  Isofluran_inhalativ: Isofluran
+  Midazolam_intravenoes_kontinuierlich: Midazolam
+  Sevofluran_inhalativ: Sevofluran
+  Morphin_intravenoes_kontinuierlich: Morphin
+  Prednisolon_intravenoes_bolusweise: Prednisolon
+  Dexamethason_intravenoes_bolusweise: Dexamethason
+  Milrinon_intravenoes_kontinuierlich: Milrinon
+  Terlipressin_intravenoes_bolusweise: Terlipressin
+  Fentanyl_intravenoes_kontinuierlich: Fentanyl
+  Inhalatives_Iloprost: Inhalatives Iloprost
+  Dobutamin_intravenoes_kontinuierlich: Dobutamin
+  Levosimendan_intravenoes_kontinuierlich: Levosimendan
+  Ketanest_intravenoes_kontinuierlich: Ketanest
+  Fludrocortison_peroral_bolusweise: Fludrocortison
+  Epinephrin_intravenoes_kontinuierlich: Epinephrin
+  Dexmedetomidin_intravenoes_kontinuierlich: Dexmedetomidin
+  3038018: 24h-Bilanz 
+  3043148: Atemfrequenz
+  46235169: Amylase
+  3003396:  BE_arteriell
+  3008152: Bicarbonat_arteriell
+  40757494: Bilirubin_ges
+  3007220: CK
+  21490582: Compliance
+  3012888: DAP
+  3024882: FiO2
+  3013721: GOT
+  005755: GPT
+  3027018: Herzfrequenz
+  43534077: Harnstoff
+  3029943: Horovitz-Quotient (ohne_Temp_Korrektur)
+  3009542: Hämatokrit 
+  40762351: Hämoglobin
+  21490724: I:E
+  3032080: INR
+  40762887: Kreatinin
+  3025926: Körperkerntemperatur
+  3018405: Laktat (arteriell)
+  3010813: Leukozyten
+  3004905: Lipase
+  3027598: MAP
+  21490855: PEEP
+  3004249: SAP
+  3016502: SaO2
+  40762500: SpO2
+  3005797: SzvO2
+  21490675: ZVD
+  3019977: pH (arteriell)
+  3013466: pTT
+  3027946: paCO2_(ohne_Temp-Korrektur)
+  3027801: paO2_(ohne_Temp-Korrektur)
+  40479778: Extrakorporaler Blutfluss
+  3661655: EVLWI
+  3029790: CK-MB
+  21490776: PCWP
+  3028074: MPAP
+  21490712: Herzindex (kontinuierlich)
+  3048529: Troponin
+  3007461: Thrombozyten
+  40757478: Albumin
+  3036518: Schlagvolumen (kontinuierlich)
+  3005555: Herzzeitvolumen (kontinuierlich)
+  3052295: BNP
+  21490880: Schlagvolumenindex (kontinuierlich)
+  3009713: PVRI
+  3017188: DPAP
+  3046279: PCT
+  3008047: SVRI 
+  4254061: GEDVI
+  3012810: P_EI
+  3005606: SPAP
+  3035357: etCO2
+  46234770: CRP
+  3017594: Tidalvolumen
+  4353937: FeO2 
+  42527138: deltaP
+  3002309: Herzzeitvolumen (Bolus)
+  3000569: Herzindex (Bolus)
+  3008952: Schlagvolumen (Bolus) 
+  3024530: Schlagvolumenindex (Bolus)
+  3026892: Atemfrequenz (spontan)
+  4089495: Extrakorporaler_Gasfluss_(O2) 
+  1321341: Norepinephrin
+  753626: Propofol
+  1343916: Epinephrin
+  35201749: Vasopressin
+  1719036: Dobutamin 
+  40173184: Levosimendan
+  956874: Furosemid
+  19078219: Sufentanil
+  19003953: Rocuronium
+  975125: Hydrocortison 
+  46287617: Midazolam
+  1110410: Morphin
+  785649: Ketanest
+  42628988: Milrinon
+  1550557: Prednisolon
+  1518254: Dexamethason 
+  35603427: Fentanyl
+  35603036: Dexmedetomidin
+  3025315: Körpergewicht
+  3005755: GPT

@@ -9,6 +9,11 @@ import os
 import paramiko
 import logging
 
+plot_names = {}
+
+def init_plot_names(names_dict):
+    global plot_names
+    plot_names = names_dict
     
 def selectBestPatients(db_name, numberOfPatients):
     """
@@ -126,23 +131,6 @@ def loadPatientData(tableName, patientId):
        
         conceptColumns = {"drug_exposure": "drug_concept_id", "measurement": "measurement_concept_id", "observation": "observation_concept_id"}
         timeColumns = {"drug_exposure": "drug_datetime", "measurement": "measurement_datetime", "observation": "observation_datetime"}
-        parameters = {"3038018": "24h-Bilanz", "3043148": "Atemfrequenz", "46235169": "Amylase", "3003396":  "BE_arteriell", "3008152": "Bicarbonat_arteriell", 
-                      "40757494": "Bilirubin_ges", "3007220": "CK", "21490582": "Compliance", "3012888": "DAP", "3024882": "FiO2", "3013721": "GOT", "3005755": "GPT", 
-                      "3027018": "Herzfrequenz", "43534077": "Harnstoff", "3029943": "Horowitz-Quotient (ohne_Temp_Korrektur)", "3009542": "Hämatokrit", 
-                      "40762351": "Hämoglobin", "21490724": "I:E", "3032080": "INR", "40762887": "Kreatinin", "3025926": "Körperkerntemperatur", 
-                      "3018405": "Laktat (arteriell)", "3010813": "Leukozyten", "3004905": "Lipase", "3027598": "MAP", "21490855": "PEEP", "3004249": "SAP", 
-                      "3016502": "SaO2", "40762500": "SpO2", "3005797": "SzvO2", "21490675": "ZVD", "3019977": "pH (arteriell)", "3013466": "pTT", 
-                      "3027946": "paCO2_(ohne_Temp-Korrektur)", "3027801": "paO2_(ohne_Temp-Korrektur)", "40479778": "Extrakorporaler Blutfluss", 
-                      "3661655": "EVLWI", "3029790": "CK-MB", "21490776": "PCWP", "3028074": "MPAP", "21490712": "Herzindex (kontinuierlich)", "3048529": "Troponin", 
-                      "3007461": "Thrombozyten", "40757478": "Albumin", "3036518": "Schlagvolumen (kontinuierlich)", "3005555": "Herzzeitvolumen (kontinuierlich)", 
-                      "3052295": "BNP", "21490880": "Schlagvolumenindex (kontinuierlich)", "3009713": "PVRI", "3017188": "DPAP", "3046279": "PCT", "3008047": "SVRI", 
-                      "4254061": "GEDVI", "3012810": "P_EI", "3005606": "SPAP", "3035357": "etCO2", "46234770": "CRP", "3017594": "Tidalvolumen", "4353937": "FeO2", 
-                      "42527138": "deltaP", "3002309": "Herzzeitvolumen (Bolus)", "3000569": "Herzindex (Bolus)", "3008952": "Schlagvolumen (Bolus)", 
-                      "3024530": "Schlagvolumenindex (Bolus)", "3026892": "Atemfrequenz (spontan)", "4089495": "Extrakorporaler_Gasfluss_(O2)", 
-                      "1321341": "Norepinephrin", "753626": "Propofol", "1343916": "Epinephrin", "35201749": "Vasopressin", "1719036": "Dobutamin", 
-                      "40173184": "Levosimendan", "956874": "Furosemid", "19078219": "Sufentanil", "19003953": "Rocuronium", "975125": "Hydrocortison", 
-                      "46287617": "Midazolam", "1110410": "Morphin", "785649": "Ketanest", "42628988": "Milrinon", "1550557": "Prednisolon", "1518254": "Dexamethason", 
-                      "35603427": "Fentanyl", "35603036": "Dexmedetomidin"} # maps the concept ids to the according parameter name
 
         for table, concept_id in conceptColumns.items():
             if table == "drug_exposure":
@@ -154,7 +142,7 @@ def loadPatientData(tableName, patientId):
             concept_ids = concept_ids[0]
             if concept_ids != []:
                 for loaded_concept_id in concept_ids:
-                    firstLine.append(parameters[loaded_concept_id.replace("\n", "")])                                                                                                                                                                                                                                                                                                                                                                                                                                        
+                    firstLine.append(plot_names[int(loaded_concept_id.replace("\n", ""))])                                                                                                                                                                                                                                                                                                                                                                                                                                        
                     stdin, stdout, stderr = ssh.exec_command('mysql -h{} -u{} -p{} SMITH_OMOP -e "select {}, {} from SMITH_OMOP.{} where person_id = {} and {} in {} and {} = {} order by {} asc"'.format(databaseConfiguration['host'], databaseConfiguration['username'], databaseConfiguration['password'], value_column, timeColumns[table], table, patientId, timeColumns[table], original_timestamps, conceptColumns[table], loaded_concept_id, timeColumns[table])) #select the data that exists in the table at the given time
                     results = stdout.readlines()[1:] 
                     counter = 0;
@@ -180,15 +168,11 @@ def loadPatientData(tableName, patientId):
         stdin, stdout, stderr = ssh.exec_command('mysql -h{} -u{} -p{} SMITH_SepsisDB -e "show columns from SMITH_ASIC_SCHEME.{}"'.format(databaseConfiguration['host'], databaseConfiguration['username'], databaseConfiguration['password'], tableName)) #get all column names
         columnNames = stdout.readlines()
         columnNames = columnNames[2:] #remove the first two elements of the result list (the first element contains the column names of the query result and the second element (the first query result element) is the "patientid" column, which is not further needed).
-        units = ["mmHg", "mmHg", "%", "", "°C", "mmHg", "cmH2O", "/min", "/min", "mmol/L", "mmol/L", "µmol/L", "U/L", "mL/cmH2O", "mmHg", "%", "mmol/L", "", "µmol/L", "mmol/L", "10^3/µL", "ng/mL", "mmHg", "mmHg", "%", "mmHg", "", "s", "mmHg", "mL/kg", "U/L", "mmHg", "mmHg", "L/min/m2", "µmol/L", "L/min", "pmol/L", "dyn.s/cm-5/m2", "mmHg", "ng/mL", "dyn.s/cm-5/m2", "cmH2O", "mmHg", "%", "nmol/L", "L/min", "L/min/m2", "ml/m2", "/min", "L/min", "%", "µg/kg/min", "mg/h", "mL/h", "mg/h", "µg/kg/min", "IE/min", "µg/kg/min", "µg/kg/min", "mg/h", "µg/h", "mg", "mg", "mg/h", "mg/h", "mg/h", "µg/kg/min", "mg", "mg", "mg", "mg/h", "µg", "µg/kg/h", "mg", "%", "µg/L", "10^3/µL", "mL", "U/L", "mmol/L", "U/L", "U/L", "ppm", "cmH2O", "", "mL/m2", "mL/Tag", "/min", "%", "", "cmH2O", "mL/kg", "cmH2O", "cmH2O", "cmH2O"] #the units for all colums. TODO: This has to be solved in another way since at this point, the table columns need to be in the correct order, and this cannot be guaranteed for upcoming tables in the SMITH_ASIC_SCHEME. 
         index = 0
         columnNames = columnNames[1:]
         for name in columnNames:
             name = name.split()
-            if index < len(units):
-                firstLine.append(name[0] + "(" + units[index] + ")") # add the unit to the column title
-            else:
-                firstLine.append(name[0]) 
+            firstLine.append(plot_names[name[0]])
             index+=1
             
         # load the actual data for the specified patient    

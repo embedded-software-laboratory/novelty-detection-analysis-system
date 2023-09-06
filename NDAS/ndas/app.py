@@ -20,6 +20,7 @@ from ndas.mainwindow import mainwindow
 from ndas.extensions import data, algorithms, annotations, savestate, plots, physiologicallimits
 from ndas.utils import logger
 from ndas.misc import colors
+from ndas.database_interface import interface
 
 q_app = cast(QApplication, None)
 q_threadpool = QThreadPool()
@@ -158,6 +159,7 @@ def _init_modules(config):
     logger.init.debug("Initializing colors...")
     colors.init_colors(config["colors"])
 
+    interface.init_plot_names(config["plot_names"])
 
 
 class Application(QApplication):
