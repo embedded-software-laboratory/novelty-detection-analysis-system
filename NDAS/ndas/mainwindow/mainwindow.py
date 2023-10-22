@@ -75,7 +75,7 @@ class MainWindow(QMainWindow):
 
         self.tab_datagenerator.setAutoFillBackground(True)
 
-        self.tab_benchmark = benchmarkwidget.BenchmarkWidget(threadpool_obj)
+        self.tab_benchmark = benchmarkwidget.BenchmarkWidget(threadpool_obj, self)
         self.tab_benchmark.setAutoFillBackground(True)
         self.tab_statistics = statgraphwidgets.StatsGraphWidget()
         self.tab_statistics.setAutoFillBackground(True)
@@ -266,6 +266,7 @@ class MainWindow(QMainWindow):
         self.toggle_plot_points_layout.addWidget(self.toggle_plot_lines)
 
         self.coordinate_label = QLabel("Pointer location:")
+        self.id_label = QLabel("ID=NaN")
         self.x_label = QLabel("x=NaN")
         self.y_label = QLabel("y=NaN")
         self.fps_label_label = QLabel("Generating:")
@@ -537,6 +538,7 @@ class MainWindow(QMainWindow):
         """
         Adds the status bar to the GUI
         """
+        self.status_bar.addPermanentWidget(self.id_label)
         self.status_bar.addPermanentWidget(self.x_label)
         self.status_bar.addPermanentWidget(self.y_label)
         self.status_bar.addPermanentWidget(self.fps_label)
@@ -587,14 +589,15 @@ class MainWindow(QMainWindow):
         QMessageBox.information(self, "Difference between pickle and hickle", "Pickle is a python module which implements the functionality to serialize and de-serialize python objects, so it enables us to save a python object into a file. Hickle does the same, but it stores the data into a HDF5 file format, which can be also used by other programming languages, not only by python like the pickle format. It also promises to be faster than pickle. The disadvantage is that it causes compatibility issues between the script version and the compiled version (=ndas.exe) of the NDAS - files stored in this format by the script version will not be loaded correclty by the compiled version. For this reason, we enabled the option to save to both file formats.")
 
 
-    def load_ndas_slot(self):
+    def load_ndas_slot(self, file_name=""):
         """
         Calls the load option for NDAS files
         """
-        options = QFileDialog.Options()
-        # options |= QFileDialog.DontUseNativeDialog
-        file_name, _ = QFileDialog.getOpenFileName(self, "Choose NDAS file", "",
-                                                   "NDAS Files (*.ndas)", options=options)
+        if not file_name:
+            options = QFileDialog.Options()
+            # options |= QFileDialog.DontUseNativeDialog
+            file_name, _ = QFileDialog.getOpenFileName(self, "Choose NDAS file", "",
+                                                       "NDAS Files (*.ndas)", options=options)
         if file_name:
             self.most_recent_opened_file_name = file_name
             self.overlay.show()
@@ -617,6 +620,7 @@ class MainWindow(QMainWindow):
 
             self.progress_bar_update_slot(100)
             self.tab_benchmark.update_dim()
+            self.id_label.setText("ID="+str(int(data.get_patient_id())))
             self.overlay.hide()
 
     def _connect_signals(self):

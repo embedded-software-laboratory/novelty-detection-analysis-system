@@ -5,10 +5,11 @@ from PyQt5.QtCore import (pyqtSignal)
 from PyQt5.QtWidgets import *
 
 from ndas.extensions import algorithms, annotations, data, plots
-from ndas.mainwindow import benchmarkplotwidget
+from ndas.mainwindow import benchmarkplotwidget, mainwindow
 from ndas.misc import datageneratorform, algorithmselectorform
 import csv
 import datetime
+import time
 
 
 class BenchmarkWidget(QStackedWidget):
@@ -16,7 +17,7 @@ class BenchmarkWidget(QStackedWidget):
     Widget to benchmark algorithms
     """
 
-    def __init__(self, threadpool_obj, *args, **kwargs):
+    def __init__(self, threadpool_obj, mainwindow, *args, **kwargs):
         """
         Adding the pages to the StackedWidget
 
@@ -27,6 +28,8 @@ class BenchmarkWidget(QStackedWidget):
         kwargs
         """
         super(BenchmarkWidget, self).__init__(*args, **kwargs)
+        self.mainwindow = mainwindow
+        self.autobenchfilenames = []
 
         self.data_generator_settings_widget = DataSelectionStackedWidgetPage()
         self.data_generator_settings_widget.next_page_signal.connect(lambda: self.to_next_page())
@@ -45,6 +48,9 @@ class BenchmarkWidget(QStackedWidget):
         # self.algorithm_selection_widget = None
         self.result_view_widget = None
 
+    def set_autobenchfilenames(self, filenames):
+        self.autobenchfilenames = filenames
+
     def to_next_page(self):
         """
         Show the next page of the StackWidget
@@ -57,8 +63,15 @@ class BenchmarkWidget(QStackedWidget):
         #     self.addWidget(self.algorithm_selection_widget)
 
         if self.currentIndex() == 1:
+            autoreset = False
+            if len(self.autobenchfilenames) > 0:
+                first_file_in_list = self.autobenchfilenames[0]
+                del self.autobenchfilenames[0]
+                self.mainwindow.load_ndas_slot(first_file_in_list)
+                autoreset = True
+                
             self.result_view_widget = ResultStackedWidgetPage(self.thread_pool, self.data_generator_settings_widget,
-                                                              self.algorithm_selection_widget)
+                                                              self.algorithm_selection_widget, autoreset)
             self.result_view_widget.restart_signal.connect(lambda: self.restart_benchmark())
             self.addWidget(self.result_view_widget)
 
@@ -76,6 +89,9 @@ class BenchmarkWidget(QStackedWidget):
                 self.removeWidget(self.result_view_widget)
                 # self.algorithm_selection_widget.deleteLater()
                 self.result_view_widget.deleteLater()
+                if len(self.autobenchfilenames) > 0:
+                    self.setCurrentIndex(1)
+                    self.to_next_page()
 
     def to_previous_page(self):
         """
@@ -209,10 +225,17 @@ class DataSelectionStackedWidgetPage(MasterStackedWidgetPage):
         self.main_layout.addItem(self.vertical_spacer)
         self.number_dimensions_changed(5)
 
+        self.autobenchButton = QPushButton("Multibench")
+        self.autobenchButton.clicked.connect(self._on_click_select_files)
+        self.main_layout.addWidget(self.autobenchButton, 3, 1, QtCore.Qt.AlignBottom)
         self.next_button = QPushButton("Next")
         self.next_button.setIcon(self.style().standardIcon(getattr(QStyle, 'SP_CommandLink')))
         self.main_layout.addWidget(self.next_button, 3, 2, QtCore.Qt.AlignBottom)
         self.next_button.clicked.connect(lambda: self.next_page_signal.emit())
+
+    def _on_click_select_files(self):
+        filenames, _ = QFileDialog.getOpenFileNames(caption="Select one or more files to open", filter="Dataset (*.ndas)")
+        self.parent().set_autobenchfilenames(filenames)
 
     def number_dimensions_changed(self, val):
         """
@@ -342,7 +365,7 @@ class ResultStackedWidgetPage(MasterStackedWidgetPage):
     Widget page for the visualization of the results
     """
 
-    def __init__(self, thread_pool, data_widget, algorithm_widget):
+    def __init__(self, thread_pool, data_widget, algorithm_widget, autoreset=False):
         """
         Adds visual elements to the widget page
 
@@ -354,6 +377,7 @@ class ResultStackedWidgetPage(MasterStackedWidgetPage):
         """
         super().__init__()
 
+        self.autoreset = autoreset
         self.thread_pool = thread_pool
         self.algorithm_count = len(algorithm_widget.elements)
 
@@ -814,9 +838,13 @@ class ResultStackedWidgetPage(MasterStackedWidgetPage):
             if len(list_csv_rows) == self.algorithm_count:
                 with open('ndas/Benchmark-Logs.csv', 'a', newline='') as f:
                     writer = csv.writer(f)
-                    list_rows_to_write = [[""], ["Benchmark at time: "+datetime.datetime.now().strftime("%m/%d/%Y|%H:%M:%S")]] + list_csv_rows
+                    list_rows_to_write = [[""], [str(data.get_patient_id())], ["Benchmark at time: "+datetime.datetime.now().strftime("%m/%d/%Y|%H:%M:%S")]] + list_csv_rows
+                    for row in list_rows_to_write:
+                        print(row)
                     writer.writerows(list_rows_to_write)
                     print("Successfully logged benchmark results")
+                if self.autoreset:
+                    self.restart_signal.emit()
 
     @staticmethod
     def color_row(table, row_index, color):

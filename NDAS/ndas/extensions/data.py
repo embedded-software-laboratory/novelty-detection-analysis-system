@@ -337,3 +337,12 @@ def restore_from_save(data: dict):
     data_slider_end = data['data_slider_end']
     _imputed_dataframe = pd.DataFrame.from_records(data.get('imputed_dataframe', []), columns=_dataframe_labels)
     _mask_dataframe = pd.DataFrame.from_records(data.get('mask_dataframe', []), columns=_dataframe_labels)
+
+
+def get_patient_id():
+    global _dataframe
+    tmp_id = _dataframe['ID'][0]
+    if tmp_id:
+        tmp_id = int(tmp_id)
+    return tmp_id
+
