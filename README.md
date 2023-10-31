@@ -1,6 +1,7 @@
 # Anomaly-detection-analysis-system
 * formally known as novelty-detection-analysis-system
-This repository contains a data analysis software which can be used to detect data anomalies in ICU datasets. It enables the user to run various novelty detection algorithms on imported patient laboratory data and provides a visualization of the analysis results. 
+
+This repository contains a data analysis software which can be used to detect data anomalies in ICU datasets. It enables the user to run various anomaly detection algorithms on imported patient laboratory data and provides a visualization of the analysis results. 
 For detailed information on how to use this software, please see the documentation folder. 
 
 This software is still in developement and new features may be added in the future. 
