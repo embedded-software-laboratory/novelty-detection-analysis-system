@@ -1,4 +1,4 @@
-#How to run AnDAS
+# How to run AnDAS
 ## Intall required software
 1. Intall Python 3.8 (Select "Allow long Paths")
 2. Install Microsoft Visual C++ Redistributable (Installing Visual Studio is not necessary)
@@ -12,7 +12,7 @@ To run AnDAS simply execute the ndas.py in this folder in PyCharm
 
 
 
-#Deprecated Information:
+# Deprecated Information:
 ## install_dependencies.bat
 This script can be executed if you want to do development work or run the ndas python script directly. It checks wether... 
 1. ...you have a compatible python version istalled,
