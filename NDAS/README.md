@@ -1,17 +1,32 @@
-# install_dependencies.bat
+#How to run AnDAS
+## Intall required software
+1. Intall Python 3.8 (Select "Allow long Paths")
+2. Install Microsoft Visual C++ Redistributable (Installing Visual Studio is not necessary)
+3. Install PyCharm Community
+## Setting up PyCharm
+1. Open the "NDAS" (all upper case, the parent folder of this file) folder as a Project in PyCharm
+2. Choose Python 3.8 as local Interpreter for the Project
+3. Open the requirements.txt file in this folder, and click install packages when promted
+## Running AnDAS
+To run AnDAS simply execute the ndas.py in this folder in PyCharm
+
+
+
+#Deprecated Information:
+## install_dependencies.bat
 This script can be executed if you want to do development work or run the ndas python script directly. It checks wether... 
 1. ...you have a compatible python version istalled,
 2. ...all necessary libraries are installed and if not, installes the missing ones. 
 So this simplifies the setup process as you don't need to install all packages by hand. 
 You don't need to run this script if you just want to use the compiled version (ndas.exe).
 
-# How to compile the NDAS
+## How to compile the NDAS
 If you want to compile the software, follow these steps:
 1. (if not yet done) install the python library "pyinstaller" 
 2. Switch to the folder "novelty-detection-analysis-system\NDAS" and run the following command: pyinstaller --onefile ndas.py --hiddenimport PyQt5.QtQml --hiddenimport PyQt5.QtSql --hiddenimport PyQt5.QtOpenGL --hiddenimport wfdb --hiddenimport seaborn
 3. The resulting exe-file is located in a folder named "dist". Copy it into the parent directory "novelty-detection-analysis-system\NDAS". From there, it should be possible to execute it. The folders "dist" and "build" can be deleted. 
 
-# How to activate the Conda environment
+## How to activate the Conda environment
 If you don't want to install a compatible python version or the needed packages directly, you can use the provided anaconda environment.
 To use the environment, please follow these steps:
 1. Download and install Anaconda (https://www.anaconda.com/products/distribution).
