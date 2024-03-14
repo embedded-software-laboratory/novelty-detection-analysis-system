@@ -193,7 +193,7 @@ physiologicalinfo:
     aliases: []
 plots:
   draw_outlier_series_box: true
-  outlier_series_threshold: -407
+  outlier_series_threshold: 5
   use_dark_mode: false
   exclusion_substrings:
   - ID
