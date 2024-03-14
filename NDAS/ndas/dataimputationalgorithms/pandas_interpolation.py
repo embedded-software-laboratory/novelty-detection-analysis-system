@@ -62,8 +62,13 @@ class PandasInterpolation:
             found_dt = physiologicallimits.get_physical_dt(col)
             if found_dt and found_dt.id in pre_trained_columns and isinstance(transformed_other_series_dict[found_dt.id], np.ndarray):
                 weights = hkl.load(file_path+found_dt.id+"_weights.hkl")
-                weighted_transformed_column = transformed_other_series_dict[found_dt.id] * np.squeeze(weights[0])
-                interpolated_other_series.append(np.sum(weighted_transformed_column, axis=1)+np.squeeze(weights[1]))
+                if isinstance(weights, dict):
+                    weight_keys = list(weights.keys())
+                    weighted_transformed_column = transformed_other_series_dict[found_dt.id] * np.squeeze(weights[weight_keys[0]][0])
+                    interpolated_other_series.append(np.sum(weighted_transformed_column, axis=1)+np.squeeze(weights[weight_keys[1]][0]))
+                else:
+                    weighted_transformed_column = transformed_other_series_dict[found_dt.id] * np.squeeze(weights[0])
+                    interpolated_other_series.append(np.sum(weighted_transformed_column, axis=1)+np.squeeze(weights[1]))
                 mask_min.append(found_dt.low)
                 mask_max.append(found_dt.high)
             else:
