@@ -1,0 +1,9 @@
+UnoViS_bed2013_3 7 400 122999
+UnoViS_bed2013_3.dat 16 3138.5867(3438)/V 0 0 0 11903 0 cecg_1
+UnoViS_bed2013_3.dat 16 3090.0242(3002)/V 0 0 0 -29201 0 cecg_2
+UnoViS_bed2013_3.dat 16 3018.7983(3948)/V 0 0 0 -21594 0 cecg_3
+UnoViS_bed2013_3.dat 16 3824.9309(3651)/V 0 0 0 -30494 0 opt_1
+UnoViS_bed2013_3.dat 16 3825.4502(3650)/V 0 0 0 28983 0 opt_2
+UnoViS_bed2013_3.dat 16 95397.9453(-750)/V 0 0 0 -6664 0 opt_3
+UnoViS_bed2013_3.dat 16 6743.9946(386)/V 0 0 0 6702 0 refecg
+#ID: p7; loc: lab, bed, B; sex: w; age: 25; bmi: 18.7; clothes: t-shirt, bed sheet; quality: bad

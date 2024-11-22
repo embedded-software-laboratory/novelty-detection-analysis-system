@@ -103,7 +103,7 @@ class WFMImporter(BaseImporter):
             """
             header = wfdb.rdrecord(single_wfm_h[:-4])  # strip ending
 
-            self.custom_labels = ["WAVE: " + str(n) + " (" + m + ")" for m, n in zip(header.units, header.sig_name)]
+            self.custom_labels = [f"WAVE: {n or 'Unknown'} ({m or 'Unknown'})" for m, n in zip(header.units, header.sig_name)]
             self.custom_labels.insert(0, "sample (#)")
 
             df_wave = pd.DataFrame.from_records(header.p_signal, columns=header.sig_name)
@@ -145,16 +145,22 @@ class WFMImporter(BaseImporter):
         Returns the headers for a waveform file
 
         Parameters
-        ----------
+        ----------3
         files
         """
         wfm_header = []
 
-        for file in files:
-            self.log("Reading waveform file: %s" % file)
+        patterns = [
+            "(\d\d\d\d\d\d\d.hea)",  # Match 7 digits followed by '.hea'
+            "(\d\d\d\d-\d\d-\d\d-\d\d-\d\d.hea)", #Match the testing case for data import
+            "(UnoViS_bed\d{4}\.hea)" # Match the Unovis file type (those header files are generated and not provided by the database itself lol)
+        ]
 
-            # first read the master header files
-            if re.search("(\d\d\d\d-\d\d-\d\d-\d\d-\d\d.hea)", file):
+        for file in files:
+            self.log(f"Reading waveform file: {file}")
+
+            # Check if the file matches any of the patterns
+            if any(re.search(pattern, file) for pattern in patterns):
                 wfm_header.append(file)
 
         if not wfm_header:

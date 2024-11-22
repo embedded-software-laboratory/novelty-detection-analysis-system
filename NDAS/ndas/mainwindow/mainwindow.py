@@ -1390,7 +1390,7 @@ class MainWindow(QMainWindow):
             data.get_instance().signals.status_signal.connect(lambda status: self.progress_bar_update_slot(status))
             data.get_instance().signals.error_signal.connect(lambda s: self.error_msg_slot(s))
             self.thread_pool.start(data.get_instance())
-            logging.info("Loaded Waveform-Files '"+file_names+"'")
+            logging.info("Loaded Waveform-Files '"+file_names[-1]+"'")
             self.toggleTooltipStatus(self.toggle_tooltip_btn, True)
 
     @pyqtSlot()
@@ -1411,7 +1411,7 @@ class MainWindow(QMainWindow):
             data.get_instance().signals.status_signal.connect(lambda status: self.progress_bar_update_slot(status))
             data.get_instance().signals.error_signal.connect(lambda s: self.error_msg_slot(s))
             self.thread_pool.start(data.get_instance())
-            logging.info("Loaded Numeric Waveform-Files '"+file_names+"'")
+            logging.info("Loaded Numeric Waveform-Files '"+file_names[-1]+"'")
             self.toggleTooltipStatus(self.toggle_tooltip_btn, True)
 
 
