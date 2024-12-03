@@ -4,7 +4,7 @@ annotation:
   - Sensor
   - Other/Unknown
 data:
-  auto_truncate_size: 100000
+  auto_truncate_size: 150000
 physiologicalinfo:
   temperature:
     low: 25

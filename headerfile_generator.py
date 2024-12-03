@@ -69,11 +69,11 @@ if __name__ == '__main__':
     if numberOfDisplayedFiles == -1:
         for line in fileInformation:
             if(line[0].startswith(namingScheme)):
-                file.write(line[0] + " " + line[1] + '\n')
+                file.write(line[0].removesuffix('.hea') + " " + line[1] + '\n')
     else:
         for line in fileInformation[:numberOfDisplayedFiles]:
             if(line[0].startswith(namingScheme)):
-                file.write(line[0] + " " + line[1] + '\n')
+                file.write(line[0].removesuffix('.hea') + " " + line[1] + '\n')
                 
     print('----------Process Successful----------')
     print('headerfile name' , 'size of .dat file that headerfile is referring to')
